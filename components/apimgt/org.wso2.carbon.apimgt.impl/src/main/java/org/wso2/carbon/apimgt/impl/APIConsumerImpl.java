@@ -3797,6 +3797,7 @@ public class APIConsumerImpl extends AbstractAPIManager implements APIConsumer {
     }
 
     public boolean updateApplicationOwner(String userId, Application application) throws APIManagementException {
+
         boolean isAppUpdated;
         String consumerKey;
         String oldUserName = application.getSubscriber().getName();
@@ -3808,7 +3809,7 @@ public class APIConsumerImpl extends AbstractAPIManager implements APIConsumer {
                 if (!APIUtil.isApplicationOwnedBySubscriber(userId, applicationName)) {
                     for (int i = 0; i < application.getKeys().size(); i++) {
                         KeyManager keyManager = KeyManagerHolder.getKeyManagerInstance();
-                             /* retrieving OAuth application information for specific consumer key */
+                        /* retrieving OAuth application information for specific consumer key */
                         consumerKey = ((APIKey) ((ArrayList) application.getKeys()).get(i)).getConsumerKey();
                         OAuthApplicationInfo oAuthApplicationInfo = keyManager.retrieveApplication(consumerKey);
                         if (oAuthApplicationInfo.getParameter(ApplicationConstants.OAUTH_CLIENT_NAME) != null) {
@@ -3818,7 +3819,7 @@ public class APIConsumerImpl extends AbstractAPIManager implements APIConsumer {
                                     null, application.getTokenType());
                             oauthAppRequest.getOAuthApplicationInfo().setAppOwner(userId);
                             oauthAppRequest.getOAuthApplicationInfo().setClientId(consumerKey);
-                             /* updating the owner of the OAuth application with userId */
+                            /* updating the owner of the OAuth application with userId */
                             OAuthApplicationInfo updatedAppInfo = keyManager.updateApplicationOwner(oauthAppRequest,
                                     oldUserName);
                             isAppUpdated = true;
@@ -3840,8 +3841,8 @@ public class APIConsumerImpl extends AbstractAPIManager implements APIConsumer {
                     userId + " as this user does not belong to " + oldTenantDomain + " domain.");
         }
 
-            isAppUpdated = apiMgtDAO.updateApplicationOwner(userId, application);
-            return isAppUpdated;
+        isAppUpdated = apiMgtDAO.updateApplicationOwner(userId, application);
+        return isAppUpdated;
     }
 
     public JSONObject resumeWorkflow(Object[] args) {
