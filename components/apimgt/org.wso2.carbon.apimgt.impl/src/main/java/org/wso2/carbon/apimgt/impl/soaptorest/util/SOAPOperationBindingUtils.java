@@ -161,9 +161,14 @@ public class SOAPOperationBindingUtils {
                     Map<String, Property> inputPropertyMap = new HashMap<>();
                     if (inputParameterModel != null) {
                         for (ModelImpl input : inputParameterModel) {
-                            RefProperty inputRefProp = new RefProperty();
                             if (input != null) {
-                                inputRefProp.set$ref(SOAPToRESTConstants.Swagger.DEFINITIONS_ROOT + input.getName());
+                                RefProperty inputRefProp;
+                                if (input.getProperties().containsKey(input.getName())) {
+                                    inputRefProp = (RefProperty) input.getProperties().get(input.getName());
+                                } else {
+                                    inputRefProp = new RefProperty();
+                                    inputRefProp.set$ref(SOAPToRESTConstants.Swagger.DEFINITIONS_ROOT + input.getName());
+                                }
                                 inputPropertyMap.put(input.getName(), inputRefProp);
                             }
                         }
@@ -179,9 +184,14 @@ public class SOAPOperationBindingUtils {
                 Map<String, Property> outputPropertyMap = new HashMap<>();
                 if (outputParameterModel != null) {
                     for (ModelImpl output : outputParameterModel) {
-                        RefProperty outputRefProp = new RefProperty();
                         if (output != null) {
-                            outputRefProp.set$ref(SOAPToRESTConstants.Swagger.DEFINITIONS_ROOT + output.getName());
+                            RefProperty outputRefProp;
+                            if (output.getProperties().containsKey(output.getName())) {
+                                outputRefProp = (RefProperty) output.getProperties().get(output.getName());
+                            } else {
+                                outputRefProp = new RefProperty();
+                                outputRefProp.set$ref(SOAPToRESTConstants.Swagger.DEFINITIONS_ROOT + output.getName());
+                            }
                             outputPropertyMap.put(output.getName(), outputRefProp);
                         }
                     }
