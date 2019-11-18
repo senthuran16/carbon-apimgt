@@ -322,13 +322,37 @@ public final class SelfSignUpUtil {
         String serviceUrl = config.getFirstProperty(APIConstants.AUTH_MANAGER_URL);
         String purposesEndpoint;
         if (!MultitenantConstants.SUPER_TENANT_DOMAIN_NAME.equalsIgnoreCase(tenantDomain)) {
-            purposesEndpoint = serviceUrl.replace(APIConstants.SERVICES_URL_RELATIVE_PATH,
+            purposesEndpoint = replaceLastOccurrence(serviceUrl, APIConstants.SERVICES_URL_RELATIVE_PATH,
                     "t/" + tenantDomain + "/" + CONSENT_API_RELATIVE_PATH + PURPOSES_ENDPOINT_RELATIVE_PATH);
         } else {
-            purposesEndpoint = serviceUrl.replace(APIConstants.SERVICES_URL_RELATIVE_PATH,
+            purposesEndpoint = replaceLastOccurrence(serviceUrl, APIConstants.SERVICES_URL_RELATIVE_PATH,
                     CONSENT_API_RELATIVE_PATH + PURPOSES_ENDPOINT_RELATIVE_PATH);
         }
         return purposesEndpoint;
+    }
+
+    /**
+     * Method to replace the last occurrence of the provided string in the base string.
+     * Ref: https://github.com/wso2/product-apim/issues/6821
+     *
+     * issue: https://services.mnm.local:9443/services => https://am/identity/concent-mgt/v1.mnm.local:9443/services/
+     * Fix: https://services.mnm.local:9443/services => https://services.mnm.local:9443/am/identity/concent-mgt/v1/
+     *
+     * @param base The base string
+     * @param toReplace The string which needs to be find and replaced
+     * @param replaceWith The replacement string.
+     * @return String with the replaced value.
+     * */
+    private static String replaceLastOccurrence(String base, String toReplace, String replaceWith) {
+    	int lastIndex = base.lastIndexOf(toReplace);
+
+    	if (lastIndex == -1) {
+    		return base;
+	    }
+
+    	String begin = base.substring(0, lastIndex);
+    	String end = base.substring(lastIndex + toReplace.length());
+    	return begin + replaceWith + end;
     }
 
     /**
