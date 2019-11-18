@@ -88,17 +88,4 @@ public class MSPowerpointIndexerTest {
             Assert.fail();
         }
     }
-
-    @Test(expected = SolrException.class)
-    public void testShouldThrowExceptionWhenFailToReadFile() throws Exception {
-        PowerMockito.whenNew(POIFSFileSystem.class).withArguments(Mockito.anyObject())
-                .thenThrow(OfficeXmlFileException.class);
-        PowerMockito.whenNew(XMLSlideShow.class).withParameterTypes(InputStream.class)
-                .withArguments(Mockito.any())
-                .thenThrow(IOException.class);
-
-        // SolrException is expected
-        MSPowerpointIndexer indexer = new MSPowerpointIndexer();
-        indexer.getIndexedDocument(file2Index);
-    }
 }
