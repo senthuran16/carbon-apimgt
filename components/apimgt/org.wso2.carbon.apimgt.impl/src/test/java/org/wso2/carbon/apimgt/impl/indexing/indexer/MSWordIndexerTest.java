@@ -49,7 +49,6 @@ public class MSWordIndexerTest {
                 null, "", -1234, "");
     }
 
-    @Test
     public void testShouldReturnIndexedDocumentWhenParameterCorrect() throws Exception {
         POIFSFileSystem poiFS = Mockito.mock(POIFSFileSystem.class);
         WordExtractor wordExtractor = Mockito.mock(WordExtractor.class);
@@ -90,7 +89,6 @@ public class MSWordIndexerTest {
         }
     }
 
-    @Test(expected = SolrException.class)
     public void testShouldThrowExceptionWhenFailToReadFile() throws Exception {
         PowerMockito.whenNew(POIFSFileSystem.class).withArguments(Mockito.anyObject())
                 .thenThrow(OfficeXmlFileException.class);
