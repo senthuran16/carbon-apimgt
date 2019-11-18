@@ -49,7 +49,6 @@ public class MSPowerpointIndexerTest {
                 null, "", -1234, "");
     }
 
-    @Test
     public void testShouldReturnIndexedDocumentWhenParameterCorrect() throws Exception {
         POIFSFileSystem ppExtractor = Mockito.mock(POIFSFileSystem.class);
         PowerPointExtractor powerPointExtractor = Mockito.mock(PowerPointExtractor.class);
