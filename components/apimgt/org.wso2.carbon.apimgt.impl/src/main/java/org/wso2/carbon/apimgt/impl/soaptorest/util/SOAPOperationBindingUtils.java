@@ -161,7 +161,7 @@ public class SOAPOperationBindingUtils {
                     Map<String, Property> inputPropertyMap = new HashMap<>();
                     if (inputParameterModel != null) {
                         for (ModelImpl input : inputParameterModel) {
-                            if (input != null) {
+                            if (input != null && input.getProperties() != null) {
                                 RefProperty inputRefProp;
                                 if (input.getProperties().containsKey(input.getName())) {
                                     inputRefProp = (RefProperty) input.getProperties().get(input.getName());
@@ -184,7 +184,7 @@ public class SOAPOperationBindingUtils {
                 Map<String, Property> outputPropertyMap = new HashMap<>();
                 if (outputParameterModel != null) {
                     for (ModelImpl output : outputParameterModel) {
-                        if (output != null) {
+                        if (output != null && output.getProperties() != null) {
                             RefProperty outputRefProp;
                             if (output.getProperties().containsKey(output.getName())) {
                                 outputRefProp = (RefProperty) output.getProperties().get(output.getName());
