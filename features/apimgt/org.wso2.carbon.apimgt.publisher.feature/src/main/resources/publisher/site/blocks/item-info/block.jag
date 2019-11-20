@@ -24,7 +24,7 @@ jagg.block("item-info", {
     isCreatePermitted = jagg.getCreatePermitted().permitted;
     result = mod.getAPI({name:name, version:version, provider:provider});
     api = result.api;
-		if (!api.wsdl) {
+		if (api && !api.wsdl) {
 			session.remove("wsdl");
 		}
         return {
