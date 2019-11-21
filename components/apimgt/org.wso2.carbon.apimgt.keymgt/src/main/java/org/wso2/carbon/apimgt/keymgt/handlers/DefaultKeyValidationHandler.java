@@ -152,8 +152,7 @@ public class DefaultKeyValidationHandler extends AbstractKeyValidationHandler {
         } catch (IdentityOAuth2Exception e) {
             log.error("ERROR while retrieving user during token validation " + e.getMessage(), e);
             apiKeyValidationInfoDTO.setAuthorized(false);
-            apiKeyValidationInfoDTO.setValidationStatus(APIConstants.KeyValidationStatus.
-                    API_AUTH_INCORRECT_ACCESS_TOKEN_TYPE);
+            apiKeyValidationInfoDTO.setValidationStatus(APIConstants.KeyValidationStatus.API_AUTH_GENERAL_ERROR);
         }
 
         AccessTokenDO accessTokenDO = new AccessTokenDO(apiKeyValidationInfoDTO.getConsumerKey(), user, scopes, null,
