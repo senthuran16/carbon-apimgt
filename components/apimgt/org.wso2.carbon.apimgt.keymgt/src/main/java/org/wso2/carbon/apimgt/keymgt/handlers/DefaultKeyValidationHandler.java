@@ -33,6 +33,7 @@ import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.oauth.config.OAuthServerConfiguration;
 import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
 import org.wso2.carbon.identity.oauth2.model.AccessTokenDO;
+import org.wso2.carbon.identity.oauth2.util.OAuth2Util;
 import org.wso2.carbon.identity.oauth2.validators.OAuth2ScopeValidator;
 import org.wso2.carbon.utils.multitenancy.MultitenantUtils;
 
@@ -144,13 +145,15 @@ public class DefaultKeyValidationHandler extends AbstractKeyValidationHandler {
             }
         }
 
-        AuthenticatedUser user = new AuthenticatedUser();
-        user.setUserName(MultitenantUtils.getTenantAwareUsername(apiKeyValidationInfoDTO.getEndUserName()));
-        user.setTenantDomain(apiKeyValidationInfoDTO.getSubscriberTenantDomain());
-
-        if (user.getUserName() != null && APIConstants.FEDERATED_USER
-                .equalsIgnoreCase(IdentityUtil.extractDomainFromName(user.getUserName()))) {
-            user.setFederatedUser(true);
+        AuthenticatedUser user = null;
+        try {
+            user = OAuth2Util.getAccessTokenDOfromTokenIdentifier(validationContext.getAccessToken()).
+                    getAuthzUser();
+        } catch (IdentityOAuth2Exception e) {
+            log.error("ERROR while retrieving user during token validation " + e.getMessage(), e);
+            apiKeyValidationInfoDTO.setAuthorized(false);
+            apiKeyValidationInfoDTO.setValidationStatus(APIConstants.KeyValidationStatus.
+                    API_AUTH_INCORRECT_ACCESS_TOKEN_TYPE);
         }
 
         AccessTokenDO accessTokenDO = new AccessTokenDO(apiKeyValidationInfoDTO.getConsumerKey(), user, scopes, null,
