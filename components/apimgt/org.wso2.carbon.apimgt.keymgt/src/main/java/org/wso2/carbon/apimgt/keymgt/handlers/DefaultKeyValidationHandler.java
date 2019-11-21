@@ -149,6 +149,15 @@ public class DefaultKeyValidationHandler extends AbstractKeyValidationHandler {
         try {
             user = OAuth2Util.getAccessTokenDOfromTokenIdentifier(validationContext.getAccessToken()).
                     getAuthzUser();
+            if (user == null) {
+                user = new AuthenticatedUser();
+                user.setUserName(MultitenantUtils.getTenantAwareUsername(apiKeyValidationInfoDTO.getEndUserName()));
+                user.setTenantDomain(apiKeyValidationInfoDTO.getSubscriberTenantDomain());
+                if (user.getUserName() != null && APIConstants.FEDERATED_USER
+                        .equalsIgnoreCase(IdentityUtil.extractDomainFromName(user.getUserName()))) {
+                    user.setFederatedUser(true);
+                }
+            }
         } catch (IdentityOAuth2Exception e) {
             log.error("ERROR while retrieving user during token validation " + e.getMessage(), e);
             apiKeyValidationInfoDTO.setAuthorized(false);
