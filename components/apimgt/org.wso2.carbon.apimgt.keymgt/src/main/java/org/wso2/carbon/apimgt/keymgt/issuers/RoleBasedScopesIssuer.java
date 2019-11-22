@@ -34,6 +34,7 @@ import org.wso2.carbon.identity.application.authentication.framework.util.Framew
 import org.wso2.carbon.identity.application.common.model.ClaimMapping;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.oauth.common.GrantType;
+import org.wso2.carbon.identity.oauth2.grant.jwt.JWTConstants;
 import org.wso2.carbon.identity.oauth2.token.OAuthTokenReqMessageContext;
 import org.wso2.carbon.user.api.UserStoreException;
 import org.wso2.carbon.user.api.UserStoreManager;
@@ -129,14 +130,14 @@ public class RoleBasedScopesIssuer extends AbstractScopesIssuer {
                 userStoreManager = realmService.getTenantUserRealm(tenantId).getUserStoreManager();
 
                 // If GrantType is SAML20_BEARER and CHECK_ROLES_FROM_SAML_ASSERTION is true,
-                // use user roles from assertion or from JWT bearer grant otherwise use roles from userstore.
+                // use user roles from assertion or from JWT otherwise use roles from userstore.
                 String isSAML2Enabled = System.getProperty(ResourceConstants.CHECK_ROLES_FROM_SAML_ASSERTION);
-                String isJWTGrantEnabled = System.getProperty(ResourceConstants.CHECK_ROLES_FROM_JWT_BEARER_GRANT);
+                String isValidateScopeRolesFromUserStore = System.getProperty(ResourceConstants.VALIDATE_SCOPE_ROLES_FROM_USERSTORE);
                 if (GrantType.SAML20_BEARER.toString().equals(grantType) && Boolean.parseBoolean(isSAML2Enabled)) {
                     Assertion assertion = (Assertion) tokReqMsgCtx.getProperty(ResourceConstants.SAML2_ASSERTION);
                     userRoles = getRolesFromAssertion(assertion);
-                } else if (ResourceConstants.JWT_BEARER_GRANT_TYPE.equals(grantType)
-                        && Boolean.parseBoolean(isJWTGrantEnabled)) {
+                } else if (JWTConstants.OAUTH_JWT_BEARER_GRANT_TYPE.equals(grantType)
+                        && !(Boolean.parseBoolean(isValidateScopeRolesFromUserStore))) {
                     AuthenticatedUser user = tokReqMsgCtx.getAuthorizedUser();
                     Map<ClaimMapping, String> userAttributes = user.getUserAttributes();
                     userRoles = getRolesFromUserAttribute(userAttributes,

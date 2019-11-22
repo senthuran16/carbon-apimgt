@@ -64,22 +64,16 @@ public class ExtendedJWTBearerGrantHandler extends JWTBearerGrantHandler {
         try {
             signedJWT = getSignedJWT(tokReqMsgCtx);
         } catch (IdentityOAuth2Exception e) {
-            log.error("Couldn't retrieve signed JWT:", e);
+            log.error("Couldn't retrieve signed JWT", e);
         }
-
-        if (signedJWT == null) {
-            log.error("No Valid Assertion was found for " + JWTConstants.OAUTH_JWT_BEARER_GRANT_TYPE);
-        } else {
-            claimsSet = getClaimSet(signedJWT);
-        }
-
+        claimsSet = getClaimSet(signedJWT);
         String jwtIssuer = claimsSet != null ? claimsSet.getIssuer() : null;
         String tenantDomain = tokReqMsgCtx.getOauth2AccessTokenReqDTO().getTenantDomain();
 
         try {
             identityProvider = IdentityProviderManager.getInstance().getIdPByName(jwtIssuer, tenantDomain);
         } catch (IdentityProviderManagementException e) {
-            log.error("Couldn't initiate identity provider instance:", e);
+            log.error("Couldn't initiate identity provider instance", e);
         }
 
         try {
@@ -187,7 +181,8 @@ public class ExtendedJWTBearerGrantHandler extends JWTBearerGrantHandler {
             }
         }
         if (StringUtils.isEmpty(assertion)) {
-            return null;
+            String errorMessage = "Error while retrieving assertion";
+            throw new IdentityOAuth2Exception(errorMessage);
         }
 
         try {
