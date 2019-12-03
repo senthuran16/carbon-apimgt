@@ -3982,9 +3982,12 @@ public class ApiMgtDAO {
             rs = prepStmt.executeQuery();
             ArrayList<Application> applicationsList = new ArrayList<Application>();
             Application application;
+            Map<String,String> applicationAttributes;
+            int applicationId;
             while (rs.next()) {
+                applicationId = rs.getInt("APPLICATION_ID");
                 application = new Application(rs.getString("NAME"), subscriber);
-                application.setId(rs.getInt("APPLICATION_ID"));
+                application.setId(applicationId);
                 application.setTier(rs.getString("APPLICATION_TIER"));
                 application.setDescription(rs.getString("DESCRIPTION"));
                 application.setStatus(rs.getString("APPLICATION_STATUS"));
@@ -3992,6 +3995,8 @@ public class ApiMgtDAO {
                 application.setUUID(rs.getString("UUID"));
                 application.setIsBlackListed(rs.getBoolean("ENABLED"));
                 application.setOwner(rs.getString("CREATED_BY"));
+                applicationAttributes = getApplicationAttributes(connection, applicationId);
+                application.setApplicationAttributes(applicationAttributes);
 
                 if (multiGroupAppSharingEnabled) {
                     setGroupIdInApplication(application);

@@ -3316,6 +3316,12 @@ public class APIStoreHostObject extends ScriptableObject {
                     row.put("totalCount", row, applicationCount);
                     row.put("owner", row, application.getOwner());
                     row.put("tokenType", row, application.getTokenType());
+                    try {
+                        row.put("applicationAttributes", row,
+                                new ObjectMapper().writeValueAsString(application.getApplicationAttributes()));
+                    } catch (JsonProcessingException e) {
+                        log.error("Error in retrieving application attributes of " + application.getName(), e);
+                    }
                     myn.put(i++, myn, row);
                 }
 
