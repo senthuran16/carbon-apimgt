@@ -356,7 +356,8 @@ public class ApisApiServiceImpl extends ApisApiService {
                     RestApiUtil.handleInternalServerError(errorMessage, log);
                 }
             } else if (!isWSAPI) {
-                apiProvider.saveSwagger20Definition(apiToAdd.getId(), body.getApiDefinition());
+                String apiDefinition = validateAndConvertYamlToJson(body.getApiDefinition());
+                apiProvider.saveSwagger20Definition(apiToAdd.getId(), apiDefinition);
             }
             APIIdentifier createdApiId = apiToAdd.getId();
             //Retrieve the newly added API to send in the response payload
@@ -1830,7 +1831,7 @@ public class ApisApiServiceImpl extends ApisApiService {
     public Response apisApiIdSwaggerPut(String apiId, String apiDefinition, String contentType, String ifMatch,
                                         String ifUnmodifiedSince) {
         try {
-            validateAPIDefinition(apiDefinition);
+            apiDefinition = validateAndConvertYamlToJson(apiDefinition);
             APIDefinition apiDefinitionFromOpenAPISpec = new APIDefinitionFromOpenAPISpec();
             APIProvider apiProvider = RestApiUtil.getLoggedInUserProvider();
             String tenantDomain = RestApiUtil.getLoggedInUserTenantDomain();
@@ -1967,5 +1968,19 @@ public class ApisApiServiceImpl extends ApisApiService {
 
     private boolean isSequenceExistsInAPI(String sequenceName, Mediation mediation) {
         return StringUtils.isNotEmpty(sequenceName) && mediation.getName().equals(sequenceName);
+    }
+
+    private String validateAndConvertYamlToJson(String apiDefinition) {
+        if (!apiDefinition.trim().startsWith("{")) {
+            try {
+                apiDefinition = APIUtil.yamlToJson(apiDefinition);
+            } catch (IOException e) {
+                String errorMsg = "Cannot convert API definition from yaml to json";
+                log.error(errorMsg, e);
+                RestApiUtil.handleBadRequest(errorMsg, log);
+            }
+        }
+        validateAPIDefinition(apiDefinition);
+        return apiDefinition;
     }
 }
