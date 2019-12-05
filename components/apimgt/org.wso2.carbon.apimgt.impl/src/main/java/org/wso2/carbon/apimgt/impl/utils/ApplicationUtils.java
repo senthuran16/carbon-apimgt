@@ -107,7 +107,6 @@ public class ApplicationUtils {
         if (tokenRequest == null) {
             tokenRequest = new AccessTokenRequest();
         }
-
         KeyManager keyManager = KeyManagerHolder.getKeyManagerInstance();
         if (keyManager != null) {
             return keyManager.buildAccessTokenRequestFromJSON(jsonParams, tokenRequest);

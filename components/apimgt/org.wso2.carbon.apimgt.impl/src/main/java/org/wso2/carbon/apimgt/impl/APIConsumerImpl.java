@@ -1009,10 +1009,12 @@ public class APIConsumerImpl extends AbstractAPIManager implements APIConsumer {
 
         try {
             // Populating additional parameters.
+            JSONObject appLogObject = (JSONObject)new JSONParser().parse(jsonInput);
+            tokenRequest.setTenantDomain((String) appLogObject.get("TenantDomain"));
+
             tokenRequest = ApplicationUtils.populateTokenRequest(jsonInput, tokenRequest);
             KeyManager keyManager = KeyManagerHolder.getKeyManagerInstance();
 
-            JSONObject appLogObject = new JSONObject();
             appLogObject.put("Re-Generated Keys for application with client Id", clientId);
             APIUtil.logAuditMessage(APIConstants.AuditLogConstants.APPLICATION, appLogObject.toString(),
                     APIConstants.AuditLogConstants.UPDATED, this.username);
@@ -1021,6 +1023,9 @@ public class APIConsumerImpl extends AbstractAPIManager implements APIConsumer {
         } catch (APIManagementException e) {
             log.error("Error while re-generating AccessToken", e);
             throw e;
+        } catch (ParseException e){
+            log.error("Error while getting tenant information for re-generating AccessToken", e);
+            throw  new APIManagementException(e);
         }
     }
 

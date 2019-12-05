@@ -4334,10 +4334,26 @@ public class APIStoreHostObject extends ScriptableObject {
             String clientSecret = (String) args[5];
             String validityTime = (String) args[6];
             String[] requestedScopeArray = new String[]{requestedScopes};
+            String tenantDomain = args[0].toString();
+            if (tenantDomain.contains("@")) {
+                String temparr[] = tenantDomain.split("@");
+                tenantDomain = temparr[1];
+            }
 
             //TODO:should take JSON input as an argument.
-            String jsonInput = null;
+            JSONObject obj = new JSONObject();
+            obj.put("TenantDomain",tenantDomain);
+            String jsonInput = obj.toJSONString();
 
+            PrivilegedCarbonContext.startTenantFlow();
+            PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(tenantDomain);
+            try {
+                PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantId(org.wso2.carbon.apimgt.impl.internal.ServiceReferenceHolder.getInstance().getRealmService().getTenantManager().
+                        getTenantId(tenantDomain));
+            } catch (org.wso2.carbon.user.api.UserStoreException e) {
+                log.error("Error occurred while obtaining the tenant information for the logged user with tenantDomain " + tenantDomain, e);
+                throw new APIManagementException(e);
+            }
 
             APIConsumer apiConsumer = getAPIConsumer(thisObj);
             //Check whether old access token is already available
