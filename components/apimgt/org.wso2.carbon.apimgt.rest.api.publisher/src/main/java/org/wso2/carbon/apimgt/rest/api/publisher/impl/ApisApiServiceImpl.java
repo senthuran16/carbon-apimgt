@@ -329,6 +329,11 @@ public class ApisApiServiceImpl extends ApisApiService {
                 String swaggerStr = SOAPOperationBindingUtils.getSoapOperationMapping(body.getWsdlUri());
                 body.setApiDefinition(swaggerStr);
             }
+            // Checks if the swagger is error free, and if it's of type yaml, converts it to JSON format.
+            if (!isWSAPI) {
+                String apiDefinition = validateAndConvertYamlToJson(body.getApiDefinition());
+                body.setApiDefinition(apiDefinition);
+            }
             API apiToAdd = APIMappingUtil.fromDTOtoAPI(body, provider);
             //Overriding some properties:
             //only allow CREATED as the stating state for the new api if not status is PROTOTYPED
@@ -356,8 +361,7 @@ public class ApisApiServiceImpl extends ApisApiService {
                     RestApiUtil.handleInternalServerError(errorMessage, log);
                 }
             } else if (!isWSAPI) {
-                String apiDefinition = validateAndConvertYamlToJson(body.getApiDefinition());
-                apiProvider.saveSwagger20Definition(apiToAdd.getId(), apiDefinition);
+                apiProvider.saveSwagger20Definition(apiToAdd.getId(), body.getApiDefinition());
             }
             APIIdentifier createdApiId = apiToAdd.getId();
             //Retrieve the newly added API to send in the response payload
