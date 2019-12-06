@@ -87,6 +87,7 @@ import org.wso2.carbon.authenticator.stub.LoginAuthenticationExceptionException;
 import org.wso2.carbon.base.MultitenantConstants;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.core.util.PermissionUpdateUtil;
+import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.oauth.OAuthAdminService;
 import org.wso2.carbon.identity.oauth.config.OAuthServerConfiguration;
 import org.wso2.carbon.identity.user.registration.stub.UserRegistrationAdminServiceException;
@@ -4336,8 +4337,7 @@ public class APIStoreHostObject extends ScriptableObject {
             String[] requestedScopeArray = new String[]{requestedScopes};
             String tenantDomain = args[0].toString();
             if (tenantDomain.contains("@")) {
-                String temparr[] = tenantDomain.split("@");
-                tenantDomain = temparr[1];
+                tenantDomain = IdentityTenantUtil.getTenantDomain(IdentityTenantUtil.getTenantIdOfUser(tenantDomain));
             }
 
             //TODO:should take JSON input as an argument.
@@ -4353,6 +4353,8 @@ public class APIStoreHostObject extends ScriptableObject {
             } catch (org.wso2.carbon.user.api.UserStoreException e) {
                 log.error("Error occurred while obtaining the tenant information for the logged user with tenantDomain " + tenantDomain, e);
                 throw new APIManagementException(e);
+            } finally {
+                PrivilegedCarbonContext.endTenantFlow();
             }
 
             APIConsumer apiConsumer = getAPIConsumer(thisObj);
