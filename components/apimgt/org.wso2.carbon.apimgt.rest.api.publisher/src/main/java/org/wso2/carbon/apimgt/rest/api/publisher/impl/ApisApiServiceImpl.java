@@ -329,6 +329,11 @@ public class ApisApiServiceImpl extends ApisApiService {
                 String swaggerStr = SOAPOperationBindingUtils.getSoapOperationMapping(body.getWsdlUri());
                 body.setApiDefinition(swaggerStr);
             }
+            // Checks if the swagger is error free, and if it's of type yaml, converts it to JSON format.
+            if (!isWSAPI) {
+                String apiDefinition = validateAndConvertYamlToJson(body.getApiDefinition());
+                body.setApiDefinition(apiDefinition);
+            }
             API apiToAdd = APIMappingUtil.fromDTOtoAPI(body, provider);
             //Overriding some properties:
             //only allow CREATED as the stating state for the new api if not status is PROTOTYPED
@@ -1830,7 +1835,7 @@ public class ApisApiServiceImpl extends ApisApiService {
     public Response apisApiIdSwaggerPut(String apiId, String apiDefinition, String contentType, String ifMatch,
                                         String ifUnmodifiedSince) {
         try {
-            validateAPIDefinition(apiDefinition);
+            apiDefinition = validateAndConvertYamlToJson(apiDefinition);
             APIDefinition apiDefinitionFromOpenAPISpec = new APIDefinitionFromOpenAPISpec();
             APIProvider apiProvider = RestApiUtil.getLoggedInUserProvider();
             String tenantDomain = RestApiUtil.getLoggedInUserTenantDomain();
@@ -1967,5 +1972,19 @@ public class ApisApiServiceImpl extends ApisApiService {
 
     private boolean isSequenceExistsInAPI(String sequenceName, Mediation mediation) {
         return StringUtils.isNotEmpty(sequenceName) && mediation.getName().equals(sequenceName);
+    }
+
+    private String validateAndConvertYamlToJson(String apiDefinition) {
+        if (!apiDefinition.trim().startsWith("{")) {
+            try {
+                apiDefinition = APIUtil.yamlToJson(apiDefinition);
+            } catch (IOException e) {
+                String errorMsg = "Cannot convert API definition from yaml to json";
+                log.error(errorMsg, e);
+                RestApiUtil.handleBadRequest(errorMsg, log);
+            }
+        }
+        validateAPIDefinition(apiDefinition);
+        return apiDefinition;
     }
 }

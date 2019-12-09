@@ -18,6 +18,8 @@
 
 package org.wso2.carbon.apimgt.impl.utils;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
@@ -7776,7 +7778,22 @@ public final class APIUtil {
         return null;
 
     }
-    
+
+    /**
+     * Converts a YAML file into JSON.
+     *
+     * @param yaml yaml representation
+     * @return yaml file as a json
+     * @throws IOException If an error occurs while converting YAML to JSON
+     */
+    public static String yamlToJson(String yaml) throws IOException {
+        ObjectMapper yamlReader = new ObjectMapper(new YAMLFactory());
+        Object obj = yamlReader.readValue(yaml, Object.class);
+
+        ObjectMapper jsonWriter = new ObjectMapper();
+        return jsonWriter.writeValueAsString(obj);
+    }
+
     public static List<String> getRolesList(String roles) {
         List<String> roleList;
         if (roles != null) {
