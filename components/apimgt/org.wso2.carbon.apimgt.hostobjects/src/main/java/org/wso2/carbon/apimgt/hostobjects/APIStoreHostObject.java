@@ -87,6 +87,7 @@ import org.wso2.carbon.authenticator.stub.LoginAuthenticationExceptionException;
 import org.wso2.carbon.base.MultitenantConstants;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.core.util.PermissionUpdateUtil;
+import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.oauth.OAuthAdminService;
 import org.wso2.carbon.identity.oauth.config.OAuthServerConfiguration;
 import org.wso2.carbon.identity.user.registration.stub.UserRegistrationAdminServiceException;
@@ -2465,7 +2466,7 @@ public class APIStoreHostObject extends ScriptableObject {
                     throw new APIManagementException("Tier " + tier + " is not allowed for user " + userId);
                 }
             }
-            
+
 	    	/* Tenant based validation for subscription*/
             String userDomain = MultitenantUtils.getTenantDomain(userId);
             boolean subscriptionAllowed = false;
@@ -3848,7 +3849,7 @@ public class APIStoreHostObject extends ScriptableObject {
                     }
                     int index = username.indexOf(UserCoreConstants.DOMAIN_SEPARATOR);
                     /*
-                     * if there is a different domain provided by the user other than one given in the configuration, 
+                     * if there is a different domain provided by the user other than one given in the configuration,
                      * add the correct signup domain. Here signup domain refers to the user storage
                      */
 
@@ -4334,15 +4335,26 @@ public class APIStoreHostObject extends ScriptableObject {
             String clientSecret = (String) args[5];
             String validityTime = (String) args[6];
             String[] requestedScopeArray = new String[]{requestedScopes};
+            String tenantDomain = args[0].toString();
+            if (tenantDomain.contains("@")) {
+                tenantDomain = IdentityTenantUtil.getTenantDomain(IdentityTenantUtil.getTenantIdOfUser(tenantDomain));
+            }
 
             //TODO:should take JSON input as an argument.
-            String jsonInput = null;
+            JSONObject obj = new JSONObject();
+            obj.put("TenantDomain",tenantDomain);
+            String jsonInput = obj.toJSONString();
 
 
             APIConsumer apiConsumer = getAPIConsumer(thisObj);
             //Check whether old access token is already available
             AccessTokenInfo response = null;
             try {
+                PrivilegedCarbonContext.startTenantFlow();
+                PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(tenantDomain);
+                    PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantId(org.wso2.carbon.apimgt.impl.internal.ServiceReferenceHolder.getInstance().getRealmService().getTenantManager().
+                            getTenantId(tenantDomain));
+
                 response = apiConsumer.renewAccessToken(oldAccessToken, clientId, clientSecret,
                                                         validityTime, requestedScopeArray, jsonInput);
                 row.put("accessToken", row, response.getAccessToken());
@@ -4363,6 +4375,11 @@ public class APIStoreHostObject extends ScriptableObject {
                             + " and user " + args[0];
                 }
                 handleException(errorMessage, e);
+            } catch (org.wso2.carbon.user.api.UserStoreException e) {
+                log.error("Error occurred while obtaining the tenant information for the logged user with tenantDomain " + tenantDomain, e);
+                throw new APIManagementException(e);
+            } finally {
+                PrivilegedCarbonContext.endTenantFlow();
             }
 
 

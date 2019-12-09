@@ -22,6 +22,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.cxf.message.Message;
 import org.wso2.carbon.apimgt.api.APIManagementException;
 import org.wso2.carbon.apimgt.api.model.*;
+import org.wso2.carbon.apimgt.impl.AMDefaultKeyManagerImpl;
 import org.wso2.carbon.apimgt.impl.APIConstants;
 import org.wso2.carbon.apimgt.impl.factory.KeyManagerHolder;
 import org.wso2.carbon.apimgt.impl.utils.APIUtil;
@@ -62,7 +63,7 @@ public class WebAppAuthenticatorImpl implements WebAppAuthenticator {
                 RestApiConstants.AUTH_HEADER_NAME);
         AccessTokenInfo tokenInfo = null;
         try {
-            tokenInfo = KeyManagerHolder.getKeyManagerInstance().getTokenMetaData(accessToken);
+            tokenInfo = new AMDefaultKeyManagerImpl().getTokenMetaData(accessToken);
         } catch (APIManagementException e) {
             log.error("Error while retrieving token information for token: " + accessToken, e);
         }

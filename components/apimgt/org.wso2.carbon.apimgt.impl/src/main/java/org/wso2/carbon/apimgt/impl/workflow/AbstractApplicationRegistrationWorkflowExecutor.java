@@ -36,6 +36,7 @@ import org.wso2.carbon.apimgt.impl.dto.WorkflowDTO;
 import org.wso2.carbon.apimgt.impl.factory.KeyManagerHolder;
 import org.wso2.carbon.apimgt.impl.utils.APIUtil;
 import org.wso2.carbon.apimgt.impl.utils.ApplicationUtils;
+import org.wso2.carbon.context.PrivilegedCarbonContext;
 
 import java.util.Arrays;
 
@@ -131,6 +132,10 @@ public abstract class AbstractApplicationRegistrationWorkflowExecutor extends Wo
         }
 
         try {
+            PrivilegedCarbonContext.startTenantFlow();
+            PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantId(workflowDTO.getTenantId());
+            PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(workflowDTO.getTenantDomain());
+
             //get new key manager
             KeyManager keyManager = KeyManagerHolder.getKeyManagerInstance();
 
@@ -163,6 +168,8 @@ public abstract class AbstractApplicationRegistrationWorkflowExecutor extends Wo
             workflowDTO.setAccessTokenInfo(tokenInfo);
         } catch (Exception e) {
             APIUtil.handleException("Error occurred while executing SubscriberKeyMgtClient.", e);
+        } finally {
+            PrivilegedCarbonContext.endTenantFlow();
         }
     }
 
