@@ -18,6 +18,8 @@
 
 package org.wso2.carbon.apimgt.rest.api.publisher.utils.mappings;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -57,6 +59,7 @@ import org.wso2.carbon.user.api.UserStoreException;
 import org.wso2.carbon.utils.multitenancy.MultitenantConstants;
 import org.wso2.carbon.utils.multitenancy.MultitenantUtils;
 
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.util.ArrayList;
@@ -720,6 +723,21 @@ public class APIMappingUtil {
             }
         }
         return policyInfoDTO;
+    }
+
+    /**
+     * Converts a YAML file into JSON.
+     *
+     * @param yaml yaml representation
+     * @return yaml file as a json
+     * @throws IOException If an error occurs while converting YAML to JSON
+     */
+    public static String yamlToJson(String yaml) throws IOException {
+        ObjectMapper yamlReader = new ObjectMapper(new YAMLFactory());
+        Object obj = yamlReader.readValue(yaml, Object.class);
+
+        ObjectMapper jsonWriter = new ObjectMapper();
+        return jsonWriter.writeValueAsString(obj);
     }
 
     private static void setEndpointSecurityFromApiDTOToModel (APIDetailedDTO dto, API api) {
