@@ -1972,7 +1972,7 @@ public class ApisApiServiceImpl extends ApisApiService {
     private String validateAndConvertYamlToJson(String apiDefinition) {
         if (!apiDefinition.trim().startsWith("{")) {
             try {
-                apiDefinition = APIUtil.yamlToJson(apiDefinition);
+                apiDefinition = APIMappingUtil.yamlToJson(apiDefinition);
             } catch (IOException e) {
                 String errorMsg = "Cannot convert API definition from yaml to json";
                 log.error(errorMsg, e);
