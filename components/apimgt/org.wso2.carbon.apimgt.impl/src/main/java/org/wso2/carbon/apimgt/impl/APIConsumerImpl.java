@@ -2305,6 +2305,20 @@ public class APIConsumerImpl extends AbstractAPIManager implements APIConsumer {
     }
 
     @Override
+    public boolean isSubscribedToApp(APIIdentifier apiIdentifier, String userId, int applicationId) throws
+            APIManagementException {
+        boolean isSubscribed;
+        try {
+            isSubscribed = apiMgtDAO.isSubscribedToApp(apiIdentifier, userId, applicationId);
+        } catch (APIManagementException e) {
+            String msg = "Failed to check if user(" + userId + ") has subscribed to " + apiIdentifier;
+            log.error(msg, e);
+            throw new APIManagementException(msg, e);
+        }
+        return isSubscribed;
+    }
+
+    @Override
     public SubscriptionResponse addSubscription(APIIdentifier identifier, String userId, int applicationId)
             throws APIManagementException {
 
