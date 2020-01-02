@@ -148,8 +148,8 @@ public class DefaultKeyValidationHandler extends AbstractKeyValidationHandler {
         user.setUserName(MultitenantUtils.getTenantAwareUsername(apiKeyValidationInfoDTO.getEndUserName()));
         user.setTenantDomain(apiKeyValidationInfoDTO.getSubscriberTenantDomain());
 
-        if (user.getUserName() != null && APIConstants.FEDERATED_USER
-                .equalsIgnoreCase(IdentityUtil.extractDomainFromName(user.getUserName()))) {
+        if (validationContext.getTokenInfo().isEndUserFederated() || (user.getUserName() != null &&
+                APIConstants.FEDERATED_USER.equalsIgnoreCase(IdentityUtil.extractDomainFromName(user.getUserName())))) {
             user.setFederatedUser(true);
         }
 
