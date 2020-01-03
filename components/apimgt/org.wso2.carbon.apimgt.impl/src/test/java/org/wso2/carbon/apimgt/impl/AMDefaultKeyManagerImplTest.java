@@ -21,6 +21,12 @@ package org.wso2.carbon.apimgt.impl;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.junit.Before;
+import org.junit.runner.RunWith;
+import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.core.classloader.annotations.SuppressStaticInitializationFor;
+import org.powermock.modules.junit4.PowerMockRunner;
 import org.wso2.carbon.apimgt.api.APIManagementException;
 import org.wso2.carbon.apimgt.api.model.AccessTokenInfo;
 import org.wso2.carbon.apimgt.api.model.AccessTokenRequest;
@@ -31,7 +37,14 @@ import org.wso2.carbon.apimgt.api.model.OAuthApplicationInfo;
 import org.json.simple.JSONObject;
 import org.junit.Assert;
 import org.junit.Test;
+import org.wso2.carbon.identity.application.authentication.framework.model.AuthenticatedUser;
+import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
+import org.wso2.carbon.identity.oauth2.model.AccessTokenDO;
+import org.wso2.carbon.identity.oauth2.util.OAuth2Util;
 
+@RunWith(PowerMockRunner.class)
+@PrepareForTest({OAuth2Util.class})
+@SuppressStaticInitializationFor("org.wso2.carbon.identity.oauth2.util.OAuth2Util")
 public class AMDefaultKeyManagerImplTest {
     
     private String APP_OWNER = "lakmali";    
@@ -40,8 +53,12 @@ public class AMDefaultKeyManagerImplTest {
     //Same client_id client_secret are used in AMDefaultKeyManagerImplWrapper mock class
     private String CLIENT_SECRET = "GGGGGGG";
     private String CLIENT_ID = "XXXXXXXXXX";
-    
-        
+
+    @Before
+    public void init() {
+        PowerMockito.mockStatic(OAuth2Util.class);
+    }
+
     @Test
     public void testCreateApplication() throws APIManagementException {
         OAuthAppRequest oauthRequest = new OAuthAppRequest();
@@ -224,9 +241,16 @@ public class AMDefaultKeyManagerImplTest {
     }
     
     @Test
-    public void testGetTokenMetaData() throws APIManagementException {
+    public void testGetTokenMetaData() throws APIManagementException, IdentityOAuth2Exception {
+        final String accessToken = "ert567yhk";
         AMDefaultKeyManagerImplWrapper keyManager = new AMDefaultKeyManagerImplWrapper();
-        AccessTokenInfo tokenInfo = keyManager.getTokenMetaData("ert567yhk");
+        AccessTokenDO accessTokenDO = new AccessTokenDO();
+        AuthenticatedUser user = new AuthenticatedUser();
+        user.setUserName("dummyName");
+        accessTokenDO.setAuthzUser(user);
+        PowerMockito.when(OAuth2Util.getAccessTokenDOfromTokenIdentifier(accessToken)).
+                thenReturn(accessTokenDO);
+        AccessTokenInfo tokenInfo = keyManager.getTokenMetaData(accessToken);
         
         Assert.assertNotNull(tokenInfo);
         Assert.assertTrue(tokenInfo.isTokenValid());

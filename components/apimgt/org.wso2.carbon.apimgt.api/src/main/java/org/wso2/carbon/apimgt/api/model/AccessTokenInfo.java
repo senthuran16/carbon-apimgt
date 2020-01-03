@@ -52,6 +52,8 @@ public class AccessTokenInfo {
 
     private String endUserName;
 
+    private boolean isEndUserFederated;
+
     public String[] getScopes() {
         return scope;
     }
@@ -174,5 +176,13 @@ public class AccessTokenInfo {
 
     public void setEndUserName(String endUserName) {
         this.endUserName = endUserName;
+    }
+
+    public boolean isEndUserFederated() {
+        return isEndUserFederated;
+    }
+
+    public void setEndUserFederated(boolean endUserFederated) {
+        isEndUserFederated = endUserFederated;
     }
 }
