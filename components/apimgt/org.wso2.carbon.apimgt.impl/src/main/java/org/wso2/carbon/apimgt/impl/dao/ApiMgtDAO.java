@@ -12294,7 +12294,7 @@ public class ApiMgtDAO {
                 application.setTokenType(rs.getString("TOKEN_TYPE"));
                 subscriber.setId(rs.getInt("SUBSCRIBER_ID"));
                 if (multiGroupAppSharingEnabled) {
-                    if (application.getGroupId().isEmpty()) {
+                    if (StringUtils.isEmpty(application.getGroupId())) {
                         application.setGroupId(getGroupId(application.getId()));
                     }
                 }
