@@ -318,6 +318,18 @@ public class WSDL11SOAPOperationExtractor implements WSDLSOAPOperationExtractor 
                         } else {
                             model.setType(ObjectProperty.TYPE);
                         }
+                        String elementFormDefault = null;
+                        if (current.getParentNode().getAttributes() != null && current.getParentNode().getAttributes()
+                                .getNamedItem(SOAPToRESTConstants.ELEMENT_FORM_DEFAULT) != null) {
+                            elementFormDefault = current.getParentNode().getAttributes()
+                                    .getNamedItem(SOAPToRESTConstants.ELEMENT_FORM_DEFAULT).getNodeValue();
+                        }
+                        if (StringUtils.isNotEmpty(elementFormDefault) &&
+                                SOAPToRESTConstants.QUALIFIED.equals(elementFormDefault)) {
+                            model.setVendorExtension(SOAPToRESTConstants.X_NAMESPACE_QUALIFIED, true);
+                        } else {
+                            model.setVendorExtension(SOAPToRESTConstants.X_NAMESPACE_QUALIFIED, false);
+                        }
                     }
                 } else if (model.getProperties() == null) {
                     if (SOAPToRESTConstants.RESTRICTION_ATTR.equals(type)) {
