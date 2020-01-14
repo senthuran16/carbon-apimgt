@@ -4431,7 +4431,7 @@ public class ApiMgtDAO {
             prepStmtGetConsumerKey = connection.prepareStatement(getConsumerKeyQuery);
             prepStmtGetConsumerKey.setInt(1, application.getId());
             rs = prepStmtGetConsumerKey.executeQuery();
-            ArrayList<String> consumerKeys = new ArrayList<String>();
+            List<String> consumerKeys = new ArrayList<>();
 
             deleteDomainApp = connection.prepareStatement(deleteDomainAppQuery);
             while (rs.next()) {
