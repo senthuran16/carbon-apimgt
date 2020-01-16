@@ -318,6 +318,7 @@ public class SequenceGenerator {
                             isRootComplexType = false;
                         } else {
                             element = doc.createElementNS(null, parameterTreeNode);
+                            element.setAttribute(SOAPToRESTConstants.XMLNS, SOAPToRESTConstants.X_WSO2_UNIQUE_NAMESPACE);
                         }
                         if (doc.getElementsByTagName(element.getTagName()).getLength() > 0) {
                             prevElement = (Element) doc.getElementsByTagName(element.getTagName()).item(0);
@@ -362,7 +363,7 @@ public class SequenceGenerator {
                     + stringWriter.toString());
         }
         Map<String, String> paramMap = new HashMap<>();
-        paramMap.put(operationId, stringWriter.toString());
+        paramMap.put(operationId, processPayloadFactXML(stringWriter.toString()));
         return paramMap;
     }
 
@@ -469,5 +470,10 @@ public class SequenceGenerator {
             handleException("Error occurred when transforming in sequence xml", e);
         }
         return property + SOAPToRESTConstants.SequenceGen.COMMA + argument;
+    }
+
+    private static String processPayloadFactXML(String xmlPayload) {
+        String processedXMLPayload = xmlPayload.replaceAll(SOAPToRESTConstants.X_WSO2_UNIQUE_NAMESPACE, "");
+        return processedXMLPayload;
     }
 }
