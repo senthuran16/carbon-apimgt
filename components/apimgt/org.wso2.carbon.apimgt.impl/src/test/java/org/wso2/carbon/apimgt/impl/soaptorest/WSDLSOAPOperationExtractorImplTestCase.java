@@ -49,7 +49,7 @@ public class WSDLSOAPOperationExtractorImplTestCase {
         APIMWSDLReader wsdlReader = new APIMWSDLReader(Thread.currentThread().getContextClassLoader()
                 .getResource("wsdls/phoneverify.wsdl").toExternalForm());
         byte[] wsdlContent = wsdlReader.getWSDL();
-        WSDLSOAPOperationExtractor processor = getWSDLProcessor(wsdlContent, wsdlReader);
+        WSDLSOAPOperationExtractor processor = getWSDLProcessor(wsdlContent, wsdlReader, null);
         operations = processor.getWsdlInfo().getSoapBindingOperations();
     }
     @Test
@@ -57,7 +57,7 @@ public class WSDLSOAPOperationExtractorImplTestCase {
         APIMWSDLReader wsdlReader = new APIMWSDLReader(Thread.currentThread().getContextClassLoader()
                 .getResource("wsdls/phoneverify.wsdl").toExternalForm());
         byte[] wsdlContent = wsdlReader.getWSDL();
-        WSDLSOAPOperationExtractor processor = new WSDL11SOAPOperationExtractor(wsdlReader);
+        WSDLSOAPOperationExtractor processor = new WSDL11SOAPOperationExtractor(wsdlReader, null);
         Assert.assertTrue("WSDL definition parsing failed", processor.init(wsdlContent));
     }
 
@@ -125,7 +125,7 @@ public class WSDLSOAPOperationExtractorImplTestCase {
                 Thread.currentThread().getContextClassLoader().getResource("wsdls/sample-service.wsdl")
                         .toExternalForm());
         byte[] wsdlContent = wsdlReader.getWSDL();
-        WSDLSOAPOperationExtractor processor = getWSDLProcessor(wsdlContent, wsdlReader);
+        WSDLSOAPOperationExtractor processor = getWSDLProcessor(wsdlContent, wsdlReader, null);
         Map<String, ModelImpl> parameterModelMap = processor.getWsdlInfo().getParameterModelMap();
         Assert.assertNotNull(parameterModelMap);
         Assert.assertTrue("wsdl complex types has not been properly parsed", parameterModelMap.size() == 11);
@@ -146,7 +146,7 @@ public class WSDLSOAPOperationExtractorImplTestCase {
                 Thread.currentThread().getContextClassLoader().getResource("wsdls/sample-service.wsdl")
                         .toExternalForm());
         byte[] wsdlContent = wsdlReader.getWSDL();
-        WSDLSOAPOperationExtractor processor = getWSDLProcessor(wsdlContent, wsdlReader);
+        WSDLSOAPOperationExtractor processor = getWSDLProcessor(wsdlContent, wsdlReader, null);
         Map<String, ModelImpl> parameterModelMap = processor.getWsdlInfo().getParameterModelMap();
         Assert.assertNotNull(parameterModelMap);
         //get simple type
@@ -163,7 +163,7 @@ public class WSDLSOAPOperationExtractorImplTestCase {
         APIMWSDLReader wsdlReader = new APIMWSDLReader(Thread.currentThread().getContextClassLoader()
                 .getResource("wsdls/wsdl-with-composite-bindings/sampleservice.wsdl").toExternalForm());
         byte[] wsdlContent = wsdlReader.getWSDL();
-        WSDLSOAPOperationExtractor processor = getWSDLProcessor(wsdlContent, wsdlReader);
+        WSDLSOAPOperationExtractor processor = getWSDLProcessor(wsdlContent, wsdlReader, null);
         Set<WSDLSOAPOperation> operations = processor.getWsdlInfo().getSoapBindingOperations();
         Assert.assertNotNull(operations);
         Map<String, ModelImpl> parameterModelMap = processor.getWsdlInfo().getParameterModelMap();
@@ -176,7 +176,7 @@ public class WSDLSOAPOperationExtractorImplTestCase {
                 Thread.currentThread().getContextClassLoader().getResource("wsdls/import-schemas/sampleservice.wsdl")
                         .toExternalForm());
         byte[] wsdlContent = wsdlReader.getWSDL();
-        WSDLSOAPOperationExtractor processor = getWSDLProcessor(wsdlContent, wsdlReader);
+        WSDLSOAPOperationExtractor processor = getWSDLProcessor(wsdlContent, wsdlReader, null);
         Set<WSDLSOAPOperation> operations = processor.getWsdlInfo().getSoapBindingOperations();
         Assert.assertNotNull(operations);
         Map<String, ModelImpl> parameterModelMap = processor.getWsdlInfo().getParameterModelMap();

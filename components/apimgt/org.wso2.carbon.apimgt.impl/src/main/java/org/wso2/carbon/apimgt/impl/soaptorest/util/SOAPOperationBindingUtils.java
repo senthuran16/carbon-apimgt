@@ -86,7 +86,7 @@ public class SOAPOperationBindingUtils {
     public static String getSoapOperationMapping(String url) throws APIManagementException {
         APIMWSDLReader wsdlReader = new APIMWSDLReader(url);
         byte[] wsdlContent = wsdlReader.getWSDL();
-        WSDLSOAPOperationExtractor processor = getWSDLProcessor(wsdlContent, wsdlReader);
+        WSDLSOAPOperationExtractor processor = getWSDLProcessor(wsdlContent, wsdlReader, url);
         Set<WSDLSOAPOperation> operations;
         Map<String, ModelImpl> paramModelMap;
         String swaggerStr = SOAPToRESTConstants.EMPTY_STRING;
@@ -354,9 +354,9 @@ public class SOAPOperationBindingUtils {
      * @return {@link WSDLSOAPOperationExtractor}
      * @throws APIManagementException
      */
-    public static WSDLSOAPOperationExtractor getWSDLProcessor(byte[] content, APIMWSDLReader wsdlReader)
+    public static WSDLSOAPOperationExtractor getWSDLProcessor(byte[] content, APIMWSDLReader wsdlReader, String url)
             throws APIManagementException {
-        WSDLSOAPOperationExtractor processor = new WSDL11SOAPOperationExtractor(wsdlReader);
+        WSDLSOAPOperationExtractor processor = new WSDL11SOAPOperationExtractor(wsdlReader, url);
         try {
             boolean canProcess = processor.init(content);
             if (canProcess) {

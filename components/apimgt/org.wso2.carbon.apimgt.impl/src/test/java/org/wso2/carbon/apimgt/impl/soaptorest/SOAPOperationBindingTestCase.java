@@ -48,7 +48,7 @@ public class SOAPOperationBindingTestCase {
         APIMWSDLReader wsdlReader = new APIMWSDLReader(Thread.currentThread().getContextClassLoader()
                 .getResource("wsdls/phoneverify.wsdl").toExternalForm());
         byte[] wsdlContent = wsdlReader.getWSDL();
-        WSDLSOAPOperationExtractor processor = SOAPOperationBindingUtils.getWSDLProcessor(wsdlContent, wsdlReader);
+        WSDLSOAPOperationExtractor processor = SOAPOperationBindingUtils.getWSDLProcessor(wsdlContent, wsdlReader, null);
         Assert.assertNotNull(processor);
         Assert.assertTrue("Failed to get soap binding operations from the WSDL", processor.getWsdlInfo().getSoapBindingOperations().size() > 0);
     }

@@ -473,6 +473,9 @@ public class SequenceGenerator {
     }
 
     private static String processPayloadFactXML(String xmlPayload) {
+        // When setting namespace as xmlns="", Xerces process it as empty namespace and removes it
+        // Hence following the string replace approach to add xmlns="".
+        // Details can be found in https://issues.apache.org/jira/browse/XERCESJ-1720
         String processedXMLPayload = xmlPayload.replaceAll(SOAPToRESTConstants.X_WSO2_UNIQUE_NAMESPACE, "");
         return processedXMLPayload;
     }
