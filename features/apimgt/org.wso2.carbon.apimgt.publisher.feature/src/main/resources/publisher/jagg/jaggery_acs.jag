@@ -194,7 +194,6 @@
             return;
         } else {
             // if the saml response is log out request from IDP, we log out from web app.
-            ssoRelyingParty.invalidateSessionBySessionId(sessionId);
             response.sendRedirect("../");
             return;
         }

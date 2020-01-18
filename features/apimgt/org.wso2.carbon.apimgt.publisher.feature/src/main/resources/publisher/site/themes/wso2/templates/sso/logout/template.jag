@@ -50,6 +50,8 @@
                         if (log.isDebugEnabled()) {
                             log.debug("doing logout request");
                         }
+                        var sessionId = session.getId();
+                        ssoRelyingParty.invalidateSessionBySessionId(sessionId);
                         idpURL = site.ssoConfiguration.identityProviderLogoutURL ;
                             if(idpURL == null){
                                 idpURL = ssoRelyingParty.getProperty("identityProviderURL");

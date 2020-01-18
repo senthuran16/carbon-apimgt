@@ -8107,7 +8107,12 @@ public class ApiMgtDAO {
                 if (scopes.containsKey(resultSet.getString(1))) {
                     // Role for the scope exists. Append the new role.
                     String roles = scopes.get(resultSet.getString(1));
-                    roles += "," + resultSet.getString(2);
+                    String thisRole = resultSet.getString(2);
+                    if (StringUtils.isEmpty(roles)) {
+                        roles = thisRole;
+                    } else {
+                        roles += "," + thisRole;
+                    }
                     scopes.put(resultSet.getString(1), roles);
                 } else {
                     scopes.put(resultSet.getString(1), resultSet.getString(2));
