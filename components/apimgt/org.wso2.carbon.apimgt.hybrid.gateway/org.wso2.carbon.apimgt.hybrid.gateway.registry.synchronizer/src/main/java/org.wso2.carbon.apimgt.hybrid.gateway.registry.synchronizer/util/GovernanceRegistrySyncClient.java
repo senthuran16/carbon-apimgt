@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ * Copyright (c) 2020, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
  *
  * WSO2 Inc. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -20,12 +20,9 @@ package org.wso2.carbon.apimgt.hybrid.gateway.registry.synchronizer.util;
 import org.apache.axis2.context.ConfigurationContext;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.wso2.carbon.apimgt.hybrid.gateway.registry.synchronizer.internal.ServiceReferenceHolder;
 import org.wso2.carbon.apimgt.hybrid.gateway.common.config.ConfigManager;
 import org.wso2.carbon.apimgt.hybrid.gateway.common.exception.OnPremiseGatewayException;
-import org.wso2.carbon.apimgt.hybrid.gateway.common.util.OnPremiseGatewayConstants;
-import org.wso2.carbon.apimgt.impl.APIConstants;
-import org.wso2.carbon.apimgt.impl.APIManagerConfiguration;
+import org.wso2.carbon.apimgt.hybrid.gateway.registry.synchronizer.internal.ServiceReferenceHolder;
 import org.wso2.carbon.apimgt.impl.utils.APIUtil;
 import org.wso2.carbon.context.CarbonContext;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
@@ -36,19 +33,17 @@ import org.wso2.carbon.registry.core.exceptions.RegistryException;
 import org.wso2.carbon.registry.ws.client.registry.WSRegistryServiceClient;
 import org.wso2.carbon.utils.multitenancy.MultitenantUtils;
 
-public class RegistryClient {
-    private static final Log log = LogFactory.getLog(org.wso2.carbon.apimgt.hybrid.gateway.registry.synchronizer.util.RegistryClient.class);
+public class GovernanceRegistrySyncClient {
+
+    private static final Log log = LogFactory
+            .getLog(GovernanceRegistrySyncClient.class);
     private Registry remoteRegistry;
     private Registry governanceRegistry;
 
-    public RegistryClient() throws OnPremiseGatewayException {
+    public GovernanceRegistrySyncClient(String username, String password) throws OnPremiseGatewayException {
         ConfigurationContext configContext = ServiceReferenceHolder.getInstance().
                 getConfigContextService().getClientConfigContext();
-        APIManagerConfiguration config = ServiceReferenceHolder.getInstance().
-                getAPIManagerConfigurationService().getAPIManagerConfiguration();
-        String username = config.getFirstProperty(APIConstants.API_KEY_VALIDATOR_USERNAME);
-        String password = config.getFirstProperty(APIConstants.API_KEY_VALIDATOR_PASSWORD);
-        String serverUrl = ConfigManager.getConfigurationDTO().getUrl_management_console() +"/services/";
+        String serverUrl = ConfigManager.getConfigurationDTO().getUrl_management_console() + "/services/";
 
         try {
             remoteRegistry = new WSRegistryServiceClient(serverUrl, username, password, 600000, configContext);
@@ -59,7 +54,7 @@ public class RegistryClient {
         }
 
         try {
-            String tenantDomain= MultitenantUtils.getTenantDomain(username);
+            String tenantDomain = MultitenantUtils.getTenantDomain(username);
             PrivilegedCarbonContext.startTenantFlow();
             PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(tenantDomain, true);
             APIUtil.loadTenantRegistry(CarbonContext.getThreadLocalCarbonContext().getTenantId());
@@ -73,13 +68,13 @@ public class RegistryClient {
     }
 
     public void copyRegistryResourceFromRemoteToLocal(String path) throws OnPremiseGatewayException {
-        log.info("Synchronizing the registry resource "+ path);
+        log.info("Synchronizing the registry resource " + path);
         String govRegistryPath = RegistryConstants.GOVERNANCE_REGISTRY_BASE_PATH + path;
         try {
             if (remoteRegistry.resourceExists(govRegistryPath)) {
                 Resource resource = remoteRegistry.get(govRegistryPath);
                 governanceRegistry.put(path, resource);
-                log.info("Successfully copied the registry resource: "+path);
+                log.info("Successfully copied the registry resource: " + path);
             } else {
                 log.warn("Registry resource at path:" + path + " does not exists.");
             }

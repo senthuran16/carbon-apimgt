@@ -21,7 +21,7 @@ package org.wso2.carbon.apimgt.hybrid.gateway.registry.synchronizer.exceptions;
 /**
  * Registry synchronization exception
  */
-public class RegistrySynchronizationException extends Exception{
+public class RegistrySynchronizationException extends Exception {
 
     public RegistrySynchronizationException(String s) {
         super(s);

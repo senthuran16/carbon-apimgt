@@ -84,7 +84,7 @@ public class ServiceReferenceHolder {
     /**
      * Method to get APIManagerConfigurationService
      *
-     * @return  API Manager Configuration Service
+     * @return API Manager Configuration Service
      */
     public APIManagerConfigurationService getAPIManagerConfigurationService() {
         return amConfigurationService;

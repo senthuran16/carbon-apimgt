@@ -25,6 +25,7 @@ import org.junit.runner.RunWith;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
+import org.wso2.carbon.apimgt.hybrid.gateway.common.dto.ConfigDTO;
 import org.wso2.carbon.apimgt.hybrid.gateway.common.util.OnPremiseGatewayConstants;
 
 import javax.xml.transform.TransformerFactory;
@@ -44,7 +45,7 @@ import static org.mockito.Matchers.any;
 @PrepareForTest({TransformerIdentityImpl.class, TransformerFactory.class})
 public class ConfiguratorTest {
 
-    private Properties gatewayProperties;
+    private ConfigDTO gatewayConfigs;
     private Properties configToolProperties;
     private String carbonConfigDirPath;
     private String gatewayConfigPath;
@@ -58,8 +59,8 @@ public class ConfiguratorTest {
         String carbonHome = System.getProperty(ConfigConstants.CARBON_HOME);
         carbonConfigDirPath = carbonHome + File.separator + ConfigConstants.REPOSITORY_DIR + File.separator
                                       + ConfigConstants.CONF_DIR;
-        gatewayConfigPath = carbonConfigDirPath + File.separator + OnPremiseGatewayConstants.CONFIG_FILE_NAME;
-        gatewayProperties = Configurator.getGatewayProperties(gatewayConfigPath, args);
+        gatewayConfigPath = carbonConfigDirPath + File.separator + OnPremiseGatewayConstants.CONFIG_FILE_TOML_NAME;
+        gatewayConfigs = Configurator.getGatewayConfigs(gatewayConfigPath, args);
         String configToolPropertyFilePath = carbonConfigDirPath + File.separator +
                                                     ConfigConstants.CONFIG_TOOL_CONFIG_FILE_NAME;
         configToolProperties = Configurator.readPropertiesFromFile(configToolPropertyFilePath);
@@ -68,7 +69,7 @@ public class ConfiguratorTest {
     @Test
     public void setAPIMConfigurations() {
         String carbonHome = System.getProperty(ConfigConstants.CARBON_HOME);
-        Configurator.setAPIMConfigurations(configToolProperties, carbonHome, gatewayProperties);
+        Configurator.setAPIMConfigurations(configToolProperties, carbonHome, gatewayConfigs);
     }
 
     @Test
@@ -78,12 +79,12 @@ public class ConfiguratorTest {
         String carbonFilePath = carbonConfigDirPath + File.separator + ConfigConstants.GATEWAY_CARBON_FILE_NAME;
         int port = Configurator.getGatewayPort(carbonFilePath);
         deviceDetails.put(ConfigConstants.PORT, Integer.toString(port));
-        String payload = Configurator.getInitializationPayload(gatewayProperties, deviceDetails, args);
+        String payload = Configurator.getInitializationPayload(gatewayConfigs, deviceDetails, args);
         String authHeader = Configurator.createAuthHeader(args);
         //Set initialization endpoint
-        String initApiUrl = gatewayProperties.getProperty(ConfigConstants.INITIALIZATION_API_URL);
+        String initApiUrl = gatewayConfigs.getUrl_initialization_api();
         //Update details in gateway properties file
-        String gatewayConfigPath = carbonConfigDirPath + File.separator + OnPremiseGatewayConstants.CONFIG_FILE_NAME;
+        String gatewayConfigPath = carbonConfigDirPath + File.separator + OnPremiseGatewayConstants.CONFIG_FILE_TOML_NAME;
         Configurator.updateOnPremGatewayUniqueId(gatewayConfigPath, TOKEN);
     }
 
@@ -98,7 +99,7 @@ public class ConfiguratorTest {
         PowerMockito.when(TransformerFactory.newInstance()).thenReturn(transformerFactory);
         PowerMockito.when(transformerFactory.newTransformer()).thenReturn(transformerIdentity);
         PowerMockito.doNothing().when(transformerIdentity).transform(any(DOMSource.class), any(StreamResult.class));
-        registryXmlConfigurator.configure(carbonConfigDirPath, gatewayProperties);
+        registryXmlConfigurator.configure(carbonConfigDirPath, gatewayConfigs);
         Log4JConfigurator log4JConfigurator = new Log4JConfigurator();
         log4JConfigurator.configure(carbonConfigDirPath);
         Configurator.writeConfiguredLock(carbonHome);

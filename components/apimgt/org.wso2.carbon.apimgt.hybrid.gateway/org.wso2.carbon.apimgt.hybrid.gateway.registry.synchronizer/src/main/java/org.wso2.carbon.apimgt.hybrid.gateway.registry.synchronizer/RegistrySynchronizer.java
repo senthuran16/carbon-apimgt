@@ -19,50 +19,70 @@ package org.wso2.carbon.apimgt.hybrid.gateway.registry.synchronizer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import org.wso2.carbon.apimgt.hybrid.gateway.common.OnPremiseGatewayInitListener;
 import org.wso2.carbon.apimgt.hybrid.gateway.common.config.ConfigManager;
 import org.wso2.carbon.apimgt.hybrid.gateway.common.exception.OnPremiseGatewayException;
-import org.wso2.carbon.apimgt.hybrid.gateway.common.util.OnPremiseGatewayConstants;
-import org.wso2.carbon.apimgt.hybrid.gateway.registry.synchronizer.util.RegistryClient;
+import org.wso2.carbon.apimgt.hybrid.gateway.common.util.MicroGatewayCommonUtil;
 import org.wso2.carbon.apimgt.hybrid.gateway.registry.synchronizer.exceptions.RegistrySynchronizationException;
+import org.wso2.carbon.apimgt.hybrid.gateway.registry.synchronizer.internal.ServiceReferenceHolder;
+import org.wso2.carbon.apimgt.hybrid.gateway.registry.synchronizer.util.GovernanceRegistrySyncClient;
+import org.wso2.carbon.apimgt.impl.APIConstants;
+import org.wso2.carbon.apimgt.impl.APIManagerConfiguration;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
+
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Class for synchronizing Registry upon initial server startup
  */
 public class RegistrySynchronizer implements OnPremiseGatewayInitListener {
+
     private static final Logger log = LoggerFactory.getLogger(RegistrySynchronizer.class);
 
     @Override
     public void completedInitialization() {
-            log.info("Started Synchronizing Registries");
-            try {
-                synchronizeRegistries();
-            } catch (RegistrySynchronizationException e) {
-                log.error("Registry synchronization failed", e);
+        log.info("Started Synchronizing Registries");
+        APIManagerConfiguration config = ServiceReferenceHolder.getInstance().
+                getAPIManagerConfigurationService().getAPIManagerConfiguration();
+        String username = config.getFirstProperty(APIConstants.API_KEY_VALIDATOR_USERNAME);
+        String password = config.getFirstProperty(APIConstants.API_KEY_VALIDATOR_PASSWORD);
+        try {
+            boolean isMultiTenantEnabled =
+                    ConfigManager.getConfigurationDTO().isMulti_tenant_enabled();
+            if (isMultiTenantEnabled) {
+                Map<String, String> multiTenantUserMap = MicroGatewayCommonUtil.getMultiTenantUserMap();
+                Set<String> tenantUsernameSet = multiTenantUserMap.keySet();
+                for (String tenantUsername : tenantUsernameSet) {
+                    synchronizeRegistries(tenantUsername, multiTenantUserMap.get(tenantUsername));
+                }
+            } else {
+                synchronizeRegistries(username, password);
             }
+        } catch (OnPremiseGatewayException | RegistrySynchronizationException e) {
+            log.error("Exception while synchronizing the registry on hybrid gateway. ", e);
+        }
     }
 
     /**
      * Method to synchronize registries
      */
-    public void synchronizeRegistries() throws RegistrySynchronizationException {
+    public void synchronizeRegistries(String username, String password) throws RegistrySynchronizationException {
         String registryPath;
         String[] registryPathArray;
         try {
-            registryPath = ConfigManager.getConfigManager()
-                    .getProperty(OnPremiseGatewayConstants.REGISTRY_PATHS_PROPERTY_KEY);
-            RegistryClient registryClient = new RegistryClient();
+            registryPath = ConfigManager.getConfigurationDTO().getGov_registry_path();
+            GovernanceRegistrySyncClient governanceRegistrySyncClient =
+                    new GovernanceRegistrySyncClient(username, password);
 
-            if(registryPath != null){
-                if(registryPath.contains(",")){
+            if (registryPath != null) {
+                if (registryPath.contains(",")) {
                     registryPathArray = registryPath.split(",");
-                    for (int i = 0; i < registryPathArray.length; i++) {
-                        registryClient.copyRegistryResourceFromRemoteToLocal(registryPathArray[i].trim());
+                    for (String registryPathValue : registryPathArray) {
+                        governanceRegistrySyncClient.copyRegistryResourceFromRemoteToLocal(registryPathValue.trim());
                     }
                 } else {
-                    registryClient.copyRegistryResourceFromRemoteToLocal(registryPath.trim());
+                    governanceRegistrySyncClient.copyRegistryResourceFromRemoteToLocal(registryPath.trim());
                 }
             }
             log.info("Registry Synchronization completed");

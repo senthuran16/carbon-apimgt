@@ -17,10 +17,10 @@
  */
 package org.wso2.carbon.apimgt.hybrid.gateway.usage.publisher.internal;
 
-import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.osgi.service.component.ComponentContext;
+import org.wso2.carbon.apimgt.hybrid.gateway.common.dto.ConfigDTO;
 import org.wso2.carbon.apimgt.impl.APIManagerConfigurationService;
 import org.wso2.carbon.apimgt.hybrid.gateway.common.config.ConfigManager;
 import org.wso2.carbon.apimgt.hybrid.gateway.common.exception.OnPremiseGatewayException;
@@ -54,16 +54,14 @@ public class APIUsagePublisherComponent {
         //Scheduling a timer task for publishing uploaded on-premise gw's usage data if
         //usage data publishing is enabled thorough a property.
         try {
-            ConfigManager configManager = ConfigManager.getConfigManager();
-            String isUsageDataPublishingEnabled = configManager
-                    .getProperty(MicroGatewayAPIUsageConstants.IS_UPLOADED_USAGE_DATA_PUBLISH_ENABLED_PROPERTY);
-            if (StringUtils.equals("true", isUsageDataPublishingEnabled)) {
+            ConfigDTO configDTO = ConfigManager.getConfigurationDTO();
+            boolean isUsageDataPublishingEnabled = configDTO.isUsage_upload_publish_task_enabled();
+            if (isUsageDataPublishingEnabled) {
                 int usagePublishFrequency = MicroGatewayAPIUsageConstants.DEFAULT_UPLOADED_USAGE_PUBLISH_FREQUENCY;
-                String usagePublishFrequencyProperty = configManager
-                        .getProperty(MicroGatewayAPIUsageConstants.UPLOADED_USAGE_PUBLISH_FREQUENCY_PROPERTY);
-                if (StringUtils.isNotBlank(usagePublishFrequencyProperty)) {
+                int usagePublishFrequencyProperty = configDTO.getUsage_upload_publish_frequency();
+                if (usagePublishFrequencyProperty != 0) {
                     try {
-                        usagePublishFrequency = Integer.parseInt(usagePublishFrequencyProperty);
+                        usagePublishFrequency = usagePublishFrequencyProperty;
                     } catch (NumberFormatException e) {
                         log.error("Error while parsing the system property: "
                                 + MicroGatewayAPIUsageConstants.UPLOADED_USAGE_PUBLISH_FREQUENCY_PROPERTY

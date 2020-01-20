@@ -18,23 +18,21 @@
 package org.wso2.carbon.apimgt.hybrid.gateway.api.synchronizer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.axiom.om.OMElement;
+import org.apache.axiom.om.util.AXIOMUtil;
 import org.apache.axis2.context.ConfigurationContext;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.w3c.dom.Document;
-import org.w3c.dom.NamedNodeMap;
-import org.w3c.dom.Node;
 import org.wso2.carbon.apimgt.api.APIManagementException;
-import org.apache.axiom.om.OMElement;
-import org.apache.axiom.om.util.AXIOMUtil;
 import org.wso2.carbon.apimgt.hybrid.gateway.api.synchronizer.dto.APIDTO;
 import org.wso2.carbon.apimgt.hybrid.gateway.api.synchronizer.dto.APIInfoDTO;
 import org.wso2.carbon.apimgt.hybrid.gateway.api.synchronizer.dto.APIListDTO;
@@ -84,11 +82,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import javax.xml.namespace.QName;
-import javax.xml.stream.XMLStreamException;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.stream.XMLStreamException;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
@@ -109,7 +108,7 @@ public class APISynchronizer implements OnPremiseGatewayInitListener {
     @Override
     public void completedInitialization() {
         try {
-            synchronizeApis(null);
+            synchronizeApis();
         } catch (APISynchronizationException e) {
             log.error("API Synchronization failed.", e);
         }
@@ -120,10 +119,8 @@ public class APISynchronizer implements OnPremiseGatewayInitListener {
      */
     private void initializeOnPremiseGatewayProperties() throws APISynchronizationException {
         try {
-            String apiPublisherUrl = ConfigManager.getConfigManager()
-                    .getProperty(APISynchronizationConstants.API_PUBLISHER_URL_PROPERTY);
-            String apiVersion = ConfigManager.getConfigManager()
-                    .getProperty(APISynchronizationConstants.API_VERSION_PROPERTY);
+            String apiPublisherUrl = ConfigManager.getConfigurationDTO().getUrl_publisher();
+            String apiVersion = ConfigManager.getConfigurationDTO().getApi_update_rest_api_version();
             if (apiVersion == null) {
                 apiVersion = APISynchronizationConstants.API_DEFAULT_VERSION;
                 if (log.isDebugEnabled()) {
@@ -151,9 +148,13 @@ public class APISynchronizer implements OnPremiseGatewayInitListener {
                     .replace(APISynchronizationConstants.API_VERSION_PARAM, apiVersion)
                     .replace("//", APISynchronizationConstants.URL_PATH_SEPARATOR);
 
-            label = ConfigManager.getConfigManager().getProperty(OnPremiseGatewayConstants.GATEWAY_LABEL_PROPERTY_KEY);
-            if (StringUtils.isNotBlank(label) && log.isDebugEnabled()) {
-                log.debug("Configured label for the gateway is: " + label);
+            ArrayList labels =
+                    ConfigManager.getConfigurationDTO().getMeta_info_labels();
+            if (labels != null && !labels.isEmpty()) {
+                label = labels.get(0).toString();
+                if (log.isDebugEnabled()) {
+                    log.debug("Configured label for the gateway is: " + label);
+                }
             }
         } catch (OnPremiseGatewayException e) {
             throw new APISynchronizationException(
@@ -163,48 +164,92 @@ public class APISynchronizer implements OnPremiseGatewayInitListener {
 
     /**
      * Method to synchronize APIs
-     *
-     * @param updatedApiIds identifiers of updated APIs
      */
-    public void synchronizeApis(JSONArray updatedApiIds)
+    public void synchronizeApis()
+            throws APISynchronizationException {
+        log.info("Started synchronizing APIs.");
+        APIManagerConfiguration config = ServiceDataHolder.getInstance().
+                getAPIManagerConfigurationService().getAPIManagerConfiguration();
+        String username = config.getFirstProperty(APIConstants.API_KEY_VALIDATOR_USERNAME);
+        char[] password = config.getFirstProperty(APIConstants.API_KEY_VALIDATOR_PASSWORD).toCharArray();
+        try {
+            boolean isMultiTenantEnabled = ConfigManager.getConfigurationDTO().isMulti_tenant_enabled();
+            if (isMultiTenantEnabled) {
+                log.info("Multi Tenant enabled for the gateway.");
+                Map<String, String> multiTenantUserMap = MicroGatewayCommonUtil.getMultiTenantUserMap();
+                Set<String> tenantUsernameSet = multiTenantUserMap.keySet();
+                for (String tenantUsername : tenantUsernameSet) {
+                    initializeAPISynchronization(null, tenantUsername, multiTenantUserMap.get(tenantUsername).toCharArray());
+                }
+            } else {
+                initializeAPISynchronization(null, username, password);
+            }
+        } catch (OnPremiseGatewayException e) {
+            throw new APISynchronizationException(e);
+        }
+    }
+
+    /**
+     * Synchronize API updates for the tenant using the updated API JSON
+     *
+     * @param updatedApiIds JSON Array of the APIs updated
+     * @param username      Tenant Username
+     * @param password      Password of the tenant user
+     * @throws APISynchronizationException
+     */
+    private void initializeAPISynchronization(JSONArray updatedApiIds, String username, char[] password)
             throws APISynchronizationException {
         try {
-            log.info("Started synchronizing APIs.");
-            loadTenant();
+            log.info("Starting API Synchronization for user:" + username);
+            OAuthApplicationInfoDTO oAuthDto;
+            AccessTokenDTO accessTokenDTO;
+            loadTenant(username);
             initializeOnPremiseGatewayProperties();
-            // Registering API client and obtaining an access token to invoke the publisher REST API
-            AccessTokenDTO accessTokenDTO = getAccessToken();
-
-            List<APIDTO> apiInfo;
-            if (updatedApiIds != null) {
-                // Retrieve updated API details
-                apiInfo = getDetailsOfUpdatedAPIs(updatedApiIds, accessTokenDTO);
-            } else {
-                // Retrieve API details
-                apiInfo = getDetailsOfAllAPIs(accessTokenDTO);
-            }
-
-            // Create APIs
-            for (APIDTO apidto : apiInfo) {
-                try {
-                    // Create custom sequences
-                    createCustomSequences(apidto, accessTokenDTO);
-                    // Overriding context information to remove path /t/providerDomain/ since it will be appended at the
-                    // time of creating an API
-                    String providerDomain =
-                            MultitenantUtils.getTenantDomain(apidto.getProvider());
-                    String removeStr = "/t/" + providerDomain;
-                    String contextReturned = apidto.getContext();
-                    String context = contextReturned.replaceAll(removeStr, APISynchronizationConstants.EMPTY_STRING);
-                    apidto.setContext(context);
-                    APIMappingUtil.apisUpdate(apidto);
-                } catch (APISynchronizationException e) {
-                    log.error("Failed to create API " + apidto.getId());
-                }
-            }
-            log.info("API synchronization completed.");
+            oAuthDto = TokenUtil.registerClient(username, password);
+            accessTokenDTO = getAccessToken(oAuthDto, username, password);
+            syncAPIForTenant(updatedApiIds, accessTokenDTO, username);
+            log.info("API synchronization completed for user: " + username);
+        } catch (OnPremiseGatewayException e) {
+            throw new APISynchronizationException(e);
         } finally {
             PrivilegedCarbonContext.endTenantFlow();
+        }
+    }
+
+    /**
+     * Synchronizing APIs for the tenant
+     * @param updatedApiIds JSON Array of the APIs updated
+     * @param accessTokenDTO Generated Access token data object
+     * @param username
+     * @throws APISynchronizationException
+     */
+    private void syncAPIForTenant(JSONArray updatedApiIds, AccessTokenDTO accessTokenDTO, String username) throws APISynchronizationException {
+        List<APIDTO> apiInfo;
+        if (updatedApiIds != null) {
+            // Retrieve updated API details
+            apiInfo = getDetailsOfUpdatedAPIs(updatedApiIds, accessTokenDTO);
+        } else {
+            // Retrieve API details
+            apiInfo = getDetailsOfAllAPIs(accessTokenDTO);
+        }
+
+        // Create APIs
+        for (APIDTO apidto : apiInfo) {
+            try {
+                // Create custom sequences
+                createCustomSequences(apidto, accessTokenDTO, username);
+                // Overriding context information to remove path /t/providerDomain/ since it will be appended at the
+                // time of creating an API
+                String providerDomain =
+                        MultitenantUtils.getTenantDomain(apidto.getProvider());
+                String removeStr = "/t/" + providerDomain;
+                String contextReturned = apidto.getContext();
+                String context = contextReturned.replaceAll(removeStr, APISynchronizationConstants.EMPTY_STRING);
+                apidto.setContext(context);
+                APIMappingUtil.apisUpdate(apidto, username);
+            } catch (APISynchronizationException e) {
+                log.error("Failed to create API " + apidto.getId());
+            }
         }
     }
 
@@ -213,23 +258,19 @@ public class APISynchronizer implements OnPremiseGatewayInitListener {
      *
      * @return AccessTokenDTO
      */
-    private AccessTokenDTO getAccessToken() throws APISynchronizationException {
+    public AccessTokenDTO getAccessToken(OAuthApplicationInfoDTO oAuthDto, String username, char[] password) throws APISynchronizationException {
         if (log.isDebugEnabled()) {
             log.debug("Registering client with dynamic client registration endpoint.");
         }
         try {
-            // Registering API client and obtaining a response with consumer key and consumer secret values.
-            OAuthApplicationInfoDTO oAuthDto = TokenUtil.registerClient();
-
             // Generating an access token to invoke publisher REST API
             String combinedScopes = APISynchronizationConstants.API_VIEW_SCOPE + " "
                     + APISynchronizationConstants.API_MEDIATION_POLICY_VIEW_SCOPE;
             if (log.isDebugEnabled()) {
                 log.debug("Generating an access token with scope(s): " + combinedScopes);
             }
-
             return TokenUtil.generateAccessToken(oAuthDto.getClientId(),
-                    oAuthDto.getClientSecret().toCharArray(), combinedScopes);
+                    oAuthDto.getClientSecret().toCharArray(), combinedScopes, username, password);
         } catch (OnPremiseGatewayException e) {
             throw new APISynchronizationException("Failed to generate an access token.", e);
         }
@@ -239,9 +280,32 @@ public class APISynchronizer implements OnPremiseGatewayInitListener {
      * Method to update APIs
      */
     public void updateApis() throws APISynchronizationException {
-        JSONArray updatedApiIds = getIdentifiersOfUpdatedAPIs();
-        if (updatedApiIds.size() != 0) {
-            synchronizeApis(updatedApiIds);
+
+        APIManagerConfiguration config = ServiceDataHolder.getInstance().
+                getAPIManagerConfigurationService().getAPIManagerConfiguration();
+        String username = config.getFirstProperty(APIConstants.API_KEY_VALIDATOR_USERNAME);
+        char[] password = config.getFirstProperty(APIConstants.API_KEY_VALIDATOR_PASSWORD).toCharArray();
+        try {
+            boolean isMultiTenantEnabled =
+                    ConfigManager.getConfigurationDTO().isMulti_tenant_enabled();
+            if (isMultiTenantEnabled) {
+                Map<String, String> multiTenantUserMap = MicroGatewayCommonUtil.getMultiTenantUserMap();
+                Set<String> tenantUsernameSet = multiTenantUserMap.keySet();
+                for (String tenantUsername : tenantUsernameSet) {
+                    password = multiTenantUserMap.get(tenantUsername).toCharArray();
+                    JSONArray updatedApiIds = getIdentifiersOfUpdatedAPIs(tenantUsername, password);
+                    if (updatedApiIds.size() != 0) {
+                        initializeAPISynchronization(updatedApiIds, tenantUsername, password);
+                    }
+                }
+            } else {
+                JSONArray updatedApiIds = getIdentifiersOfUpdatedAPIs(username, password);
+                if (updatedApiIds.size() != 0) {
+                    initializeAPISynchronization(updatedApiIds, username, password);
+                }
+            }
+        } catch (OnPremiseGatewayException e) {
+            throw new APISynchronizationException(e);
         }
     }
 
@@ -262,7 +326,7 @@ public class APISynchronizer implements OnPremiseGatewayInitListener {
             int newOffset = pagination.getOffset() + pagination.getLimit();
             if (log.isDebugEnabled()) {
                 log.debug("Retrieving paginated APIs from offset value:" + newOffset + " to: " +
-                          (newOffset + pagination.getLimit()));
+                        (newOffset + pagination.getLimit()));
             }
             summarizedApiDTOList = getAPIList(accessTokenDTO, newOffset);
             pagination = summarizedApiDTOList.getPagination();
@@ -298,8 +362,7 @@ public class APISynchronizer implements OnPremiseGatewayInitListener {
                 log.debug("Retrieving details of API " + id + " using publisher REST API.");
             }
 
-            String apiPublisherUrl = ConfigManager.getConfigManager()
-                    .getProperty(OnPremiseGatewayConstants.API_PUBLISHER_URL_PROPERTY_KEY);
+            String apiPublisherUrl = ConfigManager.getConfigurationDTO().getUrl_publisher();
             if (apiPublisherUrl == null) {
                 apiPublisherUrl = OnPremiseGatewayConstants.DEFAULT_API_PUBLISHER_URL;
                 if (log.isDebugEnabled()) {
@@ -346,8 +409,7 @@ public class APISynchronizer implements OnPremiseGatewayInitListener {
 
         String apiPublisherUrl = null;
         try {
-            apiPublisherUrl = ConfigManager.getConfigManager()
-                    .getProperty(OnPremiseGatewayConstants.API_PUBLISHER_URL_PROPERTY_KEY);
+            apiPublisherUrl = ConfigManager.getConfigurationDTO().getUrl_publisher();
         } catch (OnPremiseGatewayException e) {
             throw new APISynchronizationException(e);
         }
@@ -362,21 +424,21 @@ public class APISynchronizer implements OnPremiseGatewayInitListener {
             URL apiPublisherUrlValue = MicroGatewayCommonUtil.getURLFromStringUrlValue(apiPublisherUrl);
             httpClient = APIUtil.getHttpClient(apiPublisherUrlValue.getPort(), apiPublisherUrlValue.getProtocol());
         } catch (OnPremiseGatewayException e) {
-            throw new APISynchronizationException("Error while retrieving Http client." ,e);
+            throw new APISynchronizationException("Error while retrieving Http client.", e);
         }
 
         // Setting offset limit to 0 and pagination limit to 500 at the beginning
         String apiViewUrl = this.apiViewUrl + APISynchronizationConstants.QUESTION_MARK +
-                            APISynchronizationConstants.OFFSET_PREFIX + String.valueOf(offset) +
-                            APISynchronizationConstants.AMPERSAND +
-                            APISynchronizationConstants.PAGINATION_LIMIT_PREFIX +
-                            APISynchronizationConstants.PAGINATION_LIMIT;
+                APISynchronizationConstants.OFFSET_PREFIX + String.valueOf(offset) +
+                APISynchronizationConstants.AMPERSAND +
+                APISynchronizationConstants.PAGINATION_LIMIT_PREFIX +
+                APISynchronizationConstants.PAGINATION_LIMIT;
         try {
             // Check whether a label is configured, if true set label as a query param to the URL
             if (StringUtils.isNotBlank(label)) {
                 apiViewUrl = apiViewUrl + APISynchronizationConstants.AMPERSAND +
-                             APISynchronizationConstants.API_SEARCH_LABEL_QUERY_PREFIX +
-                             URLEncoder.encode(label, APISynchronizationConstants.CHARSET_UTF8);
+                        APISynchronizationConstants.API_SEARCH_LABEL_QUERY_PREFIX +
+                        URLEncoder.encode(label, APISynchronizationConstants.CHARSET_UTF8);
                 if (log.isDebugEnabled()) {
                     log.debug("API GET URL after adding label property value: " + apiViewUrl);
                 }
@@ -416,18 +478,13 @@ public class APISynchronizer implements OnPremiseGatewayInitListener {
      *
      * @return A JSON array with identifiers of updated APIs
      */
-    private JSONArray getIdentifiersOfUpdatedAPIs() throws APISynchronizationException {
+    private JSONArray getIdentifiersOfUpdatedAPIs(String username, char[] password) throws APISynchronizationException {
         if (log.isDebugEnabled()) {
             log.debug("Retrieving identifiers of updated APIs.");
         }
         try {
-            APIManagerConfiguration config = ServiceDataHolder.getInstance().
-                    getAPIManagerConfigurationService().getAPIManagerConfiguration();
-            String username = config.getFirstProperty(APIConstants.API_KEY_VALIDATOR_USERNAME);
-            char [] password = config.getFirstProperty(APIConstants.API_KEY_VALIDATOR_PASSWORD).toCharArray();
             String updatedAPIViewUrl =
-                    ConfigManager.getConfigManager()
-                            .getProperty(APISynchronizationConstants.DEFAULT_API_UPDATE_URL_PROPERTY);
+                    ConfigManager.getConfigurationDTO().getUrl_api_information_service();
             if (updatedAPIViewUrl == null) {
                 updatedAPIViewUrl = APISynchronizationConstants.DEFAULT_API_UPDATE_SERVICE_URL;
             }
@@ -462,8 +519,7 @@ public class APISynchronizer implements OnPremiseGatewayInitListener {
      * @param accessTokenDTO access token DTO
      * @return A List of APIDTO objects
      */
-    private List<APIDTO> getDetailsOfUpdatedAPIs(JSONArray updatedApiIds, AccessTokenDTO accessTokenDTO)
-            throws APISynchronizationException {
+    private List<APIDTO> getDetailsOfUpdatedAPIs(JSONArray updatedApiIds, AccessTokenDTO accessTokenDTO) {
         List<APIDTO> apiDtoList = new ArrayList<>();
         for (Object updatedApiId : updatedApiIds) {
             String id = updatedApiId.toString();
@@ -495,7 +551,7 @@ public class APISynchronizer implements OnPremiseGatewayInitListener {
      * @param api            APIDTO object
      * @param accessTokenDTO access token DTO
      */
-    private void createCustomSequences(APIDTO api, AccessTokenDTO accessTokenDTO)
+    private void createCustomSequences(APIDTO api, AccessTokenDTO accessTokenDTO, String username)
             throws APISynchronizationException {
         List<SequenceDTO> sequences = api.getSequences();
         if (sequences.size() > 0) {
@@ -505,8 +561,7 @@ public class APISynchronizer implements OnPremiseGatewayInitListener {
 
             Map<String, String> policies = new HashMap<>();
             try {
-                String apiPublisherUrl = ConfigManager.getConfigManager()
-                        .getProperty(OnPremiseGatewayConstants.API_PUBLISHER_URL_PROPERTY_KEY);
+                String apiPublisherUrl = ConfigManager.getConfigurationDTO().getUrl_publisher();
                 if (apiPublisherUrl == null) {
                     apiPublisherUrl = OnPremiseGatewayConstants.DEFAULT_API_PUBLISHER_URL;
                     if (log.isDebugEnabled()) {
@@ -553,12 +608,12 @@ public class APISynchronizer implements OnPremiseGatewayInitListener {
                                 }
                             } else {
                                 // Deploying the global sequence
-                                deployGlobalSequence(api, apiId, sequenceId, accessTokenDTO);
+                                deployGlobalSequence(api, apiId, sequenceId, accessTokenDTO, username);
                             }
                         }
                     } else {
                         // Deploying sequence
-                        deploySequence(api, apiId, sequenceId, accessTokenDTO);
+                        deploySequence(api, apiId, sequenceId, accessTokenDTO, username);
                     }
                 }
             } catch (OnPremiseGatewayException e) {
@@ -586,8 +641,7 @@ public class APISynchronizer implements OnPremiseGatewayInitListener {
         }
         Map<String, String> globalMediationSeq = new HashMap<>();
         try {
-            String apiPublisherUrl = ConfigManager.getConfigManager()
-                    .getProperty(OnPremiseGatewayConstants.API_PUBLISHER_URL_PROPERTY_KEY);
+            String apiPublisherUrl = ConfigManager.getConfigurationDTO().getUrl_publisher();
             if (apiPublisherUrl == null) {
                 apiPublisherUrl = OnPremiseGatewayConstants.DEFAULT_API_PUBLISHER_URL;
                 if (log.isDebugEnabled()) {
@@ -633,13 +687,13 @@ public class APISynchronizer implements OnPremiseGatewayInitListener {
      * @param seqId          id of the sequence to be recreated
      * @param accessTokenDTO access token DTO
      */
-    private void deploySequence(APIDTO api, String apiId, String seqId, AccessTokenDTO accessTokenDTO)
+    private void deploySequence(APIDTO api, String apiId, String seqId, AccessTokenDTO accessTokenDTO, String username)
             throws APISynchronizationException {
         try {
             String uri = apiViewUrl + APISynchronizationConstants.URL_PATH_SEPARATOR + apiId
                     + APISynchronizationConstants.API_VIEW_MEDIATION_POLICY_PATH
                     + APISynchronizationConstants.URL_PATH_SEPARATOR + seqId;
-            deploySequenceFromUrl(api, apiId, seqId, accessTokenDTO, uri);
+            deploySequenceFromUrl(api, apiId, seqId, accessTokenDTO, uri, username);
         } catch (APISynchronizationException e) {
             throw new APISynchronizationException("An error occurred while deploying custom sequences of API " + apiId,
                     e);
@@ -653,13 +707,13 @@ public class APISynchronizer implements OnPremiseGatewayInitListener {
      * @param seqId          id of the sequence to be recreated
      * @param accessTokenDTO access token DTO
      */
-    private void deployGlobalSequence(APIDTO api, String apiId, String seqId, AccessTokenDTO accessTokenDTO)
+    private void deployGlobalSequence(APIDTO api, String apiId, String seqId, AccessTokenDTO accessTokenDTO, String username)
             throws APISynchronizationException {
         try {
             String uri = apiViewAdminUrl + APISynchronizationConstants.URL_PATH_SEPARATOR
                     + APISynchronizationConstants.API_VIEW_MEDIATION_POLICY_PATH
                     + APISynchronizationConstants.URL_PATH_SEPARATOR + seqId;
-            deploySequenceFromUrl(api, apiId, seqId, accessTokenDTO, uri);
+            deploySequenceFromUrl(api, apiId, seqId, accessTokenDTO, uri, username);
         } catch (APISynchronizationException e) {
             throw new APISynchronizationException("An error occurred while deploying global sequence of API " + apiId,
                     e);
@@ -668,6 +722,7 @@ public class APISynchronizer implements OnPremiseGatewayInitListener {
 
     /**
      * Method to deploy
+     *
      * @param api
      * @param apiId
      * @param seqId
@@ -676,10 +731,9 @@ public class APISynchronizer implements OnPremiseGatewayInitListener {
      * @throws APISynchronizationException
      */
     private void deploySequenceFromUrl(APIDTO api, String apiId, String seqId, AccessTokenDTO accessTokenDTO,
-                                       String uri) throws APISynchronizationException {
+                                       String uri, String username) throws APISynchronizationException {
         try {
-            String apiPublisherUrl = ConfigManager.getConfigManager()
-                    .getProperty(OnPremiseGatewayConstants.API_PUBLISHER_URL_PROPERTY_KEY);
+            String apiPublisherUrl = ConfigManager.getConfigurationDTO().getUrl_publisher();
             if (apiPublisherUrl == null) {
                 apiPublisherUrl = OnPremiseGatewayConstants.DEFAULT_API_PUBLISHER_URL;
                 if (log.isDebugEnabled()) {
@@ -706,7 +760,7 @@ public class APISynchronizer implements OnPremiseGatewayInitListener {
             ObjectMapper mapper = new ObjectMapper();
 
             MediationDTO mediationDTO = mapper.readValue(is, MediationDTO.class);
-            writeSequenceToFile(mediationDTO, api);
+            writeSequenceToFile(mediationDTO, api, username);
         } catch (OnPremiseGatewayException | IOException | APIManagementException e) {
             throw new APISynchronizationException("An error occurred while deploying custom sequences of API " + apiId,
                     e);
@@ -719,7 +773,7 @@ public class APISynchronizer implements OnPremiseGatewayInitListener {
      * @param sequenceInfo MediationDTO object
      * @param api          APIDTO object
      */
-    private void writeSequenceToFile(MediationDTO sequenceInfo, APIDTO api) throws APIManagementException,
+    private void writeSequenceToFile(MediationDTO sequenceInfo, APIDTO api, String username) throws APIManagementException,
             APISynchronizationException {
         String seqFileName = APISynchronizationConstants.EMPTY_STRING;
         String tenantDomain = APISynchronizationConstants.EMPTY_STRING;
@@ -728,12 +782,7 @@ public class APISynchronizer implements OnPremiseGatewayInitListener {
             String type = sequenceInfo.getType().name();
             String xmlStr = sequenceInfo.getConfig();
             String name = api.getName();
-
-            // Sequences should be named according to the naming convention provider--apiName_version--sequenceType.xml
-            // Provider should be set as Admin
-            APIManagerConfiguration config = ServiceDataHolder.getInstance().
-                    getAPIManagerConfigurationService().getAPIManagerConfiguration();
-            String provider = config.getFirstProperty(APIConstants.API_KEY_VALIDATOR_USERNAME);
+            String provider = username;
 
             provider = provider.replaceAll("@", "-AT-");
             String version = api.getVersion();
@@ -756,7 +805,6 @@ public class APISynchronizer implements OnPremiseGatewayInitListener {
 
             APIManagerConfiguration apimConfig = ServiceDataHolder.getInstance().
                     getAPIManagerConfigurationService().getAPIManagerConfiguration();
-            String username = apimConfig.getFirstProperty(APIConstants.API_KEY_VALIDATOR_USERNAME);
             tenantDomain = MultitenantUtils.getTenantDomain(username);
             int tenantId = ServiceDataHolder.getInstance().getRealmService().getTenantManager()
                     .getTenantId(tenantDomain);
@@ -821,10 +869,7 @@ public class APISynchronizer implements OnPremiseGatewayInitListener {
     /**
      * Method to load the configurations of a tenant
      */
-    private void loadTenant() {
-        APIManagerConfiguration config = ServiceDataHolder.getInstance().
-                getAPIManagerConfigurationService().getAPIManagerConfiguration();
-        String username = config.getFirstProperty(APIConstants.API_KEY_VALIDATOR_USERNAME);
+    private void loadTenant(String username) {
         String tenantDomain = MultitenantUtils.getTenantDomain(username);
         PrivilegedCarbonContext.startTenantFlow();
         PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(tenantDomain, true);

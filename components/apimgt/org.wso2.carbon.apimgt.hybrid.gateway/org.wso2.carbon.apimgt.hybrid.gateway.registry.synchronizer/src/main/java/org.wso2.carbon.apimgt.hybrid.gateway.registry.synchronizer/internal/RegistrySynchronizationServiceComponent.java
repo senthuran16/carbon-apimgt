@@ -54,8 +54,7 @@ public class RegistrySynchronizationServiceComponent {
     @Activate
     protected void activate(ComponentContext ctx) {
         BundleContext bundleContext = ctx.getBundleContext();
-        bundleContext.registerService(OnPremiseGatewayInitListener.class.getName(), new RegistrySynchronizer(),
-                null);
+        bundleContext.registerService(OnPremiseGatewayInitListener.class.getName(), new RegistrySynchronizer(), null);
     }
 
     @Deactivate
