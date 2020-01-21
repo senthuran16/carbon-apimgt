@@ -75,6 +75,8 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static org.wso2.carbon.apimgt.impl.utils.APIUtil.handleException;
 
@@ -155,8 +157,21 @@ public class SequenceGenerator {
                     String inSequence = template.getMappingInSequence(sequenceMap, operationId, soapAction,
                             namespace, soapNamespace, arraySequenceElements);
                     String outSequence = template.getMappingOutSequence();
-                    saveApiSequences(apiDataStr, inSequence, outSequence, httpMethod.toString().toLowerCase(),
-                            pathName);
+                    Pattern pattern = Pattern.compile("[{}]");
+                    Matcher hasSpecialCharacters = pattern.matcher(pathName);
+                    if (hasSpecialCharacters.find()) {
+                        String resourcePathName = pathName.split("[{]")[0];
+                        if (resourcePathName.endsWith("/")) {
+                            saveApiSequences(apiDataStr, inSequence, outSequence, httpMethod.toString().toLowerCase(),
+                                    StringUtils.removeEnd(resourcePathName, "/"));
+                        } else {
+                            saveApiSequences(apiDataStr, inSequence, outSequence, httpMethod.toString().toLowerCase(),
+                                    resourcePathName);
+                        }
+                    } else {
+                        saveApiSequences(apiDataStr, inSequence, outSequence, httpMethod.toString().toLowerCase(),
+                                pathName);
+                    }
                 } catch (APIManagementException e) {
                     handleException("Error when generating sequence property and arg elements for soap operation: " + operationId, e);
                 }
