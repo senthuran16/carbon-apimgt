@@ -24,6 +24,8 @@ import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketFrame;
 import org.apache.axiom.util.UIDGenerator;
+import org.apache.axis2.description.Parameter;
+import org.apache.axis2.description.TransportOutDescription;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -40,6 +42,7 @@ import org.wso2.carbon.apimgt.gateway.utils.APIMgtGoogleAnalyticsUtils;
 import org.wso2.carbon.apimgt.impl.APIConstants;
 import org.wso2.carbon.apimgt.impl.APIManagerAnalyticsConfiguration;
 import org.wso2.carbon.apimgt.impl.dto.APIKeyValidationInfoDTO;
+import org.wso2.carbon.apimgt.impl.internal.ServiceReferenceHolder;
 import org.wso2.carbon.apimgt.impl.utils.APIUtil;
 import org.wso2.carbon.apimgt.usage.publisher.APIMgtUsageDataPublisher;
 import org.wso2.carbon.apimgt.usage.publisher.DataPublisherUtil;
@@ -69,6 +72,7 @@ public class WebsocketInboundHandler extends ChannelInboundHandlerAdapter {
 	private APIKeyValidationInfoDTO infoDTO = new APIKeyValidationInfoDTO();
 	private io.netty.handler.codec.http.HttpHeaders headers = new DefaultHttpHeaders();
 	private String token;
+	private static String websocketCustomHeader = null;
 
 	public WebsocketInboundHandler() {
         if (throttleDataPublisher == null) {
@@ -78,6 +82,7 @@ public class WebsocketInboundHandler extends ChannelInboundHandlerAdapter {
             }
         }
         initializeDataPublisher();
+        websocketCustomHeader = getWebsocketParameters();
     }
 
     private void initializeDataPublisher() {
@@ -168,7 +173,12 @@ public class WebsocketInboundHandler extends ChannelInboundHandlerAdapter {
                 }
 
                 if (StringUtils.isNotEmpty(token)) {
-                    ((FullHttpRequest) msg).headers().set(APIMgtGatewayConstants.WS_JWT_TOKEN_HEADER, token);
+                    String jwtHeader = APIMgtGatewayConstants.WS_CUSTOM_HEADER_PREFIX_DEFAULT +
+                            APIMgtGatewayConstants.WS_X_JWT_HEADER;
+                    if (websocketCustomHeader != null) {
+                        jwtHeader = websocketCustomHeader + APIMgtGatewayConstants.WS_X_JWT_HEADER;
+                    }
+                    ((FullHttpRequest) msg).headers().set(jwtHeader, token);
                 }
                 ctx.fireChannelRead(msg);
 
@@ -425,5 +435,17 @@ public class WebsocketInboundHandler extends ChannelInboundHandlerAdapter {
             // flow should not break if event publishing failed
             log.error("Cannot publish event. " + e.getMessage(), e);
         }
+
+    }
+
+    private String getWebsocketParameters() {
+        if (ServiceReferenceHolder.getContextService() != null) {
+            TransportOutDescription wsTransportOut = ServiceReferenceHolder.getContextService().getServerConfigContext().getAxisConfiguration().getTransportOut("ws");
+            if (wsTransportOut != null) {
+                Parameter customHeaderParam = wsTransportOut.getParameter(APIMgtGatewayConstants.WS_CUSTOM_HEADER_CONFIG_KEY);
+                return customHeaderParam != null ? (String) customHeaderParam.getValue() : null;
+            }
+        }
+        return null;
     }
 }
