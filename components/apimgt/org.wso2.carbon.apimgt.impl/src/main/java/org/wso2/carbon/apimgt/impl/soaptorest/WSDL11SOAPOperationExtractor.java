@@ -390,6 +390,16 @@ public class WSDL11SOAPOperationExtractor implements WSDLSOAPOperationExtractor 
                                             } else {
                                                 ((ArrayProperty) parentProperty).setItems(createPropertyFromNode(current, true));
                                             }
+                                        } else if (parentProperty instanceof ObjectProperty) {
+                                            if (((ObjectProperty) parentProperty).getProperties() != null) {
+                                                if ((((ObjectProperty) parentProperty).getProperties()).get(parentName) != null) {
+                                                    Property objectProperty = new ObjectProperty();
+                                                    Map propertiesMap = new HashMap();
+                                                    propertiesMap.put(element, createPropertyFromNode(current, true));
+                                                    ((ObjectProperty) objectProperty).setProperties(propertiesMap);
+                                                    ((ObjectProperty) parentProperty).setProperties(propertiesMap);
+                                                }
+                                            }
                                         }
                                     } else {
                                         model.addProperty(getNodeName(current), createPropertyFromNode(current, true));
@@ -547,7 +557,7 @@ public class WSDL11SOAPOperationExtractor implements WSDLSOAPOperationExtractor 
 
     /**
      * Creates a swagger property from given wsdl node.
-     * 
+     *
      * @param node wsdl node
      * @param prevNodeExist
      * @return generated swagger property
