@@ -323,12 +323,13 @@ public class SequenceGenerator {
                         }
                     }
                     if (StringUtils.isNotBlank(parameterTreeNode)) {
-                        if(SOAPToRESTConstants.ATTR_CONTENT_KEYWORD.equalsIgnoreCase(parameterTreeNode)) {
+                        if (SOAPToRESTConstants.ATTR_CONTENT_KEYWORD.equalsIgnoreCase(parameterTreeNode)) {
                             String attName = parameterTreeNodes[++i];
-                            prevElement.setAttribute(attName, SOAPToRESTConstants.SequenceGen.PROPERTY_ACCESSOR+count++);
+                            prevElement
+                                    .setAttribute(attName, SOAPToRESTConstants.SequenceGen.PROPERTY_ACCESSOR + count++);
                             break;
                         }
-                        if(SOAPToRESTConstants.BASE_CONTENT_KEYWORD.equalsIgnoreCase(parameterTreeNode)) {
+                        if (SOAPToRESTConstants.BASE_CONTENT_KEYWORD.equalsIgnoreCase(parameterTreeNode)) {
                             prevElement.setTextContent(SOAPToRESTConstants.SequenceGen.PROPERTY_ACCESSOR + count++);
                             break;
                         }
