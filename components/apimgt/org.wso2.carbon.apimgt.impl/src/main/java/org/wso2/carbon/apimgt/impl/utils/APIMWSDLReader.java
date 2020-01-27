@@ -482,7 +482,7 @@ public class APIMWSDLReader {
      * @return an "XXE safe" built DOM XML object by reading the content from the provided URL
      * @throws APIManagementException When error occurred while reading from URL
      */
-    private Document getSecuredParsedDocumentFromURL(String url) throws APIManagementException {
+    public Document getSecuredParsedDocumentFromURL(String url) throws APIManagementException {
         URL wsdl;
         String errorMsg = "Error while reading WSDL document";
         InputStream inputStream = null;
