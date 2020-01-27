@@ -397,11 +397,12 @@ public class WSDL11SOAPOperationExtractor implements WSDLSOAPOperationExtractor 
             return basedSchemas.get(ns);
         }
         Document doc = null;
+        APIMWSDLReader reader = new APIMWSDLReader(ns + ".xsd");
         try {
-            APIMWSDLReader reader = new APIMWSDLReader(ns + ".xsd");
             doc = reader.getSecuredParsedDocumentFromURL(ns + ".xsd");
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (APIManagementException e) {
+            String error = "Error occurred reading wsdl document.";
+            log.error(error, e);
         }
         basedSchemas.put(ns, doc);
         return doc;
