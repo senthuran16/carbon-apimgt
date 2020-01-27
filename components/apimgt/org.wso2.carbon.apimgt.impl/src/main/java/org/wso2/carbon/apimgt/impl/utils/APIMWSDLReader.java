@@ -196,7 +196,8 @@ public class APIMWSDLReader {
      * @return {@link Definition} - WSDL4j definition constructed form the wsdl
      * @throws APIManagementException
      */
-    public Definition getWSDLDefinitionFromByteContent(byte[] wsdl, boolean readDependencies) throws APIManagementException {
+    public Definition getWSDLDefinitionFromByteContent(byte[] wsdl, boolean readDependencies, String url)
+            throws APIManagementException {
         try {
             WSDLReader wsdlReader = getWsdlFactoryInstance().newWSDLReader();
             // switch off the verbose mode
@@ -209,7 +210,7 @@ public class APIMWSDLReader {
                 }
             }
 
-            return wsdlReader.readWSDL(null, getSecuredParsedDocumentFromContent(wsdl));
+            return wsdlReader.readWSDL(url, getSecuredParsedDocumentFromContent(wsdl));
         } catch (Exception e) {
             String msg = " Error occurs when updating WSDL ";
             throw new APIManagementException(msg, e);

@@ -115,7 +115,7 @@ public class APIMWSDLReaderTest {
         APIMWSDLReader wsdlReader = new APIMWSDLReader("");
         byte[] content = IOUtils.toByteArray(
                 Thread.currentThread().getContextClassLoader().getResourceAsStream("wsdls/stockQuote.wsdl"));
-        Definition definition = wsdlReader.getWSDLDefinitionFromByteContent(content, false);
+        Definition definition = wsdlReader.getWSDLDefinitionFromByteContent(content, false, null);
         Assert.assertNotNull(new String(wsdlReader.getWSDL(definition)));
     }
 
@@ -132,7 +132,7 @@ public class APIMWSDLReaderTest {
         APIMWSDLReader wsdlReader = new APIMWSDLReader("");
         byte[] content = IOUtils.toByteArray(
                 Thread.currentThread().getContextClassLoader().getResourceAsStream("wsdls/stockQuote.wsdl"));
-        Definition definition = wsdlReader.getWSDLDefinitionFromByteContent(content, false);
+        Definition definition = wsdlReader.getWSDLDefinitionFromByteContent(content, false, null);
         try {
             wsdlReader.setServiceDefinition(definition, api, environmentName, environmentType);
             wsdlReader.getWSDL(definition);
@@ -152,7 +152,7 @@ public class APIMWSDLReaderTest {
         APIMWSDLReader wsdlReader = new APIMWSDLReader("");
         byte[] content = IOUtils.toByteArray(
                 Thread.currentThread().getContextClassLoader().getResourceAsStream("wsdls/invalidEndpointURL.wsdl"));
-        Definition definition = wsdlReader.getWSDLDefinitionFromByteContent(content, false);
+        Definition definition = wsdlReader.getWSDLDefinitionFromByteContent(content, false, null);
         try {
             wsdlReader.setServiceDefinition(definition, api, environmentName, environmentType);
             wsdlReader.getWSDL(definition);

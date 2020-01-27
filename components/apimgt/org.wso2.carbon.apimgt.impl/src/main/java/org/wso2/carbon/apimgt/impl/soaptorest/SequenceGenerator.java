@@ -23,6 +23,7 @@ import io.swagger.inflector.examples.models.Example;
 import io.swagger.inflector.processors.JsonNodeExampleSerializer;
 import io.swagger.models.HttpMethod;
 import io.swagger.models.Model;
+import io.swagger.models.ModelImpl;
 import io.swagger.models.Operation;
 import io.swagger.models.Path;
 import io.swagger.models.RefModel;
@@ -74,6 +75,8 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static org.wso2.carbon.apimgt.impl.utils.APIUtil.handleException;
 
@@ -134,7 +137,7 @@ public class SequenceGenerator {
                 populateParametersFromOperation(operation, definitions, parameterJsonPathMapping, queryParameters);
 
                 Map<String, String> payloadSequence = createPayloadFacXMLForOperation(parameterJsonPathMapping, queryParameters,
-                        namespace, SOAPToRESTConstants.EMPTY_STRING, operationId);
+                        namespace, SOAPToRESTConstants.EMPTY_STRING, operationId, definitions);
                 try {
                     String[] propAndArgElements = getPropertyAndArgElementsForSequence(parameterJsonPathMapping,
                             queryParameters);
@@ -154,8 +157,21 @@ public class SequenceGenerator {
                     String inSequence = template.getMappingInSequence(sequenceMap, operationId, soapAction,
                             namespace, soapNamespace, arraySequenceElements);
                     String outSequence = template.getMappingOutSequence();
-                    saveApiSequences(apiDataStr, inSequence, outSequence, httpMethod.toString().toLowerCase(),
-                            pathName);
+                    Pattern pattern = Pattern.compile("[{}]");
+                    Matcher hasSpecialCharacters = pattern.matcher(pathName);
+                    if (hasSpecialCharacters.find()) {
+                        String resourcePathName = pathName.split("[{]")[0];
+                        if (resourcePathName.endsWith("/")) {
+                            saveApiSequences(apiDataStr, inSequence, outSequence, httpMethod.toString().toLowerCase(),
+                                    StringUtils.removeEnd(resourcePathName, "/"));
+                        } else {
+                            saveApiSequences(apiDataStr, inSequence, outSequence, httpMethod.toString().toLowerCase(),
+                                    resourcePathName);
+                        }
+                    } else {
+                        saveApiSequences(apiDataStr, inSequence, outSequence, httpMethod.toString().toLowerCase(),
+                                pathName);
+                    }
                 } catch (APIManagementException e) {
                     handleException("Error when generating sequence property and arg elements for soap operation: " + operationId, e);
                 }
@@ -264,13 +280,16 @@ public class SequenceGenerator {
     }
 
     private static Map<String, String> createPayloadFacXMLForOperation(Map<String, String> parameterJsonPathMapping,
-            Map<String, String> queryPathParamMapping, String namespace, String prefix, String operationId)
+            Map<String, String> queryPathParamMapping, String namespace, String prefix, String operationId,
+                                                                       Map<String, Model> definitions)
             throws APIManagementException {
 
         DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
         TransformerFactory transformerFactory = TransformerFactory.newInstance();
         DocumentBuilder docBuilder;
         StringWriter stringWriter = new StringWriter();
+        Boolean isNamespaceQualified = false;
+        Boolean isRootComplexType = false;
 
         try {
             Transformer transformer = transformerFactory.newTransformer();
@@ -289,12 +308,33 @@ public class SequenceGenerator {
                 int length = parameterType.equals(SOAPToRESTConstants.ParamTypes.ARRAY) ?
                         parameterTreeNodes.length - 1 :
                         parameterTreeNodes.length;
+                if (length > 0 && !isRootComplexType) {
+                    isRootComplexType = true;
+                }
                 for (int i = 0; i < length; i++) {
                     String parameterTreeNode = parameterTreeNodes[i];
+                    ModelImpl model = (ModelImpl) definitions.get(parameterTreeNode);
+                    if (model != null) {
+                        Map<String, Object> venderExtensions = model.getVendorExtensions();
+                        if (venderExtensions.get(SOAPToRESTConstants.X_NAMESPACE_QUALIFIED) != null &&
+                                Boolean.parseBoolean(venderExtensions.get(SOAPToRESTConstants.X_NAMESPACE_QUALIFIED)
+                                        .toString())) {
+                            isNamespaceQualified = true;
+                        }
+                    }
                     if (StringUtils.isNotBlank(parameterTreeNode)) {
-                        Element element = doc.createElementNS(namespace,
-                                SOAPToRESTConstants.SequenceGen.NAMESPACE_PREFIX
-                                        + SOAPToRESTConstants.SequenceGen.NAMESPACE_SEPARATOR + parameterTreeNode);
+                        Element element;
+                        if (isNamespaceQualified) {
+                            element = doc.createElementNS(namespace, SOAPToRESTConstants.SequenceGen.NAMESPACE_PREFIX
+                                    + SOAPToRESTConstants.SequenceGen.NAMESPACE_SEPARATOR + parameterTreeNode);
+                        } else if (!isNamespaceQualified && isRootComplexType) {
+                            element = doc.createElementNS(namespace, SOAPToRESTConstants.SequenceGen.NAMESPACE_PREFIX
+                                    + SOAPToRESTConstants.SequenceGen.NAMESPACE_SEPARATOR + parameterTreeNode);
+                            isRootComplexType = false;
+                        } else {
+                            element = doc.createElementNS(null, parameterTreeNode);
+                            element.setAttribute(SOAPToRESTConstants.XMLNS, SOAPToRESTConstants.X_WSO2_UNIQUE_NAMESPACE);
+                        }
                         if (doc.getElementsByTagName(element.getTagName()).getLength() > 0) {
                             prevElement = (Element) doc.getElementsByTagName(element.getTagName()).item(0);
                         } else {
@@ -338,7 +378,7 @@ public class SequenceGenerator {
                     + stringWriter.toString());
         }
         Map<String, String> paramMap = new HashMap<>();
-        paramMap.put(operationId, stringWriter.toString());
+        paramMap.put(operationId, processPayloadFactXML(stringWriter.toString()));
         return paramMap;
     }
 
@@ -445,5 +485,13 @@ public class SequenceGenerator {
             handleException("Error occurred when transforming in sequence xml", e);
         }
         return property + SOAPToRESTConstants.SequenceGen.COMMA + argument;
+    }
+
+    private static String processPayloadFactXML(String xmlPayload) {
+        // When setting namespace as xmlns="", Xerces process it as empty namespace and removes it
+        // Hence following the string replace approach to add xmlns="".
+        // Details can be found in https://issues.apache.org/jira/browse/XERCESJ-1720
+        String processedXMLPayload = xmlPayload.replaceAll(SOAPToRESTConstants.X_WSO2_UNIQUE_NAMESPACE, "");
+        return processedXMLPayload;
     }
 }

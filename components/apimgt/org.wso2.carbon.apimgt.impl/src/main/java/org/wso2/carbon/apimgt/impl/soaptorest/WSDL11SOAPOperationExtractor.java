@@ -102,6 +102,7 @@ public class WSDL11SOAPOperationExtractor implements WSDLSOAPOperationExtractor 
 
     private Definition wsdlDefinition;
     private String targetNamespace;
+    private String wsdlURL;
 
     private List typeList = null;
     private List<Node> complexElemList = new ArrayList<>();
@@ -119,15 +120,16 @@ public class WSDL11SOAPOperationExtractor implements WSDLSOAPOperationExtractor 
     public WSDL11SOAPOperationExtractor() {
     }
 
-    public WSDL11SOAPOperationExtractor(APIMWSDLReader wsdlReader) {
+    public WSDL11SOAPOperationExtractor(APIMWSDLReader wsdlReader, String url) {
         WSDL11SOAPOperationExtractor.wsdlReader = wsdlReader;
+        this.wsdlURL = url;
     }
 
     @Override
     public boolean init(byte[] wsdlContent) throws APIMgtWSDLException {
         boolean canProcess;
         try {
-            wsdlDefinition = wsdlReader.getWSDLDefinitionFromByteContent(wsdlContent, true);
+            wsdlDefinition = wsdlReader.getWSDLDefinitionFromByteContent(wsdlContent, true, wsdlURL);
             canProcess = true;
             targetNamespace = wsdlDefinition.getTargetNamespace();
             Types types = wsdlDefinition.getTypes();
@@ -317,6 +319,18 @@ public class WSDL11SOAPOperationExtractor implements WSDLSOAPOperationExtractor 
                             model.setType(ArrayProperty.TYPE);
                         } else {
                             model.setType(ObjectProperty.TYPE);
+                        }
+                        String elementFormDefault = null;
+                        if (current.getParentNode().getAttributes() != null && current.getParentNode().getAttributes()
+                                .getNamedItem(SOAPToRESTConstants.ELEMENT_FORM_DEFAULT) != null) {
+                            elementFormDefault = current.getParentNode().getAttributes()
+                                    .getNamedItem(SOAPToRESTConstants.ELEMENT_FORM_DEFAULT).getNodeValue();
+                        }
+                        if (StringUtils.isNotEmpty(elementFormDefault) &&
+                                SOAPToRESTConstants.QUALIFIED.equals(elementFormDefault)) {
+                            model.setVendorExtension(SOAPToRESTConstants.X_NAMESPACE_QUALIFIED, true);
+                        } else {
+                            model.setVendorExtension(SOAPToRESTConstants.X_NAMESPACE_QUALIFIED, false);
                         }
                     }
                 } else if (model.getProperties() == null) {
