@@ -387,7 +387,7 @@ public class WSDL11SOAPOperationExtractor implements WSDLSOAPOperationExtractor 
             }
             return nodes.item(0);
         } catch (XPathExpressionException e) {
-            log.error("Error occurred while finding element " + name + "in given document");
+            log.error("Error occurred while finding element " + name + "in given document", e);
             return null;
         }
     }
