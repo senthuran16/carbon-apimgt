@@ -38,7 +38,9 @@ import io.swagger.models.properties.StringProperty;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.wso2.carbon.apimgt.api.APIManagementException;
@@ -49,10 +51,20 @@ import org.wso2.carbon.apimgt.impl.soaptorest.model.WSDLParamDefinition;
 import org.wso2.carbon.apimgt.impl.soaptorest.model.WSDLSOAPOperation;
 import org.wso2.carbon.apimgt.impl.soaptorest.util.SOAPOperationBindingUtils;
 import org.wso2.carbon.apimgt.impl.soaptorest.util.SOAPToRESTConstants;
-import org.wso2.carbon.apimgt.impl.utils.APIFileUtil;
 import org.wso2.carbon.apimgt.impl.soaptorest.util.SwaggerFieldsExcludeStrategy;
+import org.wso2.carbon.apimgt.impl.utils.APIFileUtil;
 import org.wso2.carbon.apimgt.impl.utils.APIMWSDLReader;
 
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.Vector;
 import javax.wsdl.Binding;
 import javax.wsdl.BindingOperation;
 import javax.wsdl.Definition;
@@ -70,19 +82,21 @@ import javax.wsdl.extensions.soap.SOAPOperation;
 import javax.wsdl.extensions.soap12.SOAP12Binding;
 import javax.wsdl.extensions.soap12.SOAP12Operation;
 import javax.wsdl.xml.WSDLReader;
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.Vector;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathExpression;
+import javax.xml.xpath.XPathExpressionException;
+import javax.xml.xpath.XPathFactory;
 
+import static org.wso2.carbon.apimgt.impl.soaptorest.util.SOAPToRESTConstants.ATTRIBUTE_NODE_NAME;
+import static org.wso2.carbon.apimgt.impl.soaptorest.util.SOAPToRESTConstants.ATTR_CONTENT_KEYWORD;
+import static org.wso2.carbon.apimgt.impl.soaptorest.util.SOAPToRESTConstants.BASE_ATTR;
+import static org.wso2.carbon.apimgt.impl.soaptorest.util.SOAPToRESTConstants.BASE_CONTENT_KEYWORD;
 import static org.wso2.carbon.apimgt.impl.soaptorest.util.SOAPToRESTConstants.COMPLEX_TYPE_NODE_NAME;
+import static org.wso2.carbon.apimgt.impl.soaptorest.util.SOAPToRESTConstants.EXTENSION_NODE_NAME;
+import static org.wso2.carbon.apimgt.impl.soaptorest.util.SOAPToRESTConstants.NAME_ATTRIBUTE;
 import static org.wso2.carbon.apimgt.impl.soaptorest.util.SOAPToRESTConstants.SIMPLE_TYPE_NODE_NAME;
+import static org.wso2.carbon.apimgt.impl.soaptorest.util.SOAPToRESTConstants.TARGET_NAMESPACE_ATTRIBUTE;
 
 /**
  * Class that reads wsdl soap operations and maps with the types.
@@ -109,6 +123,7 @@ public class WSDL11SOAPOperationExtractor implements WSDLSOAPOperationExtractor 
     private List<Node> simpleElemList = new ArrayList<>();
     private List<Node> schemaNodeList = new ArrayList<>();
     private List<WSDLParamDefinition> wsdlParamDefinitions = new ArrayList<>();
+    private Map<String, Document> basedSchemas = new HashMap<>();
 
     private Map<String, ModelImpl> parameterModelMap = new HashMap<>();
     private boolean isArrayType = false;
@@ -172,7 +187,19 @@ public class WSDL11SOAPOperationExtractor implements WSDLSOAPOperationExtractor 
                                             "The referenced schema : " + schemaUrl + " doesn't have any defined types");
                                 }
                             } else {
-                                log.warn("Cannot access referenced schema for the schema defined at: " + schemaUrl);
+                                boolean isInlineSchema = false;
+                                for (Object aSchema : typeList) {
+                                    if (schemaUrl.equalsIgnoreCase(
+                                            ((Schema) aSchema).getElement().getAttribute(TARGET_NAMESPACE_ATTRIBUTE))) {
+                                        isInlineSchema = true;
+                                        break;
+                                    }
+                                }
+                                if (isInlineSchema) {
+                                    log.debug(schemaUrl + " is already defined inline. Hence continue.");
+                                } else {
+                                    log.warn("Cannot access referenced schema for the schema defined at: " + schemaUrl);
+                                }
                             }
                         }
                     }
@@ -275,6 +302,12 @@ public class WSDL11SOAPOperationExtractor implements WSDLSOAPOperationExtractor 
                     addModelDefinition(current, model, SOAPToRESTConstants.EMPTY_STRING, prevNodeExist, prevNode);
                 }
             }
+        } else if (EXTENSION_NODE_NAME.equals(current.getLocalName())) {
+            readExtensionModel(model, current);
+        } else if (ATTRIBUTE_NODE_NAME.equals(current.getLocalName())) {
+            if (current.hasAttributes()) {
+                addAttributesToModel(model, current.getAttributes());
+            }
         } else if (SIMPLE_TYPE_NODE_NAME.equals(current.getLocalName())) {
             if (StringUtils.isNotBlank(getNodeName(current))) {
                 if (current.getParentNode() != null) {
@@ -287,6 +320,106 @@ public class WSDL11SOAPOperationExtractor implements WSDLSOAPOperationExtractor 
             }
         }
         return currentProp;
+    }
+
+    private void readExtensionModel(ModelImpl model, Node node) {
+        Node baseNode = node.getAttributes().getNamedItem(BASE_ATTR);
+        if (baseNode == null) {
+            return;
+        }
+        String baseName = baseNode.getNodeValue();
+        String refName;
+        String nsName = null;
+        if (baseName.contains(":")) {
+            refName = baseNode.getNodeValue().split(":")[1];
+            nsName = baseNode.getNodeValue().split(":")[0];
+        } else {
+            refName = baseName;
+        }
+        model.addProperty(BASE_CONTENT_KEYWORD, new RefProperty(refName));
+        if (nsName == null) {
+            return;
+        }
+
+        if (isElementExist(refName, node.getOwnerDocument())) {
+            log.debug(refName + ": is already defined inline.");
+            return;
+        }
+
+        String ns = node.lookupNamespaceURI(nsName);
+        if (ns == null) {
+            log.debug("Couldn't find namespace for the " + refName + ". Hence skipping generating model.");
+            return;
+        }
+
+        Document nsDoc = getBasedXSDofWSDL(ns);
+        if (nsDoc == null) {
+            log.warn("Couldn't find xsd document for namespace " + ns);
+        }
+        Node refNode = findFirstElementByName(refName, nsDoc);
+        if (refNode == null) {
+            log.warn("Couldn't find element " + refName + "from namespace " + ns);
+        }
+
+        ModelImpl newModel = new ModelImpl();
+        //only the refNode is handled. If children needs to handle, it's this method should calls over the children
+        addModelDefinition(refNode, newModel, SOAPToRESTConstants.EMPTY_STRING, false, null);
+        parameterModelMap.put(newModel.getName(), newModel);
+    }
+
+    private boolean isElementExist(String name, Document doc) {
+        Node firstNode = findFirstElementByName(name, doc);
+        if (firstNode == null) {
+            return false;
+        }
+        return true;
+    }
+
+    private Node findFirstElementByName(String name, Document doc) {
+        XPathFactory xpathfactory = XPathFactory.newInstance();
+        XPath xpath = xpathfactory.newXPath();
+        try {
+            XPathExpression expr = xpath.compile("//*[@name='" + name + "']");
+            Object result = expr.evaluate(doc, XPathConstants.NODESET);
+            NodeList nodes = (NodeList) result;
+            if (nodes == null || nodes.getLength() < 1) {
+                return null;
+            }
+            return nodes.item(0);
+        } catch (XPathExpressionException e) {
+            log.error("Error occurred while finding element " + name + "in given document");
+            return null;
+        }
+    }
+
+    private Document getBasedXSDofWSDL(String ns) {
+        if (basedSchemas.containsKey(ns)) {
+            return basedSchemas.get(ns);
+        }
+        Document doc = null;
+        try {
+            APIMWSDLReader reader = new APIMWSDLReader(ns + ".xsd");
+            doc = reader.getSecuredParsedDocumentFromURL(ns + ".xsd");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        basedSchemas.put(ns, doc);
+        return doc;
+    }
+
+    private void addAttributesToModel(ModelImpl model, NamedNodeMap namedNodeMap) {
+        if (namedNodeMap == null || namedNodeMap.getNamedItem(NAME_ATTRIBUTE) == null) {
+            return;
+        }
+        String name = namedNodeMap.getNamedItem(NAME_ATTRIBUTE).getNodeValue();
+        Map<String, Property> properties = new HashMap<>();
+        if (model.getProperties() == null || !model.getProperties().containsKey(ATTR_CONTENT_KEYWORD)) {
+            ObjectProperty objectProperty = new ObjectProperty();
+            objectProperty.setProperties(properties);
+            model.addProperty(ATTR_CONTENT_KEYWORD, objectProperty);
+        }
+        ObjectProperty objectProperty = (ObjectProperty) model.getProperties().get(ATTR_CONTENT_KEYWORD);
+        objectProperty.getProperties().put(name, new StringProperty());
     }
 
     /**
