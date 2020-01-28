@@ -440,9 +440,11 @@ public class WebsocketInboundHandler extends ChannelInboundHandlerAdapter {
 
     private String getWebsocketParameters() {
         if (ServiceReferenceHolder.getContextService() != null) {
-            TransportOutDescription wsTransportOut = ServiceReferenceHolder.getContextService().getServerConfigContext().getAxisConfiguration().getTransportOut("ws");
+            TransportOutDescription wsTransportOut = ServiceReferenceHolder
+                    .getContextService().getServerConfigContext().getAxisConfiguration().getTransportOut("ws");
             if (wsTransportOut != null) {
-                Parameter customHeaderParam = wsTransportOut.getParameter(APIMgtGatewayConstants.WS_CUSTOM_HEADER_CONFIG_KEY);
+                Parameter customHeaderParam = wsTransportOut
+                        .getParameter(APIMgtGatewayConstants.WS_CUSTOM_HEADER_CONFIG_KEY);
                 return customHeaderParam != null ? (String) customHeaderParam.getValue() : null;
             }
         }
