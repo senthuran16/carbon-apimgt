@@ -353,6 +353,9 @@ public class SequenceGenerator {
                             if (xPathOfNode.startsWith(".")) {
                                 xPathOfNode = xPathOfNode.substring(1);
                             }
+                            if (xPathOfNode.contains(operationId + ".")) {
+                                xPathOfNode = xPathOfNode.replace(operationId + ".", "");
+                            }
                         }
 
                         if (doc.getElementsByTagName(element.getTagName()).getLength() > 0
