@@ -901,15 +901,21 @@ public class ApisApiServiceImpl extends ApisApiService {
             }
             //validation for tiers
             List<String> tiersFromDTO = body.getTiers();
-            if (tiersFromDTO == null || tiersFromDTO.isEmpty()) {
-                RestApiUtil.handleBadRequest("No tier defined for the API", log);
+            String originalStatus = apiInfo.getStatus();
+            if (tiersFromDTO == null || tiersFromDTO.isEmpty() &&
+                    !(APIConstants.CREATED.equals(originalStatus) || APIConstants.PROTOTYPED.equals(originalStatus))) {
+                RestApiUtil.handleBadRequest("A tier should be defined " +
+                        "if the API is not in CREATED or PROTOTYPED state", log);
             }
-            //check whether the added API's tiers are all valid
-            Set<Tier> definedTiers = apiProvider.getTiers();
-            List<String> invalidTiers = RestApiUtil.getInvalidTierNames(definedTiers, tiersFromDTO);
-            if (invalidTiers.size() > 0) {
-                RestApiUtil.handleBadRequest(
-                        "Specified tier(s) " + Arrays.toString(invalidTiers.toArray()) + " are invalid", log);
+
+            if (tiersFromDTO != null && !tiersFromDTO.isEmpty()) {
+                //check whether the added API's tiers are all valid
+                Set<Tier> definedTiers = apiProvider.getTiers();
+                List<String> invalidTiers = RestApiUtil.getInvalidTierNames(definedTiers, tiersFromDTO);
+                if (invalidTiers.size() > 0) {
+                    RestApiUtil.handleBadRequest(
+                            "Specified tier(s) " + Arrays.toString(invalidTiers.toArray()) + " are invalid", log);
+                }
             }
             if (body.getAccessControlRoles() != null) {
                 String errorMessage = RestApiPublisherUtils.validateUserRoles(body.getAccessControlRoles());
