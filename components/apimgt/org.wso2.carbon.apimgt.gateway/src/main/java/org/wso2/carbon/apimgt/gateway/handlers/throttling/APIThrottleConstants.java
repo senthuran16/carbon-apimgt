@@ -52,6 +52,7 @@ public class APIThrottleConstants {
     public static final String BLOCKED_REASON = APIConstants.BLOCKED_REASON_KEY;
     public static final String UTC = "UTC";
     public static final String IS_THROTTLED = "isThrottled";
+    public static final String CUSTOM_PROPERTY = "customProperty";
     public static final String THROTTLE_KEY = "throttleKey";
     public static final String EXPIRY_TIMESTAMP = "expiryTimeStamp";
     public static final String EVALUATED_CONDITIONS = "evaluatedConditions";

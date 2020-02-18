@@ -923,7 +923,7 @@ public class ThrottleHandler extends AbstractHandler implements ManagedLifecycle
                                         String appTenant, String apiTenant, String appId, String clientIp, Map<String
             , String> keyTemplateMap, MessageContext messageContext) {
 
-        HashMap<String, Object> propertyFromMap = (HashMap<String, Object>) messageContext.getProperty("propertyMap");
+        HashMap<String, Object> propertyFromMap = (HashMap<String, Object>) messageContext.getProperty("customProperty");
 
         if (keyTemplateMap != null && keyTemplateMap.size() > 0) {
             for (String key : keyTemplateMap.keySet()) {
@@ -937,13 +937,13 @@ public class ThrottleHandler extends AbstractHandler implements ManagedLifecycle
                 if (clientIp != null && clientIp.length() > 0) {
                     key = key.replaceAll("\\$clientIp", Long.valueOf(APIUtil.ipToLong(clientIp)).toString());
                 }
-                /* The Key $propertyMap is treated as an actual map even though only one value
+                /* The Key $customProperty is treated as an actual map even though only one value
                  * can be assigned to the key. This is because in the current implementation stream parameters are
                  * treated as one string variable. Therefore, propertyMap cannot be used as an actual map.
                  * */
                 if (propertyFromMap != null) {
                     for (String mapKey : propertyFromMap.keySet()) {
-                        key = key.replaceAll("\\$propertyMap", (String) propertyFromMap.get(mapKey));
+                        key = key.replaceAll("\\$customProperty", (String) propertyFromMap.get(mapKey));
                     }
                 }
                 if (getThrottleDataHolder().isThrottled(key)) {

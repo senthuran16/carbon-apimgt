@@ -59,7 +59,7 @@ public class DataProcessAndPublishingAgent implements Runnable {
     String apiTenant;
     String apiName;
     String appId;
-    Map<String, Object> propertyMap;
+    Map<String, Object> customPropertyMap;
     Map<String, String> headersMap;
     private AuthenticationContext authenticationContext;
 
@@ -90,7 +90,7 @@ public class DataProcessAndPublishingAgent implements Runnable {
         this.apiTenant = null;
         this.appId = null;
         this.apiName = null;
-        this.propertyMap = Collections.emptyMap();
+        this.customPropertyMap = Collections.emptyMap();
     }
 
     /**
@@ -142,12 +142,12 @@ public class DataProcessAndPublishingAgent implements Runnable {
             }
         }
 
-        if (messageContext.getProperty("propertyMap") != null) {
-            HashMap<String, Object> propertyMapFromMsgCtx = (HashMap<String, Object>) messageContext.getProperty(
-                    "propertyMap");
+        if (messageContext.getProperty(APIThrottleConstants.CUSTOM_PROPERTY) != null) {
+            HashMap<String, Object> propertyFromMsgCtx = (HashMap<String, Object>) messageContext.getProperty(
+                    APIThrottleConstants.CUSTOM_PROPERTY);
 
-            if (propertyMapFromMsgCtx != null) {
-                this.propertyMap = (Map<String, Object>) propertyMapFromMsgCtx.clone();
+            if (propertyFromMsgCtx != null) {
+                this.customPropertyMap = (Map<String, Object>) propertyFromMsgCtx.clone();
             }
         }
     }
@@ -174,8 +174,9 @@ public class DataProcessAndPublishingAgent implements Runnable {
             jsonObMap.putAll(this.headersMap);
         }
 
-        if (this.propertyMap != null){
-            jsonObMap.putAll(this.propertyMap);
+        //adding any custom property if available to stream's property map
+        if (this.customPropertyMap != null){
+            jsonObMap.putAll(this.customPropertyMap);
         }
 
         //Setting query parameters
