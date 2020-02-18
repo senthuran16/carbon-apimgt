@@ -23,6 +23,8 @@ import org.wso2.carbon.databridge.agent.DataPublisher;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
 import javax.xml.stream.XMLStreamException;
@@ -57,6 +59,7 @@ public class DataProcessAndPublishingAgent implements Runnable {
     String apiTenant;
     String apiName;
     String appId;
+    Map<String, Object> customPropertyMap;
     Map<String, String> headersMap;
     private AuthenticationContext authenticationContext;
 
@@ -87,6 +90,7 @@ public class DataProcessAndPublishingAgent implements Runnable {
         this.apiTenant = null;
         this.appId = null;
         this.apiName = null;
+        this.customPropertyMap = Collections.emptyMap();
     }
 
     /**
@@ -137,6 +141,15 @@ public class DataProcessAndPublishingAgent implements Runnable {
                 this.headersMap = (Map<String, String>) transportHeaderMap.clone();
             }
         }
+
+        if (messageContext.getProperty(APIThrottleConstants.CUSTOM_PROPERTY) != null) {
+            HashMap<String, Object> propertyFromMsgCtx = (HashMap<String, Object>) messageContext.getProperty(
+                    APIThrottleConstants.CUSTOM_PROPERTY);
+
+            if (propertyFromMsgCtx != null) {
+                this.customPropertyMap = (Map<String, Object>) propertyFromMsgCtx.clone();
+            }
+        }
     }
 
     public void run() {
@@ -159,6 +172,11 @@ public class DataProcessAndPublishingAgent implements Runnable {
         //HeaderMap will only be set if the Header Publishing has been enabled.
         if (this.headersMap != null) {
             jsonObMap.putAll(this.headersMap);
+        }
+
+        //adding any custom property if available to stream's property map
+        if (this.customPropertyMap != null){
+            jsonObMap.putAll(this.customPropertyMap);
         }
 
         //Setting query parameters

@@ -69,6 +69,7 @@ import org.wso2.carbon.metrics.manager.Timer;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
@@ -918,10 +919,12 @@ public class ThrottleHandler extends AbstractHandler implements ManagedLifecycle
      * @return
      */
     public boolean validateCustomPolicy(String userID, String appKey, String resourceKey, String apiKey,
-                                        String subscriptionKey, String apiContext, String apiVersion, String appTenant,
-                                        String apiTenant, String appId, String clientIp,
-                                        Map<String, String> keyTemplateMap,
-                                        MessageContext messageContext) {
+                                        String subscriptionKey, String apiContext, String apiVersion,
+                                        String appTenant, String apiTenant, String appId, String clientIp, Map<String
+            , String> keyTemplateMap, MessageContext messageContext) {
+
+        HashMap<String, Object> propertyFromMap = (HashMap<String, Object>) messageContext.getProperty("customProperty");
+
         if (keyTemplateMap != null && keyTemplateMap.size() > 0) {
             for (String key : keyTemplateMap.keySet()) {
                 key = key.replaceAll("\\$resourceKey", resourceKey);
@@ -933,6 +936,15 @@ public class ThrottleHandler extends AbstractHandler implements ManagedLifecycle
                 key = key.replaceAll("\\$appId", appId);
                 if (clientIp != null && clientIp.length() > 0) {
                     key = key.replaceAll("\\$clientIp", Long.valueOf(APIUtil.ipToLong(clientIp)).toString());
+                }
+                /* The Key $customProperty is treated as an actual map even though only one value
+                 * can be assigned to the key. This is because in the current implementation stream parameters are
+                 * treated as one string variable. Therefore, propertyMap cannot be used as an actual map.
+                 * */
+                if (propertyFromMap != null) {
+                    for (String mapKey : propertyFromMap.keySet()) {
+                        key = key.replaceAll("\\$customProperty", (String) propertyFromMap.get(mapKey));
+                    }
                 }
                 if (getThrottleDataHolder().isThrottled(key)) {
                     long timestamp = getThrottleDataHolder().getThrottleNextAccessTimestamp(key);
