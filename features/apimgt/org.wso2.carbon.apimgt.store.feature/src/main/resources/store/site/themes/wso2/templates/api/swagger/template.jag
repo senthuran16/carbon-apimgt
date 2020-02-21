@@ -172,6 +172,9 @@ var api = outputs.api;%>
             if (<%= isOauthProtected%>) {
               //Intercept the request and inject Bearer token
               var authorizationHeader = <%=stringify(outputs.authorizationHeader)%>;
+              // Removes star character(*) only in following example scenarios:
+              // Ex: /api/*                --> /api/
+              //     /api/*?queryParam=10  --> /api/?queryParam=10
               request.url = request.url.replace(/(\/\*(?=(\?|$)))/g, "/");
               var key = $("#access_token").val();
               if (key && key.trim() != "") {
