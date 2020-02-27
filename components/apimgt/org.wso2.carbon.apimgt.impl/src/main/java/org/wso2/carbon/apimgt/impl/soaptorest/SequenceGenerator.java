@@ -174,7 +174,7 @@ public class SequenceGenerator {
     }
 
     private static void populateParametersFromOperation(Operation operation, Map<String, Model> definitions,
-                                                        Map<String, String> parameterJsonPathMapping, Map<String, String> queryParameters) {
+            Map<String, String> parameterJsonPathMapping, Map<String, String> queryParameters) {
 
         List<Parameter> parameters = operation.getParameters();
         for (Parameter parameter : parameters) {
@@ -206,7 +206,7 @@ public class SequenceGenerator {
     }
 
     private static void saveApiSequences(String apiDataStr, String inSequence, String outSequence, String method,
-                                         String resourcePath) throws APIManagementException {
+            String resourcePath) throws APIManagementException {
 
         JSONParser parser = new JSONParser();
         boolean isTenantFlowStarted = false;
@@ -286,7 +286,7 @@ public class SequenceGenerator {
     }
 
     private static Map<String, String> createPayloadFacXMLForOperation(Map<String, String> parameterJsonPathMapping,
-                                                                       Map<String, String> queryPathParamMapping, String namespace, String prefix, String operationId,
+            Map<String, String> queryPathParamMapping, String namespace, String prefix, String operationId,
                                                                        Map<String, Model> definitions)
             throws APIManagementException {
 
@@ -426,7 +426,7 @@ public class SequenceGenerator {
     }
 
     private static String[] getPropertyAndArgElementsForSequence(Map<String, String> parameterJsonPathMapping,
-                                                                 Map<String, String> queryPathParamMapping) throws APIManagementException {
+            Map<String, String> queryPathParamMapping) throws APIManagementException {
 
         String argStr = SOAPToRESTConstants.EMPTY_STRING;
         String propertyStr = SOAPToRESTConstants.EMPTY_STRING;
@@ -457,7 +457,7 @@ public class SequenceGenerator {
     }
 
     private static void getArraySequenceElements(org.json.simple.JSONArray array,
-                                                 Map<String, String> parameterJsonPathMapping) {
+            Map<String, String> parameterJsonPathMapping) {
 
         for (String parameter : parameterJsonPathMapping.keySet()) {
             String parameterType = parameterJsonPathMapping.get(parameter);
