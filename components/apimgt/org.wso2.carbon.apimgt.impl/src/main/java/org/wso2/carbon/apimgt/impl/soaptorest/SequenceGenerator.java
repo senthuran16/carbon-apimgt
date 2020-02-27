@@ -112,6 +112,7 @@ public class SequenceGenerator {
 
             Map<HttpMethod, Operation> operationMap = path.getOperationMap();
             for (HttpMethod httpMethod : operationMap.keySet()) {
+                boolean isResourceFromWSDL = false;
                 Map<String, String> parameterJsonPathMapping = new HashMap<>();
                 Map<String, String> queryParameters = new HashMap<>();
                 Operation operation = operationMap.get(httpMethod);
@@ -129,6 +130,7 @@ public class SequenceGenerator {
                     namespace = (String) ((LinkedHashMap) vendorExtensionObj).get("namespace");
                     soapVersion = (String) ((LinkedHashMap) vendorExtensionObj)
                             .get(SOAPToRESTConstants.Swagger.SOAP_VERSION);
+                    isResourceFromWSDL = true;
                 }
                 String soapNamespace = SOAPToRESTConstants.SOAP12_NAMSPACE;
                 if (StringUtils.isNotBlank(soapVersion) && SOAPToRESTConstants.SOAP_VERSION_11.equals(soapVersion)) {
@@ -158,21 +160,12 @@ public class SequenceGenerator {
                     String inSequence = template.getMappingInSequence(sequenceMap, operationId, soapAction,
                             namespace, soapNamespace, arraySequenceElements);
                     String outSequence = template.getMappingOutSequence();
-                    Pattern pattern = Pattern.compile("[{}]");
-                    Matcher hasSpecialCharacters = pattern.matcher(pathName);
-                    if (hasSpecialCharacters.find()) {
-                        String resourcePathName = pathName.split("[{]")[0];
-                        if (resourcePathName.endsWith("/")) {
-                            saveApiSequences(apiDataStr, inSequence, outSequence, httpMethod.toString().toLowerCase(),
-                                    StringUtils.removeEnd(resourcePathName, "/"));
-                        } else {
-                            saveApiSequences(apiDataStr, inSequence, outSequence, httpMethod.toString().toLowerCase(),
-                                    resourcePathName);
-                        }
-                    } else {
+
+                    if (isResourceFromWSDL) {
                         saveApiSequences(apiDataStr, inSequence, outSequence, httpMethod.toString().toLowerCase(),
                                 pathName);
                     }
+
                 } catch (APIManagementException e) {
                     handleException("Error when generating sequence property and arg elements for soap operation: " + operationId, e);
                 }
@@ -181,7 +174,7 @@ public class SequenceGenerator {
     }
 
     private static void populateParametersFromOperation(Operation operation, Map<String, Model> definitions,
-            Map<String, String> parameterJsonPathMapping, Map<String, String> queryParameters) {
+                                                        Map<String, String> parameterJsonPathMapping, Map<String, String> queryParameters) {
 
         List<Parameter> parameters = operation.getParameters();
         for (Parameter parameter : parameters) {
@@ -213,7 +206,7 @@ public class SequenceGenerator {
     }
 
     private static void saveApiSequences(String apiDataStr, String inSequence, String outSequence, String method,
-            String resourcePath) throws APIManagementException {
+                                         String resourcePath) throws APIManagementException {
 
         JSONParser parser = new JSONParser();
         boolean isTenantFlowStarted = false;
@@ -249,19 +242,31 @@ public class SequenceGenerator {
                 APIUtil.loadTenantRegistry(tenantId);
                 registry = registryService.getGovernanceSystemRegistry(tenantId);
 
+                Pattern pattern = Pattern.compile("[{}]");
+                Matcher hasSpecialCharacters = pattern.matcher(resourcePath);
+                String resourcePathName = resourcePath;
+                if (hasSpecialCharacters.find()) {
+                    resourcePathName = resourcePath.split("[{]")[0];
+                    if (resourcePathName.endsWith("/")) {
+                        resourcePathName = StringUtils.removeEnd(resourcePathName, "/");
+                    }
+                }
+
                 String resourceInPath = APIConstants.API_LOCATION + RegistryConstants.PATH_SEPARATOR +
                         provider + RegistryConstants.PATH_SEPARATOR + name + RegistryConstants.PATH_SEPARATOR + version
                         + RegistryConstants.PATH_SEPARATOR + SOAPToRESTConstants.SequenceGen.SOAP_TO_REST_IN_RESOURCE
-                        + resourcePath + SOAPToRESTConstants.SequenceGen.RESOURCE_METHOD_SEPERATOR + method
+                        + resourcePathName + SOAPToRESTConstants.SequenceGen.RESOURCE_METHOD_SEPERATOR + method
                         + SOAPToRESTConstants.SequenceGen.XML_FILE_EXTENSION;
                 String resourceOutPath = APIConstants.API_LOCATION + RegistryConstants.PATH_SEPARATOR +
                         provider + RegistryConstants.PATH_SEPARATOR + name + RegistryConstants.PATH_SEPARATOR + version
                         + RegistryConstants.PATH_SEPARATOR + SOAPToRESTConstants.SequenceGen.SOAP_TO_REST_OUT_RESOURCE
-                        + resourcePath + SOAPToRESTConstants.SequenceGen.RESOURCE_METHOD_SEPERATOR + method
+                        + resourcePathName + SOAPToRESTConstants.SequenceGen.RESOURCE_METHOD_SEPERATOR + method
                         + SOAPToRESTConstants.SequenceGen.XML_FILE_EXTENSION;
 
-                SequenceUtils.saveRestToSoapConvertedSequence(registry, inSequence, method, resourceInPath);
-                SequenceUtils.saveRestToSoapConvertedSequence(registry, outSequence, method, resourceOutPath);
+                SequenceUtils.saveRestToSoapConvertedSequence(registry, inSequence, method, resourceInPath,
+                        resourcePath);
+                SequenceUtils.saveRestToSoapConvertedSequence(registry, outSequence, method, resourceOutPath,
+                        resourcePath);
             } catch (UserStoreException e) {
                 handleException("Error while reading tenant information", e);
             } catch (RegistryException e) {
@@ -281,7 +286,7 @@ public class SequenceGenerator {
     }
 
     private static Map<String, String> createPayloadFacXMLForOperation(Map<String, String> parameterJsonPathMapping,
-            Map<String, String> queryPathParamMapping, String namespace, String prefix, String operationId,
+                                                                       Map<String, String> queryPathParamMapping, String namespace, String prefix, String operationId,
                                                                        Map<String, Model> definitions)
             throws APIManagementException {
 
@@ -421,7 +426,7 @@ public class SequenceGenerator {
     }
 
     private static String[] getPropertyAndArgElementsForSequence(Map<String, String> parameterJsonPathMapping,
-            Map<String, String> queryPathParamMapping) throws APIManagementException {
+                                                                 Map<String, String> queryPathParamMapping) throws APIManagementException {
 
         String argStr = SOAPToRESTConstants.EMPTY_STRING;
         String propertyStr = SOAPToRESTConstants.EMPTY_STRING;
@@ -452,7 +457,7 @@ public class SequenceGenerator {
     }
 
     private static void getArraySequenceElements(org.json.simple.JSONArray array,
-            Map<String, String> parameterJsonPathMapping) {
+                                                 Map<String, String> parameterJsonPathMapping) {
 
         for (String parameter : parameterJsonPathMapping.keySet()) {
             String parameterType = parameterJsonPathMapping.get(parameter);
@@ -533,3 +538,4 @@ public class SequenceGenerator {
         return processedXMLPayload;
     }
 }
+

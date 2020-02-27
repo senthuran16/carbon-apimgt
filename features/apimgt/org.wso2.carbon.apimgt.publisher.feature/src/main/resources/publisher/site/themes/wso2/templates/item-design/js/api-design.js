@@ -152,7 +152,6 @@ function APIDesigner(){
 
     $( "#soapToRestMappingContent" ).delegate( ".resource_expand", "click", this, function( event ) {
         if(this.soap_resource_created == undefined){
-            var specialCharacters = /.*\{.*\}.*/;
             var soapRestMapping = JSON.parse($('#sequenceMapping').val());
             var soapRestOutMapping = JSON.parse($('#sequenceOutMapping').val());
             var resourceDetails = $.trim($(this).parent().text().replace(/[\t\n]+/g,''));
@@ -160,16 +159,7 @@ function APIDesigner(){
             var method = resourceDetails.substring(0, resourceDetails.indexOf("/"));
             var path = resourceDetails.substring(resourceDetails.indexOf("/") + 1, resourceDetails.indexOf("+"));
             var key;
-            if (specialCharacters.test(path)) {
-                var resourcePathName = path.split("{")[0];
-                if (resourcePathName.endsWith("/")) {
-                    key = resourcePathName.slice(0, -1) + "_" + method;
-                } else {
-                    key = resourcePathName + "_" + method;
-                }
-            } else {
-                key = path + "_" + method;
-            }
+            key = path + "_" + method;
             var inSeqContent = soapRestMapping[key].content;
             var outSeqContent = soapRestOutMapping[key].content;
             event.data.render_soap_to_rest_resource($(this).parent().next().find('.resource_body'), inSeqContent, outSeqContent, key);
