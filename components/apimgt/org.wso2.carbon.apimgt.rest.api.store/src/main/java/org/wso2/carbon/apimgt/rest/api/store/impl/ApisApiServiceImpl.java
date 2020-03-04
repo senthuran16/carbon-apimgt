@@ -125,7 +125,6 @@ public class ApisApiServiceImpl extends ApisApiService {
             }
 
             APIMappingUtil.setPaginationParams(apiListDTO, query, offset, limit, length);
-
             APIListPaginationDTO paginationDTO = new APIListPaginationDTO();
             paginationDTO.setOffset(offset);
             paginationDTO.setLimit(limit);
