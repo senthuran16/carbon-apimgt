@@ -94,6 +94,11 @@ public class ImportApiServiceImpl extends ImportApiService {
                     new FileBasedApplicationImportExportManager(consumer, tempDirPath);
             Application applicationDetails = importExportManager.importApplication(fileInputStream);
 
+            // set tokenType of the application to DEFAULT if it is null
+            if (StringUtils.isEmpty(applicationDetails.getTokenType())) {
+                applicationDetails.setTokenType(APIConstants.DEFAULT_TOKEN_TYPE);
+            }
+
             // decode Oauth secrets
             OAuthApplicationInfo productionOAuthApplicationInfo = applicationDetails.getOAuthApp(PRODUCTION);
             if (productionOAuthApplicationInfo != null) {
