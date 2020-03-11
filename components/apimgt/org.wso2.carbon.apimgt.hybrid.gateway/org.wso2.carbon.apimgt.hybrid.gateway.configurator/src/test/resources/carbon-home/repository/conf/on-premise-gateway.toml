@@ -73,6 +73,8 @@ metadata = [
 "api.hybrid.meta.env.java.runtime.version"
 ]
 
+custom = [{api.hybrid.meta.custom.owner = "John",api.hybrid.meta.custom.project = "Marketing"}]
+
 labels = [
 ""
 ]
