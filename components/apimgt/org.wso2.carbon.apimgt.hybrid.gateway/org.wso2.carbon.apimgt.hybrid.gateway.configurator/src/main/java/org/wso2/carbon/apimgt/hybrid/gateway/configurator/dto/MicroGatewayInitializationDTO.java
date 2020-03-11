@@ -17,6 +17,7 @@
  */
 package org.wso2.carbon.apimgt.hybrid.gateway.configurator.dto;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -31,7 +32,7 @@ public class MicroGatewayInitializationDTO {
     private String gwUrl = null;
     private String label = null;
     private Map<String, String> envMetadataMap = null;
-    private Map<String, String> customMetadataMap = null;
+    private Map<String, String> customMetadataMap = new HashMap<>();
 
     /**
      * Retrieve tenant domain
