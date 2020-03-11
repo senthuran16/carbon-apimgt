@@ -81,12 +81,8 @@ public class APIAuthenticationService extends AbstractServiceBusAdmin {
                 String resourceVerbCacheKey = APIUtil.getResourceInfoDTOCacheKey(apiContext, apiVersion,
                         resourceURLContext, httpVerb);
                 String apiCacheKey = APIUtil.getAPIInfoDTOCacheKey(apiContext, apiVersion);
-                if (cache.containsKey(apiCacheKey)) {
-                    cache.remove(apiCacheKey);
-                }
-                if (cache.containsKey(resourceVerbCacheKey)) {
-                    cache.remove(resourceVerbCacheKey);
-                }
+                cache.remove(apiCacheKey);
+                cache.remove(resourceVerbCacheKey);
             }
 
 		} finally {
