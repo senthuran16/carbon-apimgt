@@ -79,6 +79,7 @@ import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -283,8 +284,6 @@ public class APISynchronizer implements OnPremiseGatewayInitListener {
 
         APIManagerConfiguration config = ServiceDataHolder.getInstance().
                 getAPIManagerConfigurationService().getAPIManagerConfiguration();
-        String username = config.getFirstProperty(APIConstants.API_KEY_VALIDATOR_USERNAME);
-        char[] password = config.getFirstProperty(APIConstants.API_KEY_VALIDATOR_PASSWORD).toCharArray();
         try {
             boolean isMultiTenantEnabled =
                     ConfigManager.getConfigurationDTO().isMulti_tenant_enabled();
@@ -292,14 +291,18 @@ public class APISynchronizer implements OnPremiseGatewayInitListener {
                 Map<String, String> multiTenantUserMap = MicroGatewayCommonUtil.getMultiTenantUserMap();
                 Set<String> tenantUsernameSet = multiTenantUserMap.keySet();
                 for (String tenantUsername : tenantUsernameSet) {
-                    password = multiTenantUserMap.get(tenantUsername).toCharArray();
-                    JSONArray updatedApiIds = getIdentifiersOfUpdatedAPIs(tenantUsername, password);
+                    char[] password = multiTenantUserMap.get(tenantUsername).toCharArray();
+                    JSONArray updatedApiIds = getIdentifiersOfUpdatedAPIs(tenantUsername,
+                            Arrays.copyOf(password, password.length));
                     if (updatedApiIds.size() != 0) {
                         initializeAPISynchronization(updatedApiIds, tenantUsername, password);
                     }
                 }
             } else {
-                JSONArray updatedApiIds = getIdentifiersOfUpdatedAPIs(username, password);
+                String username = config.getFirstProperty(APIConstants.API_KEY_VALIDATOR_USERNAME);
+                char[] password = config.getFirstProperty(APIConstants.API_KEY_VALIDATOR_PASSWORD).toCharArray();
+                JSONArray updatedApiIds = getIdentifiersOfUpdatedAPIs(username,
+                        Arrays.copyOf(password, password.length));
                 if (updatedApiIds.size() != 0) {
                     initializeAPISynchronization(updatedApiIds, username, password);
                 }
