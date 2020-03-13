@@ -31,6 +31,7 @@ import org.w3c.dom.Element;
 import org.wso2.carbon.apimgt.impl.soaptorest.exceptions.APIMgtWSDLException;
 import org.wso2.carbon.apimgt.impl.soaptorest.model.WSDLInfo;
 import org.wso2.carbon.apimgt.impl.utils.APIFileUtil;
+import org.wso2.carbon.apimgt.impl.utils.APIMWSDLReader;
 import org.xml.sax.SAXException;
 
 import javax.xml.XMLConstants;
@@ -190,5 +191,10 @@ public class WSDL20SOAPOperationExtractor implements WSDLSOAPOperationExtractor 
             }
         }
         return serviceEndpointMap;
+    }
+
+    @Override
+    public void loadXSDs(APIMWSDLReader wsdlReader, String url) {
+        throw new UnsupportedOperationException("This method is not implemented");
     }
 }

@@ -217,6 +217,10 @@ if(jagg.isCSRFTokenValid())
                 wsdl = "soap";
                 if (wsdlFile) {
                     wsdl = wsdlFile.getName();
+                    mod = jagg.module("api");
+                    url = mod.extractAndGetPath(wsdlFile);
+                    log.info("0");
+
                 }
                 if(url){
                     wsdl = url.trim();
@@ -227,7 +231,7 @@ if(jagg.isCSRFTokenValid())
                 try {
                     if(rest) {
                         var soapToRestUtil = Packages.org.wso2.carbon.apimgt.impl.soaptorest.util.SOAPOperationBindingUtils;
-                        resp = new Packages.java.lang.String(soapToRestUtil.getSoapOperationMapping(url));
+                        resp = new Packages.java.lang.String(soapToRestUtil.getSoapOperationMapping(wsdl));
                         if(resp) {
                             mappingJson = JSON.parse(resp);
                             session.put("mappingJson", mappingJson);

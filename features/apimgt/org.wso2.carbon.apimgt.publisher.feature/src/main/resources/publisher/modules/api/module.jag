@@ -204,5 +204,9 @@ jagg.module("api", {
     getSequenceFileContent:function() {
         return jagg.require(jagg.getModulesDir() + "api/add.jag").getSequenceFileContent.apply(this, arguments);
     }
+    ,
+    extractAndGetPath:function() {
+        return jagg.require(jagg.getModulesDir() + "api/add.jag").extractAndGetPath.apply(this, arguments);
+    }
 });
 %>

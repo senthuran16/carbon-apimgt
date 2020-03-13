@@ -1053,6 +1053,29 @@ public class APIProviderHostObject extends ScriptableObject {
     }
 
     /**
+     * Extract and get the path of the extracted directory
+     * @param cx        Rhino context
+     * @param thisObj   Scriptable object
+     * @param args      Passing arguments
+     * @param funObj    Function object
+     * @return          extracted directory path
+     * @throws APIManagementException
+     */
+    public static String jsFunction_extractAndGetPath(Context cx, Scriptable thisObj, Object[] args, Function funObj)
+            throws APIManagementException {
+        FileHostObject wsdlFile = (FileHostObject) args[0];
+        WSDLArchiveInfo archiveInfo = null;
+        try {
+            archiveInfo = APIUtil.extractAndValidateWSDLArchive(wsdlFile.getInputStream());
+            if (archiveInfo != null) {
+                return archiveInfo.getLocation();
+            }
+        } catch (ScriptException e) {
+            throw new APIManagementException(e.getMessage(), e);
+        }
+        return null;
+    }
+    /**
      * This method is to functionality of create a new API in API-Provider     *
      *
      * @param cx      Rhino context

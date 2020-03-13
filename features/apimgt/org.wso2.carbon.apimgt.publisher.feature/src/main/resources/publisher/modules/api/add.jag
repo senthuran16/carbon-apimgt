@@ -6,7 +6,7 @@ var manageAPI = function (api) {
     var success, log = new Log(),
             provider = jagg.module("manager").getAPIProviderObj();
     try {
-        success = provider.manageAPI(api);
+        successsuccess = provider.manageAPI(api);
         if (log.isDebugEnabled()) {
             log.debug("manageAPI : " + api.name + "-" + api.version);
         }
@@ -974,6 +974,21 @@ var uploadSequenceFile = function (api) {
         return {
             error:true,
             message:e.message.split(":")[1]
+        };
+    }
+};
+
+var extractAndGetPath = function(file) {
+    var success, log = new Log(),
+            provider = jagg.module("manager").getAPIProviderObj();
+    try {
+        path = provider.extractAndGetPath(file);
+        return path;
+    } catch (e) {
+        log.error(e.message);
+        return {
+            error:true,
+            message:e.message
         };
     }
 };

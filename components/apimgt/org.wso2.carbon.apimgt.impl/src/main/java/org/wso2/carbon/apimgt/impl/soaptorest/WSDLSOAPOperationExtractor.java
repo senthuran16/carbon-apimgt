@@ -17,8 +17,10 @@
  */
 package org.wso2.carbon.apimgt.impl.soaptorest;
 
+import org.wso2.carbon.apimgt.api.APIManagementException;
 import org.wso2.carbon.apimgt.impl.soaptorest.exceptions.APIMgtWSDLException;
 import org.wso2.carbon.apimgt.impl.soaptorest.model.WSDLInfo;
+import org.wso2.carbon.apimgt.impl.utils.APIMWSDLReader;
 
 /**
  * Interface to extend different the wsdl operation extractor implementations.
@@ -58,4 +60,6 @@ public interface WSDLSOAPOperationExtractor {
      * @return true if WSDL can be processed by this processor
      */
     boolean canProcess();
+
+    void loadXSDs(APIMWSDLReader wsdlReader, String url) throws APIManagementException;
 }

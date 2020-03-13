@@ -54,6 +54,8 @@ import javax.xml.parsers.ParserConfigurationException;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -500,6 +502,34 @@ public class APIMWSDLReader {
             throw new APIManagementException(errorMsg, e);
         } finally {
             IOUtils.closeQuietly(inputStream);
+        }
+    }
+
+    /**
+     * Get the Secured Parsed Document from given file
+     *
+     * @param file file path
+     * @return Secured Parsed Document
+     * @throws APIManagementException When error occurred when parsing the file
+     */
+    public Document getSecuredParsedDocument(String file) throws APIManagementException {
+        String errorMsg = "Error while reading WSDL document";
+        InputStream inputStream = null;
+        try {
+            inputStream = new FileInputStream(new File(file));
+            DocumentBuilderFactory factory = getSecuredDocumentBuilder();
+            DocumentBuilder builder = factory.newDocumentBuilder();
+            return builder.parse(inputStream);
+        } catch (ParserConfigurationException e) {
+            throw new APIManagementException(errorMsg, e);
+        } catch (IOException e) {
+            throw new APIManagementException(errorMsg, e);
+        } catch (SAXException e) {
+            throw new APIManagementException(errorMsg, e);
+        } finally {
+            if(inputStream != null) {
+                IOUtils.closeQuietly(inputStream);
+            }
         }
     }
 

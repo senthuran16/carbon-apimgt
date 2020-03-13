@@ -54,6 +54,7 @@ import org.wso2.carbon.apimgt.impl.soaptorest.util.SOAPToRESTConstants;
 import org.wso2.carbon.apimgt.impl.soaptorest.util.SwaggerFieldsExcludeStrategy;
 import org.wso2.carbon.apimgt.impl.utils.APIFileUtil;
 import org.wso2.carbon.apimgt.impl.utils.APIMWSDLReader;
+import org.wso2.carbon.utils.CarbonUtils;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -1215,5 +1216,45 @@ public class WSDL11SOAPOperationExtractor implements WSDLSOAPOperationExtractor 
 
     public Map<String, ModelImpl> getParameterModelMap() {
         return parameterModelMap;
+    }
+
+    /**
+     * Load the schemas into the listof based schemas
+     *
+     * @param url   url or the location to load the schemas
+     */
+    @Override
+    public void loadXSDs(APIMWSDLReader wsdlReader, String url) throws APIManagementException {
+        Collection<File> foundXSDFiles = new java.util.LinkedList<>();
+        if(url.endsWith(File.pathSeparator + "extracted")) {
+            File folderToImport = new File(url);
+            foundXSDFiles = APIFileUtil.searchFilesWithMatchingExtension(folderToImport, "xsd", false);
+        }
+        foundXSDFiles.addAll(getStandardBaseXSDs());
+        Document document;
+        for (File file : foundXSDFiles) {
+            String absWSDLPath = file.getAbsolutePath();
+            if (log.isDebugEnabled()) {
+                log.debug("Processing xsd file: " + absWSDLPath);
+            }
+            document = wsdlReader.getSecuredParsedDocument(absWSDLPath);
+            Node namespace = document.getDocumentElement().getAttributes().getNamedItem("targetNamespace");
+            if (namespace != null) {
+                basedSchemas.put(namespace.getNodeValue(), document);
+            }
+        }
+    }
+
+    /**
+     * Get the standard base xsd files
+     * @return Collection of xsd files
+     */
+    private Collection<File> getStandardBaseXSDs() {
+        String baseStandardXSDLocation =
+                CarbonUtils.getCarbonHome() + File.separator + "repository" + File.separator + "resources"
+                        + File.separator + "xsds";
+        File folderToImport = new File(baseStandardXSDLocation);
+        Collection<File> foundXSDFiles = APIFileUtil.searchFilesWithMatchingExtension(folderToImport, "xsd", false);
+        return foundXSDFiles;
     }
 }
