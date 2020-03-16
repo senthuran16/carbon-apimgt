@@ -1737,7 +1737,9 @@ public final class APIUtil {
         if (!processor.canProcess()) {
             throw new APIManagementException(processor.getClass().getName() + " was unable to process the WSDL");
         }
-        return new WSDLArchiveInfo(path, APIConstants.WSDL_ARCHIVE_ZIP_FILE);
+        WSDLArchiveInfo info = new WSDLArchiveInfo(path, APIConstants.WSDL_ARCHIVE_ZIP_FILE);
+        info.setLocation(extractedLocation);
+        return info;
     }
 
     /**

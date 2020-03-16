@@ -45,4 +45,8 @@ public class WSDLArchiveInfo {
     public String getAbsoluteFilePath() {
         return fullAbsoluteFilePath;
     }
+
+    public void setLocation(String location) {
+        this.location = location;
+    }
 }

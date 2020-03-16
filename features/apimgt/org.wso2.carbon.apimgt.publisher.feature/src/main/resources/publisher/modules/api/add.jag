@@ -978,6 +978,21 @@ var uploadSequenceFile = function (api) {
     }
 };
 
+var extractAndGetPath = function(file) {
+    var success, log = new Log(),
+            provider = jagg.module("manager").getAPIProviderObj();
+    try {
+        path = provider.extractAndGetPath(file);
+        return path;
+    } catch (e) {
+        log.error(e.message);
+        return {
+            error:true,
+            message:e.message
+        };
+    }
+};
+
 /**
  * Get the content of the selected sequence file.
  *

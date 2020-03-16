@@ -240,7 +240,7 @@ $( document ).ready(function() {
         } else if(this.value === 'archive') {
             $('#wsdl-url-section').hide();
             $('#wsdl-file-section').show();
-            $('input[name=soap-options-rest]').attr("disabled",true);
+            $('input[name=soap-options-rest]').attr("disabled",false);
         }
     });
 

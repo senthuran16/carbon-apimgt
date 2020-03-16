@@ -46,6 +46,7 @@ import org.wso2.carbon.apimgt.impl.soaptorest.WSDLSOAPOperationExtractor;
 import org.wso2.carbon.apimgt.impl.soaptorest.exceptions.APIMgtWSDLException;
 import org.wso2.carbon.apimgt.impl.soaptorest.model.WSDLOperationParam;
 import org.wso2.carbon.apimgt.impl.soaptorest.model.WSDLSOAPOperation;
+import org.wso2.carbon.apimgt.impl.utils.APIFileUtil;
 import org.wso2.carbon.apimgt.impl.utils.APIMWSDLReader;
 import org.wso2.carbon.apimgt.impl.utils.APIUtil;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
@@ -57,13 +58,18 @@ import org.wso2.carbon.user.api.UserStoreException;
 import org.wso2.carbon.utils.multitenancy.MultitenantConstants;
 import org.wso2.carbon.utils.multitenancy.MultitenantUtils;
 
+import java.io.File;
 import java.util.AbstractList;
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import javax.wsdl.Definition;
+import javax.wsdl.WSDLException;
+import javax.wsdl.xml.WSDLReader;
 
 import static org.wso2.carbon.apimgt.impl.utils.APIUtil.handleException;
 
@@ -84,8 +90,27 @@ public class SOAPOperationBindingUtils {
      * @throws APIManagementException if an error occurs when getting soap operations from the wsdl
      */
     public static String getSoapOperationMapping(String url) throws APIManagementException {
+
+        byte[] wsdlContent = null;
         APIMWSDLReader wsdlReader = new APIMWSDLReader(url);
-        byte[] wsdlContent = wsdlReader.getWSDL();
+        if(!url.endsWith(".wsdl") && !url.endsWith("?wsdl")) {
+            try {
+                WSDLReader reader = APIMWSDLReader.getWsdlFactoryInstance().newWSDLReader();
+                File folderToImport = new File(url);
+                Collection<File> foundWSDLFiles = APIFileUtil.searchFilesWithMatchingExtension(folderToImport, "wsdl");
+                if(foundWSDLFiles.isEmpty()) {
+                   throw new APIManagementException("WSDL cannot be found");
+                }
+                Definition definition = reader.readWSDL(null, foundWSDLFiles.iterator().next().getAbsolutePath());
+                wsdlContent = wsdlReader.getWSDL(definition);
+            } catch (WSDLException e) {
+                handleException("Error in reading the wsdl file from location:" + url, e);
+            }
+        } else {
+            wsdlReader = new APIMWSDLReader(url);
+            wsdlContent = wsdlReader.getWSDL();
+        }
+
         WSDLSOAPOperationExtractor processor = getWSDLProcessor(wsdlContent, wsdlReader, url);
         Set<WSDLSOAPOperation> operations;
         Map<String, ModelImpl> paramModelMap;
@@ -358,6 +383,7 @@ public class SOAPOperationBindingUtils {
             throws APIManagementException {
         WSDLSOAPOperationExtractor processor = new WSDL11SOAPOperationExtractor(wsdlReader, url);
         try {
+            processor.loadXSDs(wsdlReader, url);
             boolean canProcess = processor.init(content);
             if (canProcess) {
                 return processor;
