@@ -21,6 +21,7 @@ import io.swagger.models.ModelImpl;
 import io.swagger.models.properties.ArrayProperty;
 import io.swagger.models.properties.ObjectProperty;
 import io.swagger.models.properties.Property;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -47,6 +48,7 @@ public class WSDLSOAPOperationExtractorImplTestCase {
 
     @Before
     public void setup() throws Exception {
+        System.setProperty("carbon.home", SOAPOperationBindingTestCase.class.getResource("/").getPath());
         APIMWSDLReader wsdlReader = new APIMWSDLReader(Thread.currentThread().getContextClassLoader()
                 .getResource("wsdls/phoneverify.wsdl").toExternalForm());
         byte[] wsdlContent = wsdlReader.getWSDL();
@@ -182,6 +184,11 @@ public class WSDLSOAPOperationExtractorImplTestCase {
         Assert.assertNotNull(operations);
         Map<String, ModelImpl> parameterModelMap = processor.getWsdlInfo().getParameterModelMap();
         Assert.assertNotNull(parameterModelMap);
+    }
+
+    @AfterClass
+    public static void destroyClass() {
+        System.clearProperty("carbon.home");
     }
 
     public static API getAPIForTesting() {

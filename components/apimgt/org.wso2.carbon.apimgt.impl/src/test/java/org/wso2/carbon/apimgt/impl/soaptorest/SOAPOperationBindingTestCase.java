@@ -21,7 +21,9 @@ import io.swagger.models.HttpMethod;
 import io.swagger.models.Swagger;
 import io.swagger.models.properties.ObjectProperty;
 import io.swagger.parser.SwaggerParser;
+import org.junit.AfterClass;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.powermock.core.classloader.annotations.PrepareForTest;
@@ -35,6 +37,10 @@ import java.util.Map;
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({ServiceReferenceHolder.class})
 public class SOAPOperationBindingTestCase {
+    @Before
+    public void setup() {
+        System.setProperty("carbon.home", SOAPOperationBindingTestCase.class.getResource("/").getPath());
+    }
 
     @Test
     public void testGetSoapOperationMapping() throws Exception {
@@ -110,5 +116,10 @@ public class SOAPOperationBindingTestCase {
                 Assert.assertEquals(vendorExtensions.get("namespace"), "http://service.test.com/");
             }
         }
+    }
+
+    @AfterClass
+    public static void destroyClass() {
+        System.clearProperty("carbon.home");
     }
 }
