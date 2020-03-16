@@ -6,7 +6,7 @@ var manageAPI = function (api) {
     var success, log = new Log(),
             provider = jagg.module("manager").getAPIProviderObj();
     try {
-        successsuccess = provider.manageAPI(api);
+        success = provider.manageAPI(api);
         if (log.isDebugEnabled()) {
             log.debug("manageAPI : " + api.name + "-" + api.version);
         }

@@ -219,8 +219,6 @@ if(jagg.isCSRFTokenValid())
                     wsdl = wsdlFile.getName();
                     mod = jagg.module("api");
                     url = mod.extractAndGetPath(wsdlFile);
-                    log.info("0");
-
                 }
                 if(url){
                     wsdl = url.trim();
