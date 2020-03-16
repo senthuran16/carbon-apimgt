@@ -2138,8 +2138,8 @@ public class APIStoreHostObject extends ScriptableObject {
 
                 while (it.hasNext()) {
                     String url = it.next();
-                    if (url != null && url.startsWith("https:")) {
-                        myn.put(index, myn, url);
+                    if (url != null && url.trim().startsWith("https:")) {
+                        myn.put(index, myn, url.trim());
                         index++;
                     }
                 }
@@ -2211,8 +2211,8 @@ public class APIStoreHostObject extends ScriptableObject {
 
     private static String getHttpsEnvironmentUrl(Environment environment) {
         for (String url : environment.getApiGatewayEndpoint().split(",")) {
-            if (url.startsWith("https:")) {
-                return url;
+            if (url != null && url.trim().startsWith("https:")) {
+                return url.trim();
             }
         }
         return "";
