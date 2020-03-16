@@ -30,6 +30,7 @@ import org.wso2.carbon.apimgt.api.model.APIIdentifier;
 import org.wso2.carbon.apimgt.api.model.APIKey;
 import org.wso2.carbon.apimgt.api.model.Application;
 import org.wso2.carbon.apimgt.api.model.OAuthApplicationInfo;
+import org.wso2.carbon.apimgt.impl.APIConstants;
 import org.wso2.carbon.apimgt.impl.utils.APIUtil;
 import org.wso2.carbon.apimgt.rest.api.admin.ImportApiService;
 import org.wso2.carbon.apimgt.rest.api.admin.dto.APIInfoListDTO;
@@ -93,6 +94,11 @@ public class ImportApiServiceImpl extends ImportApiService {
             FileBasedApplicationImportExportManager importExportManager =
                     new FileBasedApplicationImportExportManager(consumer, tempDirPath);
             Application applicationDetails = importExportManager.importApplication(fileInputStream);
+
+            // set tokenType of the application to DEFAULT if it is null
+            if (StringUtils.isEmpty(applicationDetails.getTokenType())) {
+                applicationDetails.setTokenType(APIConstants.DEFAULT_TOKEN_TYPE);
+            }
 
             // decode Oauth secrets
             OAuthApplicationInfo productionOAuthApplicationInfo = applicationDetails.getOAuthApp(PRODUCTION);
