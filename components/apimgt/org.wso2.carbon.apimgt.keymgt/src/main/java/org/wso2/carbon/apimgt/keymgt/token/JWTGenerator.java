@@ -1,20 +1,20 @@
 /*
-*Copyright (c) 2005-2010, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
-*
-*WSO2 Inc. licenses this file to you under the Apache License,
-*Version 2.0 (the "License"); you may not use this file except
-*in compliance with the License.
-*You may obtain a copy of the License at
-*
-*http://www.apache.org/licenses/LICENSE-2.0
-*
-*Unless required by applicable law or agreed to in writing,
-*software distributed under the License is distributed on an
-*"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-*KIND, either express or implied.  See the License for the
-*specific language governing permissions and limitations
-*under the License.
-*/
+ *Copyright (c) 2005-2010, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ *
+ *WSO2 Inc. licenses this file to you under the Apache License,
+ *Version 2.0 (the "License"); you may not use this file except
+ *in compliance with the License.
+ *You may obtain a copy of the License at
+ *
+ *http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *Unless required by applicable law or agreed to in writing,
+ *software distributed under the License is distributed on an
+ *"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ *KIND, either express or implied.  See the License for the
+ *specific language governing permissions and limitations
+ *under the License.
+ */
 package org.wso2.carbon.apimgt.keymgt.token;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -24,12 +24,17 @@ import org.apache.commons.logging.LogFactory;
 
 import org.wso2.carbon.apimgt.api.APIManagementException;
 import org.wso2.carbon.apimgt.api.model.Application;
+import org.wso2.carbon.apimgt.impl.APIConstants;
 import org.wso2.carbon.apimgt.impl.internal.ServiceReferenceHolder;
 import org.wso2.carbon.apimgt.impl.token.ClaimsRetriever;
 import org.wso2.carbon.apimgt.impl.utils.APIUtil;
 import org.wso2.carbon.apimgt.keymgt.MethodStats;
 import org.wso2.carbon.apimgt.keymgt.service.TokenValidationContext;
+import org.wso2.carbon.claim.mgt.ClaimManagementException;
+import org.wso2.carbon.claim.mgt.ClaimManagerHandler;
 import org.wso2.carbon.identity.application.common.model.ClaimMapping;
+import org.wso2.carbon.identity.claim.metadata.mgt.ClaimMetadataHandler;
+import org.wso2.carbon.identity.claim.metadata.mgt.exception.ClaimMetadataException;
 import org.wso2.carbon.identity.oauth.cache.AuthorizationGrantCache;
 import org.wso2.carbon.identity.oauth.cache.AuthorizationGrantCacheEntry;
 import org.wso2.carbon.identity.oauth.cache.AuthorizationGrantCacheKey;
@@ -38,22 +43,24 @@ import org.wso2.carbon.user.api.UserStoreManager;
 import org.wso2.carbon.utils.multitenancy.MultitenantUtils;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 
 import static org.apache.commons.collections.MapUtils.isNotEmpty;
+
 @MethodStats
 public class JWTGenerator extends AbstractJWTGenerator {
 
     private static final Log log = LogFactory.getLog(JWTGenerator.class);
-
 
     @Override
     public Map<String, String> populateStandardClaims(TokenValidationContext validationContext)
             throws APIManagementException {
 
         //generating expiring timestamp
-        long currentTime = System.currentTimeMillis() ;
+        long currentTime = System.currentTimeMillis();
         long expireIn = currentTime + getTTL() * 1000;
 
         String dialect;
@@ -119,7 +126,10 @@ public class JWTGenerator extends AbstractJWTGenerator {
             String accessToken = validationContext.getAccessToken();
             AuthorizationGrantCacheKey cacheKey = new AuthorizationGrantCacheKey(accessToken);
 
-            Map<String, String> customClaims = getClaimsFromCache(cacheKey);
+            String username = validationContext.getValidationInfoDTO().getEndUserName();
+            int tenantId = APIUtil.getTenantId(username);
+
+            Map<String, String> customClaims = getClaimsFromCache(cacheKey, username);
             if (isNotEmpty(customClaims)) {
                 if (log.isDebugEnabled()) {
                     log.debug("The custom claims are retrieved from AuthorizationGrantCache for user : "
@@ -133,12 +143,9 @@ public class JWTGenerator extends AbstractJWTGenerator {
                             .getEndUserName());
                 }
             }
+
             // If claims are not found in AuthorizationGrantCache, they will be retrieved from the userstore.
-            String username = validationContext.getValidationInfoDTO().getEndUserName();
-
             try {
-                int tenantId = APIUtil.getTenantId(username);
-
                 if (tenantId != -1) {
                     UserStoreManager manager = ServiceReferenceHolder.getInstance().
                             getRealmService().getTenantUserRealm(tenantId).getUserStoreManager();
@@ -167,18 +174,70 @@ public class JWTGenerator extends AbstractJWTGenerator {
         return null;
     }
 
-    private static Map<String, String> getClaimsFromCache(AuthorizationGrantCacheKey cacheKey) {
-
+    private Map<String, String> getClaimsFromCache(AuthorizationGrantCacheKey cacheKey, String username)
+            throws APIManagementException {
         AuthorizationGrantCacheEntry cacheEntry = AuthorizationGrantCache.getInstance()
                 .getValueFromCacheByToken(cacheKey);
         if (cacheEntry == null) {
             return new HashMap<String, String>();
         }
+
         Map<ClaimMapping, String> userAttributes = cacheEntry.getUserAttributes();
-        Map<String, String> userClaims = new HashMap<String, String>();
+        Map<String, String> oidcUserClaims = new HashMap<>();
+        Map<String, String> oidcUserClaimsCopy = new HashMap<>();
+
         for (Map.Entry<ClaimMapping, String> entry : userAttributes.entrySet()) {
-            userClaims.put(entry.getKey().getRemoteClaim().getClaimUri(), entry.getValue());
+            oidcUserClaims.put(entry.getKey().getRemoteClaim().getClaimUri(), entry.getValue());
+            oidcUserClaimsCopy.put(entry.getKey().getRemoteClaim().getClaimUri(), entry.getValue());
         }
-        return userClaims;
+
+        String convertClaimsFromOIDCtoConsumerDialect = ServiceReferenceHolder.getInstance().getAPIManagerConfigurationService().
+                        getAPIManagerConfiguration().getFirstProperty(APIConstants.CONVERT_CLAIMS_TO_CONSUMER_DIALECT);
+
+        if (convertClaimsFromOIDCtoConsumerDialect != null && !Boolean.parseBoolean(convertClaimsFromOIDCtoConsumerDialect)) {
+            return oidcUserClaims;
+        }
+
+        int tenantId = APIUtil.getTenantId(username);
+        String tenantDomain = APIUtil.getTenantDomainFromTenantId(tenantId);
+        String dialect;
+        ClaimsRetriever claimsRetriever = getClaimsRetriever();
+        if (claimsRetriever != null) {
+            dialect = claimsRetriever.getDialectURI(username);
+        } else {
+            dialect = getDialectURI();
+        }
+
+        Map<String, String> configuredDialectToCarbonClaimMapping; // (key) configuredDialectClaimURI -> (value) carbonClaimURI
+        Map<String, String> carbonToOIDCclaimMapping; // (key) carbonClaimURI ->  value (oidcClaimURI)
+
+        Set<String> claimUris = new HashSet<>(oidcUserClaims.keySet());
+        try {
+            carbonToOIDCclaimMapping = new ClaimMetadataHandler().getMappingsMapFromOtherDialectToCarbon("http://wso2.org/oidc/claim",
+                    claimUris, tenantDomain, true);
+            configuredDialectToCarbonClaimMapping =
+                    ClaimManagerHandler.getInstance().getMappingsMapFromCarbonDialectToOther(dialect,
+                            carbonToOIDCclaimMapping.keySet(), tenantDomain);
+        } catch (ClaimMetadataException e) {
+            String error = "Error while mapping claims from Carbon dialect to http://wso2.org/oidc/claim dialect";
+            throw new APIManagementException(error, e);
+        } catch (ClaimManagementException e) {
+            String error = "Error while mapping claims from configured dialect to Carbon dialect";
+            throw new APIManagementException(error, e);
+        }
+
+        for (Map.Entry<String, String> oidcClaimValEntry : oidcUserClaims.entrySet()) {
+            for (Map.Entry<String, String> carbonToOIDCEntry : carbonToOIDCclaimMapping.entrySet()) {
+                if (oidcClaimValEntry.getKey().equals(carbonToOIDCEntry.getValue())) {
+                    for (Map.Entry<String, String> configuredToCarbonEntry : configuredDialectToCarbonClaimMapping.entrySet()) {
+                        if (configuredToCarbonEntry.getValue().equals(carbonToOIDCEntry.getKey())) {
+                            oidcUserClaimsCopy.remove(oidcClaimValEntry.getKey());
+                            oidcUserClaimsCopy.put(configuredToCarbonEntry.getKey(), oidcClaimValEntry.getValue());
+                        }
+                    }
+                }
+            }
+        }
+        return oidcUserClaimsCopy;
     }
 }
