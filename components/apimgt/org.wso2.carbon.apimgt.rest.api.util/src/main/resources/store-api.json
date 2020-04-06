@@ -632,8 +632,8 @@
       "post": {
         "x-scope": "apim:subscribe",
         "x-wso2-curl": "curl -k -H \"Authorization: Bearer ae4eae22-3f65-387b-a171-d37eaa366fa8\" -H \"Content-Type: application/json\" -X POST -d @data.json \"https://localhost:9443/api/am/store/v0.14/applications\"",
-        "x-wso2-request": "POST https://localhost:9443/api/am/store/v0.14/applications\nAuthorization: Bearer ae4eae22-3f65-387b-a171-d37eaa366fa8\n\n{\n    \"throttlingTier\": \"Unlimited\",\n    \"description\": \"sample app description\",\n    \"name\": \"sampleapp\",\n    \"callbackUrl\": \"http://my.server.com/callback\"\n}",
-        "x-wso2-response": "HTTP/1.1 201 Created\nLocation: https://localhost:9443/api/am/store/v0.14/applications/c30f3a6e-ffa4-4ae7-afce-224d1f820524\nContent-Type: application/json\n\n{\n   \"groupId\": null,\n   \"callbackUrl\": \"http://my.server.com/callback\",\n   \"subscriber\": \"admin\",\n   \"throttlingTier\": \"Unlimited\",\n   \"applicationId\": \"c30f3a6e-ffa4-4ae7-afce-224d1f820524\",\n   \"description\": \"sample app description\",\n   \"status\": \"APPROVED\",\n   \"name\": \"sampleapp\",\n   \"keys\": []\n}",
+        "x-wso2-request": "POST https://localhost:9443/api/am/store/v0.14/applications\nAuthorization: Bearer ae4eae22-3f65-387b-a171-d37eaa366fa8\n\n{\n    \"throttlingTier\": \"Unlimited\",\n    \"description\": \"sample app description\",\n    \"name\": \"sampleapp\",\n    \"callbackUrl\": \"http://my.server.com/callback\",\n    \"groupId\": \"org1\"\n}",
+        "x-wso2-response": "HTTP/1.1 201 Created\nLocation: https://localhost:9443/api/am/store/v0.14/applications/c30f3a6e-ffa4-4ae7-afce-224d1f820524\nContent-Type: application/json\n\n{\n   \"groupId\": \"org1\",\n   \"callbackUrl\": \"http://my.server.com/callback\",\n   \"subscriber\": \"admin\",\n   \"throttlingTier\": \"Unlimited\",\n   \"applicationId\": \"c30f3a6e-ffa4-4ae7-afce-224d1f820524\",\n   \"description\": \"sample app description\",\n   \"status\": \"APPROVED\",\n   \"name\": \"sampleapp\",\n   \"keys\": []\n}",
         "summary": "Create a new application\n",
         "description": "This operation can be used to create a new application specifying the details of the application in the payload.\n",
         "parameters": [
@@ -761,8 +761,8 @@
       "put": {
         "x-scope": "apim:subscribe",
         "x-wso2-curl": "curl -k -H \"Authorization: Bearer ae4eae22-3f65-387b-a171-d37eaa366fa8\" -H \"Content-Type: application/json\" -X PUT -d @data.json \"https://localhost:9443/api/am/store/v0.14/applications/c30f3a6e-ffa4-4ae7-afce-224d1f820524\"",
-        "x-wso2-request": "PUT https://localhost:9443/api/am/store/v0.14/applications/c30f3a6e-ffa4-4ae7-afce-224d1f820524\nAuthorization: Bearer ae4eae22-3f65-387b-a171-d37eaa366fa8\n\n{\n   \"callbackUrl\": \"\",\n   \"throttlingTier\": \"Bronze\",\n   \"description\": \"sample app description updated\",\n   \"name\": \"sampleapp\"\n}",
-        "x-wso2-response": "HTTP/1.1 200 OK\nContent-Type: application/json\n\n{\n   \"groupId\": null,\n   \"callbackUrl\": \"\",\n   \"subscriber\": \"admin\",\n   \"throttlingTier\": \"Bronze\",\n   \"applicationId\": \"c30f3a6e-ffa4-4ae7-afce-224d1f820524\",\n   \"description\": \"sample app description updated\",\n   \"status\": \"APPROVED\",\n   \"name\": \"sampleapp\",\n   \"keys\": []\n}",
+        "x-wso2-request": "PUT https://localhost:9443/api/am/store/v0.14/applications/c30f3a6e-ffa4-4ae7-afce-224d1f820524\nAuthorization: Bearer ae4eae22-3f65-387b-a171-d37eaa366fa8\n\n{\n   \"callbackUrl\": \"\",\n   \"throttlingTier\": \"Bronze\",\n   \"description\": \"sample app description updated\",\n   \"name\": \"sampleapp\",\n    \"groupId\": \"org1\"\n}",
+        "x-wso2-response": "HTTP/1.1 200 OK\nContent-Type: application/json\n\n{\n   \"groupId\": \"org1\",\n   \"callbackUrl\": \"\",\n   \"subscriber\": \"admin\",\n   \"throttlingTier\": \"Bronze\",\n   \"applicationId\": \"c30f3a6e-ffa4-4ae7-afce-224d1f820524\",\n   \"description\": \"sample app description updated\",\n   \"status\": \"APPROVED\",\n   \"name\": \"sampleapp\",\n   \"keys\": []\n}",
         "summary": "Update an application\n",
         "description": "This operation can be used to update an application. Upon succesfull you will retrieve the updated application as the response.\n",
         "parameters": [
@@ -1274,7 +1274,7 @@
         "x-scope": "apim:subscribe",
         "x-wso2-curl": "curl -k -H \"Authorization: Bearer ae4eae22-3f65-387b-a171-d37eaa366fa8\" \"https://localhost:9443/api/am/store/v0.14/subscriptions?apiId=c43a325c-260b-4302-81cb-768eafaa3aed\"",
         "x-wso2-request": "GET https://localhost:9443/api/am/store/v0.14/subscriptions?apiId=c43a325c-260b-4302-81cb-768eafaa3aed\nAuthorization: Bearer ae4eae22-3f65-387b-a171-d37eaa366fa8\n",
-        "x-wso2-response": "HTTP/1.1 200 OK\nContent-Type: application/json\n\n{\n   \"previous\": \"\",\n   \"list\":    [\n            {\n         \"tier\": \"Bronze\",\n         \"subscriptionId\": \"03b8ef2b-5ae5-41f5-968e-52fa7fbd5d33\",\n         \"apiIdentifier\": \"admin-PhoneVerification-2.0.0\",\n         \"applicationId\": \"896658a0-b4ee-4535-bbfa-806c894a4015\",\n         \"status\": \"UNBLOCKED\"\n      },\n            {\n         \"tier\": \"Bronze\",\n         \"subscriptionId\": \"5ed42650-9f5e-4dd4-94f3-3f09f1b17354\",\n         \"apiIdentifier\": \"admin-PhoneVerification-2.0.0\",\n         \"applicationId\": \"846118a5-3b25-4c22-a983-2d0278936f09\",\n         \"status\": \"UNBLOCKED\"\n      }\n   ],\n   \"count\": 2,\n   \"next\": \"\"\n}",
+        "x-wso2-response": "HTTP/1.1 200 OK\nContent-Type: application/json\n\n{\n   \"previous\": \"\",\n   \"list\":    [\n            {\n         \"tier\": \"Bronze\",\n         \"subscriptionId\": \"03b8ef2b-5ae5-41f5-968e-52fa7fbd5d33\",\n         \"apiIdentifier\": \"admin-PhoneVerification-2.0.0\",\n         \"applicationId\": \"896658a0-b4ee-4535-bbfa-806c894a4015\",\n         \"apiId\": \"896658a0-b4ee-4535-bbfa-806c894a4015\",\n         \"status\": \"UNBLOCKED\"\n      },\n            {\n         \"tier\": \"Bronze\",\n         \"subscriptionId\": \"5ed42650-9f5e-4dd4-94f3-3f09f1b17354\",\n         \"apiIdentifier\": \"admin-PhoneVerification-2.0.0\",\n         \"applicationId\": \"846118a5-3b25-4c22-a983-2d0278936f09\",\n         \"apiId\": \"896658a0-b4ee-4535-bbfa-806c894a4015\",\n         \"status\": \"UNBLOCKED\"\n      }\n   ],\n   \"count\": 2,\n   \"next\": \"\"\n}",
         "summary": "Get all subscriptions\n",
         "description": "This operation can be used to retrieve a list of subscriptions of the user associated with the provided access token. This operation is capable of\n\n1. Retrieving applications which are subscibed to a specific API.\n`GET https://localhost:9443/api/am/store/v0.14/subscriptions?apiId=c43a325c-260b-4302-81cb-768eafaa3aed`\n\n2. Retrieving APIs which are subscribed by a specific application.\n`GET https://localhost:9443/api/am/store/v0.14/subscriptions?applicationId=c43a325c-260b-4302-81cb-768eafaa3aed`\n\n**IMPORTANT:**\n* It is mandatory to provide either **apiId** or **applicationId**.\n",
         "parameters": [
@@ -2523,6 +2523,11 @@
           "type": "string",
           "description": "The UUID of the application",
           "example": "b3ade481-30b0-4b38-9a67-498a40873a6d"
+        },
+        "apiId": {
+          "type": "string",
+          "description": "The UUID of the api",
+          "example": "e1117ada-960f-4745-a071-be834c3deb89"
         },
         "apiIdentifier": {
           "type": "string",

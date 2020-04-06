@@ -19,6 +19,9 @@ public class SubscriptionDTO  {
   
   @NotNull
   private String applicationId = null;
+
+  @NotNull
+  private String apiId = null;
   
   @NotNull
   private String apiIdentifier = null;
@@ -85,6 +88,18 @@ public class SubscriptionDTO  {
     this.applicationId = applicationId;
   }
 
+  /**
+   * The UUID of the api
+   **/
+  @ApiModelProperty(required = true, value = "The UUID of the api")
+  @JsonProperty("apiId")
+  public String getAPIId() {
+    return apiId;
+  }
+  public void setAPIId(String apiId) {
+    this.apiId= apiId;
+  }
+
   
   /**
    * The unique identifier of the API.
@@ -132,6 +147,7 @@ public class SubscriptionDTO  {
     sb.append("  subscriptionId: ").append(subscriptionId).append("\n");
     sb.append("  applicationId: ").append(applicationId).append("\n");
     sb.append("  apiIdentifier: ").append(apiIdentifier).append("\n");
+    sb.append("  apiID: ").append(apiId).append("\n");
     sb.append("  tier: ").append(tier).append("\n");
     sb.append("  status: ").append(status).append("\n");
     sb.append("}\n");
