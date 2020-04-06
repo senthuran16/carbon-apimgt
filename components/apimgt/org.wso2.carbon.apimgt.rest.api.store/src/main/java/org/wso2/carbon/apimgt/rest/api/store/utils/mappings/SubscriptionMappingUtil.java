@@ -18,8 +18,7 @@
 
 package org.wso2.carbon.apimgt.rest.api.store.utils.mappings;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+
 import org.wso2.carbon.apimgt.api.APIConsumer;
 import org.wso2.carbon.apimgt.api.APIManagementException;
 import org.wso2.carbon.apimgt.api.model.APIIdentifier;
@@ -28,26 +27,18 @@ import org.wso2.carbon.apimgt.api.model.SubscribedAPI;
 import org.wso2.carbon.apimgt.api.model.Subscriber;
 import org.wso2.carbon.apimgt.api.model.Tier;
 import org.wso2.carbon.apimgt.api.model.API;
-import org.wso2.carbon.apimgt.impl.dao.constants.SQLConstants;
-import org.wso2.carbon.apimgt.impl.utils.APIMgtDBUtil;
 import org.wso2.carbon.apimgt.impl.utils.APIUtil;
 import org.wso2.carbon.apimgt.rest.api.store.dto.SubscriptionDTO;
 import org.wso2.carbon.apimgt.rest.api.store.dto.SubscriptionListDTO;
-import org.wso2.carbon.apimgt.rest.api.store.impl.SubscriptionsApiServiceImpl;
 import org.wso2.carbon.apimgt.rest.api.util.RestApiConstants;
 import org.wso2.carbon.apimgt.rest.api.util.utils.RestApiUtil;
-
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import static org.wso2.carbon.apimgt.impl.utils.APIUtil.handleException;
+
 
 /** This class is responsible for mapping APIM core subscription related objects into REST API subscription related DTOs 
  *
@@ -59,8 +50,6 @@ public class SubscriptionMappingUtil {
      * @param subscription SubscribedAPI object
      * @return SubscriptionDTO corresponds to SubscribedAPI object
      */
-
-    private static final Log log = LogFactory.getLog(SubscriptionMappingUtil.class);
 
     public static SubscriptionDTO fromSubscriptionToDTO(SubscribedAPI subscription) throws UnsupportedEncodingException, APIManagementException{
         SubscriptionDTO subscriptionDTO = new SubscriptionDTO();
@@ -80,8 +69,6 @@ public class SubscriptionMappingUtil {
         subscriptionDTO.setTier(subscription.getTier().getName());
         return subscriptionDTO;
     }
-
-
 
     /** 
      * Converts a SubscriptionDTO object into SubscribedAPI
