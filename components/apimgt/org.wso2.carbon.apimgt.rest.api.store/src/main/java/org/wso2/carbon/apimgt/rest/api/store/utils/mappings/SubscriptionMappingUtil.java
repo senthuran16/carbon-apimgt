@@ -52,9 +52,11 @@ public class SubscriptionMappingUtil {
         SubscriptionDTO subscriptionDTO = new SubscriptionDTO();
         subscriptionDTO.setSubscriptionId(subscription.getUUID());
         APIIdentifier apiId = subscription.getApiId();
-        APIConsumer apiConsumer = RestApiUtil.getLoggedInUserConsumer();
-        API api = apiConsumer.getLightweightAPI(apiId);
-        subscriptionDTO.setAPIId(api.getUUID());
+        if (apiId != null) {
+            APIConsumer apiConsumer = RestApiUtil.getLoggedInUserConsumer();
+            API api = apiConsumer.getLightweightAPI(apiId);
+            subscriptionDTO.setAPIId(api.getUUID());
+        }
         APIIdentifier apiIdEmailReplacedBack = new APIIdentifier(APIUtil.replaceEmailDomainBack(apiId.getProviderName
                 ()).replace(RestApiConstants.API_ID_DELIMITER, RestApiConstants.URL_ENCODED_API_ID_DELIMITER),
                 URLEncoder.encode(apiId.getApiName(), RestApiConstants.CHARSET).replace(RestApiConstants
