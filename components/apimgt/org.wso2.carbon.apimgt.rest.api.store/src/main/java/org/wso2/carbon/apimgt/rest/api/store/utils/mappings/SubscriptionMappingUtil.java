@@ -38,8 +38,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-
-
 /** This class is responsible for mapping APIM core subscription related objects into REST API subscription related DTOs 
  *
  */
@@ -50,7 +48,6 @@ public class SubscriptionMappingUtil {
      * @param subscription SubscribedAPI object
      * @return SubscriptionDTO corresponds to SubscribedAPI object
      */
-
     public static SubscriptionDTO fromSubscriptionToDTO(SubscribedAPI subscription) throws UnsupportedEncodingException, APIManagementException{
         SubscriptionDTO subscriptionDTO = new SubscriptionDTO();
         subscriptionDTO.setSubscriptionId(subscription.getUUID());
