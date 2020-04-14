@@ -119,7 +119,7 @@ public final class BlockConditionDBUtil {
                     } else if ("APPLICATION".equals(type)) {
                         application.add(value);
                     } else if ("IP".equals(type)) {
-                        ip.add(tenantDomain + ":" + value);
+                        ip.add(value);
                     } else if ("USER".equals(type)) {
                         user.add(value);
                     } else if ("CUSTOM".equals(type)) {
