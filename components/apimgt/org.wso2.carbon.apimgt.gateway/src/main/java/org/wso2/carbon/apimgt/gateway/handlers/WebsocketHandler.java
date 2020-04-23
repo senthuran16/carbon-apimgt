@@ -21,6 +21,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
 import io.netty.channel.CombinedChannelDuplexHandler;
 import io.netty.handler.codec.http.websocketx.CloseWebSocketFrame;
+import io.netty.handler.codec.http.websocketx.PongWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketFrame;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -38,7 +39,7 @@ public class WebsocketHandler extends CombinedChannelDuplexHandler<WebsocketInbo
     @Override
     public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
 
-        if (msg instanceof CloseWebSocketFrame) {
+        if ((msg instanceof CloseWebSocketFrame) || (msg instanceof PongWebSocketFrame)) {
             //if the inbound frame is a closed frame, throttling, analytics will not be published.
             outboundHandler().write(ctx, msg, promise);
 
