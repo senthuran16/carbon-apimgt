@@ -21,6 +21,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.codec.http.DefaultHttpHeaders;
 import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.websocketx.CloseWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketFrame;
 import org.apache.axiom.util.UIDGenerator;
@@ -48,6 +49,7 @@ import org.wso2.carbon.apimgt.usage.publisher.APIMgtUsageDataPublisher;
 import org.wso2.carbon.apimgt.usage.publisher.DataPublisherUtil;
 import org.wso2.carbon.apimgt.usage.publisher.dto.ExecutionTimeDTO;
 import org.wso2.carbon.apimgt.usage.publisher.dto.RequestResponseStreamDTO;
+import org.wso2.carbon.apimgt.usage.publisher.dto.ThrottlePublisherDTO;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.ganalytics.publisher.GoogleAnalyticsData;
 import org.wso2.carbon.utils.multitenancy.MultitenantConstants;
@@ -197,19 +199,26 @@ public class WebsocketInboundHandler extends ChannelInboundHandlerAdapter {
                 throw new APISecurityException(APISecurityConstants.API_AUTH_INVALID_CREDENTIALS,
                         APISecurityConstants.API_AUTH_INVALID_CREDENTIALS_MESSAGE);
             }
+        } else if (msg instanceof CloseWebSocketFrame) {
+            //if the inbound frame is a closed frame, throttling, analytics will not be published.
+            ctx.fireChannelRead(msg);
+
         } else if (msg instanceof WebSocketFrame) {
+
             boolean isThrottledOut = doThrottle(ctx, (WebSocketFrame) msg);
             String clientIp = getRemoteIP(ctx);
 
             if (isThrottledOut) {
                 ctx.fireChannelRead(msg);
+                // publish analytics events if analytics is enabled
+                if (APIUtil.isAnalyticsEnabled()) {
+                    publishRequestEvent(clientIp, isThrottledOut);
+                }
             } else {
                 ctx.writeAndFlush(new TextWebSocketFrame("Websocket frame throttled out"));
-            }
-
-            // publish analytics events if analytics is enabled
-            if (APIUtil.isAnalyticsEnabled()) {
-                publishRequestEvent(infoDTO, clientIp, isThrottledOut);
+                if (log.isDebugEnabled()){
+                    log.debug("Inbound Websocket frame is throttled. " + ctx.channel().toString());
+                }
             }
         }
     }
@@ -346,6 +355,9 @@ public class WebsocketInboundHandler extends ChannelInboundHandlerAdapter {
                     .isThrottled(resourceLevelThrottleKey, subscriptionLevelThrottleKey,
                             applicationLevelThrottleKey);
             if (isThrottled) {
+                if (APIUtil.isAnalyticsEnabled()) {
+                    publishThrottleEvent();
+                }
                 return false;
             }
         } finally {
@@ -372,11 +384,10 @@ public class WebsocketInboundHandler extends ChannelInboundHandlerAdapter {
     /**
      * Publish reuqest event to analytics server
      *
-     * @param infoDTO        API and Application data
      * @param clientIp       client's IP Address
      * @param isThrottledOut request is throttled out or not
      */
-    private void publishRequestEvent(APIKeyValidationInfoDTO infoDTO, String clientIp, boolean isThrottledOut) {
+    public void publishRequestEvent(String clientIp, boolean isThrottledOut) {
         long requestTime = System.currentTimeMillis();
         String useragent = headers.get(HttpHeaders.USER_AGENT);
 
@@ -395,8 +406,8 @@ public class WebsocketInboundHandler extends ChannelInboundHandlerAdapter {
             requestPublisherDTO.setApplicationOwner(appOwner);
             requestPublisherDTO.setUserIp(clientIp);
             requestPublisherDTO.setApplicationConsumerKey(infoDTO.getConsumerKey());
-            //context will always be empty as this method will call only for WebSocketFrame and url is null
-            requestPublisherDTO.setApiContext("-");
+            //api context id needs to be provided, otherwise usage details under APIs is not populated
+            requestPublisherDTO.setApiContext(apiContextUri);
             requestPublisherDTO.setThrottledOut(isThrottledOut);
             requestPublisherDTO.setApiHostname(DataPublisherUtil.getHostAddress());
             requestPublisherDTO.setApiMethod("-");
@@ -435,7 +446,40 @@ public class WebsocketInboundHandler extends ChannelInboundHandlerAdapter {
             // flow should not break if event publishing failed
             log.error("Cannot publish event. " + e.getMessage(), e);
         }
+    }
 
+    /*
+     * Publish throttle events.
+     */
+    private void publishThrottleEvent() {
+
+        long requestTime = System.currentTimeMillis();
+        String correlationID = UUID.randomUUID().toString();
+        try {
+            ThrottlePublisherDTO throttlePublisherDTO = new ThrottlePublisherDTO();
+            throttlePublisherDTO.setKeyType(infoDTO.getType());
+            throttlePublisherDTO.setTenantDomain(tenantDomain);
+            //throttlePublisherDTO.setApplicationConsumerKey(infoDTO.getConsumerKey());
+            throttlePublisherDTO.setApiname(infoDTO.getApiName());
+            throttlePublisherDTO.setVersion(infoDTO.getApiName() + ':' + version);
+            throttlePublisherDTO.setContext(apiContextUri);
+            throttlePublisherDTO.setApiCreator(infoDTO.getApiPublisher());
+            throttlePublisherDTO.setApiCreatorTenantDomain(MultitenantUtils.getTenantDomain(infoDTO.getApiPublisher()));
+            throttlePublisherDTO.setApplicationName(infoDTO.getApplicationName());
+            throttlePublisherDTO.setApplicationId(infoDTO.getApplicationId());
+            throttlePublisherDTO.setSubscriber(infoDTO.getSubscriber());
+            throttlePublisherDTO.setThrottledTime(requestTime);
+            throttlePublisherDTO.setGatewayType(APIMgtGatewayConstants.GATEWAY_TYPE);
+            throttlePublisherDTO.setThrottledOutReason("-");
+            throttlePublisherDTO.setUsername(infoDTO.getEndUserName());
+            throttlePublisherDTO.setCorrelationID(correlationID);
+            throttlePublisherDTO.setHostName(DataPublisherUtil.getHostAddress());
+            throttlePublisherDTO.setAccessToken("-");
+            usageDataPublisher.publishEvent(throttlePublisherDTO);
+        } catch (Exception e) {
+            // flow should not break if event publishing failed
+            log.error("Cannot publish event. " + e.getMessage(), e);
+        }
     }
 
     private String getWebsocketParameters() {
