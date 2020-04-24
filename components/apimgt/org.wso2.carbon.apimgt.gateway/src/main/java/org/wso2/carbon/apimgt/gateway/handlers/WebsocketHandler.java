@@ -44,7 +44,7 @@ public class WebsocketHandler extends CombinedChannelDuplexHandler<WebsocketInbo
             outboundHandler().write(ctx, msg, promise);
 
         } else if (msg instanceof WebSocketFrame) {
-            if (isThrottled(ctx, (WebSocketFrame) msg)) {
+            if (isAllowed(ctx, (WebSocketFrame) msg)) {
                 outboundHandler().write(ctx, msg, promise);
                 // publish analytics events if analytics is enabled
                 if (APIUtil.isAnalyticsEnabled()) {
@@ -61,7 +61,7 @@ public class WebsocketHandler extends CombinedChannelDuplexHandler<WebsocketInbo
         }
     }
 
-    protected boolean isThrottled(ChannelHandlerContext ctx, WebSocketFrame msg) throws APIManagementException {
+    protected boolean isAllowed(ChannelHandlerContext ctx, WebSocketFrame msg) throws APIManagementException {
         return inboundHandler().doThrottle(ctx, msg);
     }
 

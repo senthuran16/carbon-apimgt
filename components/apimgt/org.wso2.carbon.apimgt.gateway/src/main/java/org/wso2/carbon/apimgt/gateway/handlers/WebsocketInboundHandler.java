@@ -196,7 +196,7 @@ public class WebsocketInboundHandler extends ChannelInboundHandlerAdapter {
             } else {
                 ctx.writeAndFlush(new TextWebSocketFrame(APISecurityConstants.API_AUTH_INVALID_CREDENTIALS_MESSAGE));
                 if (log.isDebugEnabled()){
-                    log.debug("Authentication Failure.");
+                    log.debug("Authentication Failure for the websocket context: " + apiContextUri );
                 }
                 throw new APISecurityException(APISecurityConstants.API_AUTH_INVALID_CREDENTIALS,
                         APISecurityConstants.API_AUTH_INVALID_CREDENTIALS_MESSAGE);
@@ -206,9 +206,9 @@ public class WebsocketInboundHandler extends ChannelInboundHandlerAdapter {
             ctx.fireChannelRead(msg);
         } else if (msg instanceof WebSocketFrame) {
 
-            boolean isThrottledOut = doThrottle(ctx, (WebSocketFrame) msg);
+            boolean isAllowed = doThrottle(ctx, (WebSocketFrame) msg);
 
-            if (isThrottledOut) {
+            if (isAllowed) {
                 ctx.fireChannelRead(msg);
                 String clientIp = getRemoteIP(ctx);
                 // publish analytics events if analytics is enabled

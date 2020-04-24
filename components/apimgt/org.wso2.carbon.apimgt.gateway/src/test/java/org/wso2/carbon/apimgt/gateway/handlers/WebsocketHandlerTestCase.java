@@ -88,7 +88,7 @@ public class WebsocketHandlerTestCase {
         Mockito.when(msg.content()).thenReturn(content);
         WebsocketHandler websocketHandler = new WebsocketHandler() {
             @Override
-            protected boolean isThrottled(ChannelHandlerContext ctx, WebSocketFrame msg) throws APIManagementException {
+            protected boolean isAllowed(ChannelHandlerContext ctx, WebSocketFrame msg) throws APIManagementException {
                 return true;
             }
             @Override
