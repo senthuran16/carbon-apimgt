@@ -110,8 +110,7 @@ var log = new Log();
                 username = MultitenantUtils.getTenantAwareUsername(user.username);
             } else {
                 username = "wso2.anonymous.user";
-            }
-            
+            }   
             var registry = carbon.server.osgiService('org.wso2.carbon.registry.core.service.RegistryService').getGovernanceUserRegistry(username, tenantID);
 
             url = swaggerPath + "swagger.json";

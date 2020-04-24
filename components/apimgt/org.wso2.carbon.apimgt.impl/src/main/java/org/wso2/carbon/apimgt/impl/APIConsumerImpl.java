@@ -1423,7 +1423,7 @@ public class APIConsumerImpl extends AbstractAPIManager implements APIConsumer {
             Map<String, String> params = new HashMap<String, String>();
             params.put(RegistryConstants.RESULT_TYPE_PROPERTY_NAME, RegistryConstants.TAG_SUMMARY_RESULT_TYPE);
             //as a tenant, I'm browsing my own Store or I'm browsing a Store of another tenant..
-            if ((isTenantMode && this.tenantDomain==null) || (isTenantMode && isTenantDomainNotMatching(requestedTenant))) {//Tenant based store anonymous mode
+            if ((isTenantMode && this.tenantDomain == null) || (isTenantMode && isTenantDomainNotMatching(requestedTenant))) {//Tenant based store anonymous mode
                 int tenantId = getTenantId(this.requestedTenant);
                 userRegistry = ServiceReferenceHolder.getInstance().getRegistryService().
                         getGovernanceUserRegistry(CarbonConstants.REGISTRY_ANONNYMOUS_USERNAME, tenantId);
@@ -1696,11 +1696,13 @@ public class APIConsumerImpl extends AbstractAPIManager implements APIConsumer {
 
             boolean isTenantMode = (tenantDomain != null);
             //as a tenant, I'm browsing my own Store or I'm browsing a Store of another tenant..
-            if ((isTenantMode && this.tenantDomain == null) || (isTenantMode && isTenantDomainNotMatching(requestedTenant))) {//Tenant based store anonymous mode
+            if ((isTenantMode && this.tenantDomain == null) || (isTenantMode &&
+                    isTenantDomainNotMatching(requestedTenant))) {//Tenant based store anonymous mode
                 tenantId = getTenantId(this.requestedTenant);
                 registry = ServiceReferenceHolder.getInstance().getRegistryService().
                         getGovernanceUserRegistry(CarbonConstants.REGISTRY_ANONNYMOUS_USERNAME, tenantId);
-                PrivilegedCarbonContext.getThreadLocalCarbonContext().setUsername(CarbonConstants.REGISTRY_ANONNYMOUS_USERNAME);
+                PrivilegedCarbonContext.getThreadLocalCarbonContext().
+                        setUsername(CarbonConstants.REGISTRY_ANONNYMOUS_USERNAME);
             }
             GenericArtifactManager artifactManager = APIUtil.getArtifactManager(registry,
                     APIConstants.API_KEY);
@@ -1720,7 +1722,6 @@ public class APIConsumerImpl extends AbstractAPIManager implements APIConsumer {
                     listMap.put(APIConstants.API_OVERVIEW_BUSS_OWNER, new ArrayList<String>() {{
                         add(bizOwner);
                     }});
-
                     GenericArtifact[] genericArtifacts = artifactManager.findGenericArtifacts(listMap);
 
                     if(genericArtifacts != null && genericArtifacts.length > 0){
