@@ -1689,6 +1689,7 @@ public class APIConsumerImpl extends AbstractAPIManager implements APIConsumer {
             Boolean showAllAPIs = APIUtil.isAllowDisplayAPIsWithMultipleStatus();
 
             String providerDomain = MultitenantUtils.getTenantDomain(APIUtil.replaceEmailDomainBack(providerId));
+            this.requestedTenant = providerDomain;
             int tenantId = getTenantId(providerDomain);
             Registry registry = ServiceReferenceHolder.getInstance().
                     getRegistryService().getGovernanceSystemRegistry(tenantId);

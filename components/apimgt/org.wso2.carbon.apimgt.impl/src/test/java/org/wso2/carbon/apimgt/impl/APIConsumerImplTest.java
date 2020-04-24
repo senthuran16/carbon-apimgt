@@ -1432,7 +1432,7 @@ public class APIConsumerImplTest {
     public void testGetPublishedAPIsByProvider1()
             throws APIManagementException, RegistryException, org.wso2.carbon.user.core.UserStoreException {
         APIConsumerImpl apiConsumer = new APIConsumerImplWrapper(userRegistry, apiMgtDAO);
-        String providerId = "1";
+        String providerId = "mike";
         API api = new API(new APIIdentifier(API_PROVIDER, SAMPLE_API_NAME, SAMPLE_API_VERSION));
         API api1 = new API(new APIIdentifier(API_PROVIDER, "pizza_api", "2.0.0"));
         PowerMockito.when(APIUtil.isAllowDisplayMultipleVersions()).thenReturn(true, false);
@@ -1452,9 +1452,10 @@ public class APIConsumerImplTest {
         PowerMockito.mockStatic(GovernanceUtils.class);
         PowerMockito.when(GovernanceUtils.getArtifactPath(Mockito.any(), Mockito.anyString())).thenReturn("/path1");
         PowerMockito.when(RegistryUtils.getAbsolutePath(Mockito.any(), Mockito.anyString())).thenReturn("/path1");
-        Assert.assertNull(apiConsumer.getPublishedAPIsByProvider("1", "test_user", 5, API_PROVIDER, "John"));
+        PowerMockito.when(MultitenantUtils.getTenantDomain("mike")).thenReturn("carbon.super");
+        Assert.assertNull(apiConsumer.getPublishedAPIsByProvider("mike", "test_user", 5, API_PROVIDER, "John"));
         Assert.assertEquals(0,
-                apiConsumer.getPublishedAPIsByProvider("1", "test_user", 5, API_PROVIDER, "John").size());
+                apiConsumer.getPublishedAPIsByProvider("mike", "test_user", 5, API_PROVIDER, "John").size());
         Mockito.when(
                 authorizationManager.isUserAuthorized(Mockito.anyString(), Mockito.anyString(), Mockito.anyString()))
                 .thenReturn(true);
@@ -1464,17 +1465,19 @@ public class APIConsumerImplTest {
         GenericArtifact genericArtifact = Mockito.mock(GenericArtifactImpl.class);
         Mockito.when(genericArtifactManager.getGenericArtifact(Mockito.anyString())).thenReturn(genericArtifact);
         Assert.assertEquals(1,
-                apiConsumer.getPublishedAPIsByProvider("1", "test_user", 1, API_PROVIDER, "John").size());
+                apiConsumer.getPublishedAPIsByProvider("mike", "test_user", 1, API_PROVIDER, "John").size());
         api.setVisibility("specific_to_roles");
         PowerMockito.when(MultitenantUtils.getTenantDomain(Mockito.anyString()))
                 .thenReturn("carbon.super", "carbon.super", SAMPLE_TENANT_DOMAIN_1);
         PowerMockito.when(APIUtil.getAPI((GenericArtifact) Mockito.any())).thenReturn(api, api1);
         Assert.assertEquals(1,
-                apiConsumer.getPublishedAPIsByProvider("1", "test_user", 5, API_PROVIDER, "John").size());
+                apiConsumer.getPublishedAPIsByProvider("mike", "test_user", 5, API_PROVIDER, "John").size());
         Mockito.when(
                 authorizationManager.isRoleAuthorized(Mockito.anyString(), Mockito.anyString(), Mockito.anyString()))
                 .thenReturn(true);
-        Assert.assertEquals(1, apiConsumer.getPublishedAPIsByProvider("1", "", 5, API_PROVIDER, "John").size());
+        PowerMockito.when(MultitenantUtils.getTenantDomain(Mockito.anyString()))
+                .thenReturn("carbon.super", "carbon.super", SAMPLE_TENANT_DOMAIN_1);
+        Assert.assertEquals(1, apiConsumer.getPublishedAPIsByProvider("mike", "", 5, API_PROVIDER, "John").size());
 
     }
 
@@ -1482,7 +1485,7 @@ public class APIConsumerImplTest {
     public void testGetPublishedAPIsByProvider2()
             throws APIManagementException, RegistryException, org.wso2.carbon.user.core.UserStoreException {
         APIConsumerImpl apiConsumer = new APIConsumerImplWrapper(userRegistry, apiMgtDAO);
-        String providerId = "2";
+        String providerId = "john";
         API api = new API(new APIIdentifier(API_PROVIDER, SAMPLE_API_NAME, SAMPLE_API_VERSION));
         API api1 = new API(new APIIdentifier(API_PROVIDER, SAMPLE_API_NAME, "2.0.0"));
         PowerMockito.mockStatic(APIUtil.class);
@@ -1510,25 +1513,26 @@ public class APIConsumerImplTest {
         Association[] associations = new Association[] { association, association2 };
         Mockito.when(userRegistry.getAssociations(Mockito.anyString(), Mockito.anyString()))
                 .thenThrow(RegistryException.class).thenReturn(associations);
+        PowerMockito.when(MultitenantUtils.getTenantDomain("john")).thenReturn("carbon.super");
         try {
-            apiConsumer.getPublishedAPIsByProvider("1", "test_user", 5, API_PROVIDER, "");
+            apiConsumer.getPublishedAPIsByProvider("john", "test_user", 5, API_PROVIDER, "");
             Assert.fail("Registry exception not thrown for error scenario");
         } catch (APIManagementException e) {
             Assert.assertTrue(e.getMessage().contains("Failed to get Published APIs for provider :"));
         }
-        Assert.assertEquals(0, apiConsumer.getPublishedAPIsByProvider("1", "test_user", 2, API_PROVIDER, "").size());
+        Assert.assertEquals(0, apiConsumer.getPublishedAPIsByProvider("john", "test_user", 2, API_PROVIDER, "").size());
         Mockito.when(
                 authorizationManager.isUserAuthorized(Mockito.anyString(), Mockito.anyString(), Mockito.anyString()))
                 .thenThrow(UserStoreException.class).thenThrow(org.wso2.carbon.user.core.UserStoreException.class)
                 .thenReturn(true);
         try {
-            apiConsumer.getPublishedAPIsByProvider("1", "test_user", 5, API_PROVIDER, "");
+            apiConsumer.getPublishedAPIsByProvider("john", "test_user", 5, API_PROVIDER, "");
             Assert.fail("User store exception not thrown for error scenario");
         } catch (APIManagementException e) {
             Assert.assertTrue(e.getMessage().contains("Failed to get Published APIs for provider :"));
         }
         try {
-            apiConsumer.getPublishedAPIsByProvider("1", "test_user", 5, API_PROVIDER, "");
+            apiConsumer.getPublishedAPIsByProvider("john", "test_user", 5, API_PROVIDER, "");
             Assert.fail("User store exception not thrown for error scenario");
         } catch (APIManagementException e) {
             Assert.assertTrue(e.getMessage().contains("Failed to get Published APIs for provider :"));
@@ -1539,20 +1543,22 @@ public class APIConsumerImplTest {
         GenericArtifact genericArtifact = Mockito.mock(GenericArtifactImpl.class);
         Mockito.when(genericArtifact.getLifecycleState(Mockito.anyString())).thenReturn(APIConstants.PUBLISHED);
         Mockito.when(genericArtifactManager.getGenericArtifact(Mockito.anyString())).thenReturn(genericArtifact);
-        Assert.assertEquals(1, apiConsumer.getPublishedAPIsByProvider("1", "test_user", 1, API_PROVIDER, "").size());
+        Assert.assertEquals(1, apiConsumer.getPublishedAPIsByProvider("john", "test_user", 1, API_PROVIDER, "").size());
         PowerMockito.when(APIUtil.getAPI((GenericArtifact) Mockito.any())).thenReturn(api, api1);
-        Assert.assertEquals(1, apiConsumer.getPublishedAPIsByProvider("1", "test_user", 5, API_PROVIDER, "").size());
+        Assert.assertEquals(1, apiConsumer.getPublishedAPIsByProvider("john", "test_user", 5, API_PROVIDER, "").size());
         PowerMockito.when(APIUtil.isAllowDisplayAPIsWithMultipleStatus()).thenReturn(true);
         Set<API> apiSet = apiConsumer.getPublishedAPIsByProvider("1", "test_user", 5, API_PROVIDER, "");
         Assert.assertEquals(1, apiSet.size());
         Assert.assertTrue(apiSet.contains(api1));
 
         String apiOwner = "Smith";
+        PowerMockito.when(MultitenantUtils.getTenantDomain(Mockito.anyString()))
+                .thenReturn("carbon.super", "carbon.super", SAMPLE_TENANT_DOMAIN_1);
         PowerMockito.when(APIUtil.replaceEmailDomainBack(apiOwner)).thenReturn(apiOwner);
         api.setApiOwner("John");
         PowerMockito.when(APIUtil.isAllowDisplayMultipleVersions()).thenReturn(true);
         Assert.assertEquals(1, apiConsumer.getPublishedAPIsByProvider(apiOwner, "test_user", 1, apiOwner, "").size());
-        Assert.assertEquals(0, apiConsumer.getPublishedAPIsByProvider("1", "test_user", 1, apiOwner, "").size());
+        Assert.assertEquals(0, apiConsumer.getPublishedAPIsByProvider("john", "test_user", 1, apiOwner, "").size());
     }
 
     @Test
