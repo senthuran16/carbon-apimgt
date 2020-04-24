@@ -1417,11 +1417,13 @@ public class APIConsumerImpl extends AbstractAPIManager implements APIConsumer {
         boolean isTenantFlowStarted = false;
         String tagsQueryPath = null;
         try {
+            boolean isTenantMode = (tenantDomain != null);
+            this.isTenantModeStoreView = isTenantMode;
         	tagsQueryPath = RegistryConstants.QUERIES_COLLECTION_PATH + "/tag-summary";
             Map<String, String> params = new HashMap<String, String>();
             params.put(RegistryConstants.RESULT_TYPE_PROPERTY_NAME, RegistryConstants.TAG_SUMMARY_RESULT_TYPE);
             //as a tenant, I'm browsing my own Store or I'm browsing a Store of another tenant..
-            if ((this.isTenantModeStoreView && this.tenantDomain==null) || (this.isTenantModeStoreView && isTenantDomainNotMatching(requestedTenantDomain))) {//Tenant based store anonymous mode
+            if ((isTenantMode && this.tenantDomain == null) || (isTenantMode && isTenantDomainNotMatching(requestedTenant))) {//Tenant based store anonymous mode
                 int tenantId = getTenantId(this.requestedTenant);
                 userRegistry = ServiceReferenceHolder.getInstance().getRegistryService().
                         getGovernanceUserRegistry(CarbonConstants.REGISTRY_ANONNYMOUS_USERNAME, tenantId);
@@ -1688,9 +1690,20 @@ public class APIConsumerImpl extends AbstractAPIManager implements APIConsumer {
 
             String providerDomain = MultitenantUtils.getTenantDomain(APIUtil.replaceEmailDomainBack(providerId));
             int tenantId = getTenantId(providerDomain);
-            final Registry registry = ServiceReferenceHolder.getInstance().
+            Registry registry = ServiceReferenceHolder.getInstance().
                     getRegistryService().getGovernanceSystemRegistry(tenantId);
+            PrivilegedCarbonContext.getThreadLocalCarbonContext().setUsername(this.username);
 
+            boolean isTenantMode = (tenantDomain != null);
+            //as a tenant, I'm browsing my own Store or I'm browsing a Store of another tenant..
+            if ((isTenantMode && this.tenantDomain == null) || (isTenantMode &&
+                    isTenantDomainNotMatching(requestedTenant))) {//Tenant based store anonymous mode
+                tenantId = getTenantId(this.requestedTenant);
+                registry = ServiceReferenceHolder.getInstance().getRegistryService().
+                        getGovernanceUserRegistry(CarbonConstants.REGISTRY_ANONNYMOUS_USERNAME, tenantId);
+                PrivilegedCarbonContext.getThreadLocalCarbonContext().
+                        setUsername(CarbonConstants.REGISTRY_ANONNYMOUS_USERNAME);
+            }
             GenericArtifactManager artifactManager = APIUtil.getArtifactManager(registry,
                     APIConstants.API_KEY);
             if (artifactManager == null) {
@@ -1709,7 +1722,6 @@ public class APIConsumerImpl extends AbstractAPIManager implements APIConsumer {
                     listMap.put(APIConstants.API_OVERVIEW_BUSS_OWNER, new ArrayList<String>() {{
                         add(bizOwner);
                     }});
-                    PrivilegedCarbonContext.getThreadLocalCarbonContext().setUsername(this.username);
                     GenericArtifact[] genericArtifacts = artifactManager.findGenericArtifacts(listMap);
 
                     if(genericArtifacts != null && genericArtifacts.length > 0){
