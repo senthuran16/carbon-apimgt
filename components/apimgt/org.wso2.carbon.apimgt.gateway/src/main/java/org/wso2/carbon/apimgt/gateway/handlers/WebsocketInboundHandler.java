@@ -139,7 +139,6 @@ public class WebsocketInboundHandler extends ChannelInboundHandlerAdapter {
     @SuppressWarnings("unchecked")
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-
         //check if the request is a handshake
         if (msg instanceof FullHttpRequest) {
             FullHttpRequest req = (FullHttpRequest) msg;
@@ -184,7 +183,6 @@ public class WebsocketInboundHandler extends ChannelInboundHandlerAdapter {
                     ((FullHttpRequest) msg).headers().set(jwtHeader, token);
                 }
                 ctx.fireChannelRead(msg);
-
                 // publish google analytics data
                 GoogleAnalyticsData.DataBuilder gaData = new GoogleAnalyticsData.DataBuilder(null, null, null, null)
                         .setDocumentPath(uri)
@@ -198,7 +196,7 @@ public class WebsocketInboundHandler extends ChannelInboundHandlerAdapter {
             } else {
                 ctx.writeAndFlush(new TextWebSocketFrame(APISecurityConstants.API_AUTH_INVALID_CREDENTIALS_MESSAGE));
                 if (log.isDebugEnabled()){
-                    log.debug("Authentication Failure." + ctx.channel().toString());
+                    log.debug("Authentication Failure.");
                 }
                 throw new APISecurityException(APISecurityConstants.API_AUTH_INVALID_CREDENTIALS,
                         APISecurityConstants.API_AUTH_INVALID_CREDENTIALS_MESSAGE);
@@ -209,13 +207,13 @@ public class WebsocketInboundHandler extends ChannelInboundHandlerAdapter {
         } else if (msg instanceof WebSocketFrame) {
 
             boolean isThrottledOut = doThrottle(ctx, (WebSocketFrame) msg);
-            String clientIp = getRemoteIP(ctx);
 
             if (isThrottledOut) {
                 ctx.fireChannelRead(msg);
+                String clientIp = getRemoteIP(ctx);
                 // publish analytics events if analytics is enabled
                 if (APIUtil.isAnalyticsEnabled()) {
-                    publishRequestEvent(clientIp, isThrottledOut);
+                    publishRequestEvent(clientIp, true);
                 }
             } else {
                 ctx.writeAndFlush(new TextWebSocketFrame("Websocket frame throttled out"));

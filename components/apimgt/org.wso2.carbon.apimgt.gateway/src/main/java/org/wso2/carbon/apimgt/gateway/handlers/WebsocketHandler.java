@@ -46,9 +46,9 @@ public class WebsocketHandler extends CombinedChannelDuplexHandler<WebsocketInbo
         } else if (msg instanceof WebSocketFrame) {
             if (isThrottled(ctx, (WebSocketFrame) msg)) {
                 outboundHandler().write(ctx, msg, promise);
-                String clientIp = inboundHandler().getRemoteIP(ctx);
                 // publish analytics events if analytics is enabled
                 if (APIUtil.isAnalyticsEnabled()) {
+                    String clientIp = getClientIp(ctx);
                     inboundHandler().publishRequestEvent(clientIp, true);
                 }
             } else {
@@ -63,5 +63,9 @@ public class WebsocketHandler extends CombinedChannelDuplexHandler<WebsocketInbo
 
     protected boolean isThrottled(ChannelHandlerContext ctx, WebSocketFrame msg) throws APIManagementException {
         return inboundHandler().doThrottle(ctx, msg);
+    }
+
+    protected String getClientIp(ChannelHandlerContext ctx) {
+        return inboundHandler().getRemoteIP(ctx);
     }
 }
