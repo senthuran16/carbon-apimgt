@@ -102,9 +102,16 @@ var log = new Log();
             var apiUtil = new APIUtil();
             var swaggerPath = apiUtil.getOpenAPIDefinitionFilePath(apiNameVal, apiVersionVal, providerVal);
             var user = jagg.getUser();
-            if (user && user.username) {
-                var MultitenantUtils = Packages.org.wso2.carbon.utils.multitenancy.MultitenantUtils;
-                username = MultitenantUtils.getTenantAwareUsername(user.username);
+            if (user && user.username ) {
+                var userTenantDomain = MultitenantUtils.getTenantDomain(APIUtil.replaceEmailDomainBack(user.username));
+                if (userTenantDomain == tenantDomain) {
+                    var MultitenantUtils = Packages.org.wso2.carbon.utils.multitenancy.MultitenantUtils;
+                    username = MultitenantUtils.getTenantAwareUsername(user.username);
+                } else {
+                    username = "wso2.anonymous.user";
+                }
+                log.debug("user tenantDomain : " + userTenantDomain);
+                log.debug("store tenantDomain : " + tenantDomain);
             } else {
                 username = "wso2.anonymous.user";
             }
