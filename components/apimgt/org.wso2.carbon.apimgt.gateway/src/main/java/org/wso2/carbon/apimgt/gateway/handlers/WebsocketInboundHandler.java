@@ -460,7 +460,6 @@ public class WebsocketInboundHandler extends ChannelInboundHandlerAdapter {
             ThrottlePublisherDTO throttlePublisherDTO = new ThrottlePublisherDTO();
             throttlePublisherDTO.setKeyType(infoDTO.getType());
             throttlePublisherDTO.setTenantDomain(tenantDomain);
-            //throttlePublisherDTO.setApplicationConsumerKey(infoDTO.getConsumerKey());
             throttlePublisherDTO.setApiname(infoDTO.getApiName());
             throttlePublisherDTO.setVersion(infoDTO.getApiName() + ':' + version);
             throttlePublisherDTO.setContext(apiContextUri);
