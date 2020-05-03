@@ -217,7 +217,7 @@ public class WebsocketInboundHandler extends ChannelInboundHandlerAdapter {
                 }
             } else {
                 ctx.writeAndFlush(new TextWebSocketFrame("Websocket frame throttled out"));
-                if (log.isDebugEnabled()){
+                if (log.isDebugEnabled()) {
                     log.debug("Inbound Websocket frame is throttled. " + ctx.channel().toString());
                 }
             }
