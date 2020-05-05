@@ -531,7 +531,9 @@ public class APISynchronizer implements OnPremiseGatewayInitListener {
                 // synced out of the APIs that have been updated.
                 if (StringUtils.isNotBlank(label)) {
                     for (LabelDTO labelDTO : apiDTO.getLabels()) {
-                        if (label.equals(labelDTO.getName())) {
+                        //Trimming labels to remove trailing white spaces and prevent
+                        //label mismatch during API synchronization
+                        if (label.trim().equals(labelDTO.getName().trim())) {
                             apiDtoList.add(apiDTO);
                             break;
                         }
