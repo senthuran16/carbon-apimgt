@@ -38,9 +38,13 @@ public class ConfigDTO {
 
     private String usage_upload_task_cron;
 
+    private long usage_upload_task_period;
+
     private String url_usage_upload_service;
 
     private String throttling_synchronization_task_cron;
+
+    private long throttling_synchronization_task_period;
 
     private boolean api_update_task_enabled;
 
@@ -74,6 +78,8 @@ public class ConfigDTO {
 
     private String api_update_task_cron;
 
+    private long api_update_task_period;
+
     private String status_ping_api_url;
 
     private boolean advanced_throttling_header_conditions_enabled;
@@ -81,6 +87,8 @@ public class ConfigDTO {
     private ArrayList multi_tenant_users;
 
     private String usage_upload_cleanup_task_cron;
+
+    private long usage_upload_cleanup_task_period;
 
     private String url_api_information_service;
 
@@ -565,5 +573,38 @@ public class ConfigDTO {
     public void setUsage_upload_publish_task_enabled(boolean usage_upload_publish_task_enabled) {
 
         this.usage_upload_publish_task_enabled = usage_upload_publish_task_enabled;
+    }
+
+    public void setApi_update_task_period(long api_update_task_period) {
+        this.api_update_task_period = api_update_task_period;
+    }
+
+    public long getApi_update_task_period() {
+        return api_update_task_period;
+    }
+
+    public long getThrottling_synchronization_task_period() {
+        return throttling_synchronization_task_period;
+    }
+
+    public void setThrottling_synchronization_task_period(long throttling_synchronization_task_period) {
+        this.throttling_synchronization_task_period = throttling_synchronization_task_period;
+    }
+
+
+    public long getUsage_upload_task_period() {
+        return usage_upload_task_period;
+    }
+
+    public void setUsage_upload_task_period(long usage_upload_task_period) {
+        this.usage_upload_task_period = usage_upload_task_period;
+    }
+
+    public long getUsage_upload_cleanup_task_period() {
+        return usage_upload_cleanup_task_period;
+    }
+
+    public void setUsage_upload_cleanup_task_period(long usage_upload_cleanup_task_period) {
+        this.usage_upload_cleanup_task_period = usage_upload_cleanup_task_period;
     }
 }
