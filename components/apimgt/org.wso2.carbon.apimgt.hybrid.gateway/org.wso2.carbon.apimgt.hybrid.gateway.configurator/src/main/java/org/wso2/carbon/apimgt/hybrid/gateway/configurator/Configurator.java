@@ -108,9 +108,6 @@ public class Configurator {
             //Configure api-manager.xml
             Properties configToolProperties = readPropertiesFromFile(configToolPropertyFilePath);
             setAPIMConfigurations(configToolProperties, carbonHome, gatewayConfigs);
-            //Configure registry.xml
-            RegistryXmlConfigurator registryXmlConfigurator = new RegistryXmlConfigurator();
-            registryXmlConfigurator.configure(carbonConfigDirPath, gatewayConfigs);
             //Configure log4j.properties
             Log4JConfigurator log4JConfigurator = new Log4JConfigurator();
             log4JConfigurator.configure(carbonConfigDirPath);

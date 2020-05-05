@@ -52,6 +52,7 @@ import org.wso2.carbon.apimgt.hybrid.gateway.throttling.synchronizer.dto.Subscri
 import org.wso2.carbon.apimgt.hybrid.gateway.throttling.synchronizer.dto.SubscriptionThrottlePolicyListDTO;
 import org.wso2.carbon.apimgt.hybrid.gateway.throttling.synchronizer.exception.ThrottlingSynchronizerException;
 import org.wso2.carbon.apimgt.hybrid.gateway.throttling.synchronizer.internal.ServiceReferenceHolder;
+import org.wso2.carbon.apimgt.hybrid.gateway.throttling.synchronizer.tasks.ThrottlingSyncScheduler;
 import org.wso2.carbon.apimgt.hybrid.gateway.throttling.synchronizer.util.ThrottlingConstants;
 import org.wso2.carbon.apimgt.hybrid.gateway.throttling.synchronizer.util.mapping.throttling.AdvancedThrottlePolicyMappingUtil;
 import org.wso2.carbon.apimgt.hybrid.gateway.throttling.synchronizer.util.mapping.throttling.ApplicationThrottlePolicyMappingUtil;
@@ -89,6 +90,7 @@ public class ThrottlingSynchronizer implements OnPremiseGatewayInitListener {
     @Override
     public void completedInitialization() {
         initSynchronization();
+        ThrottlingSyncScheduler.schedule();
     }
 
     /**

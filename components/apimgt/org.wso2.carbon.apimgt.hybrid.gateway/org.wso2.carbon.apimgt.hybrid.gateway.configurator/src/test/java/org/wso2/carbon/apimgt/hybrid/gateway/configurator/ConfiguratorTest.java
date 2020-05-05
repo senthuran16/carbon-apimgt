@@ -92,14 +92,12 @@ public class ConfiguratorTest {
     public void main() throws Exception {
         String carbonHome = System.getProperty(ConfigConstants.CARBON_HOME);
         setAPIMConfigurations();
-        RegistryXmlConfigurator registryXmlConfigurator = new RegistryXmlConfigurator();
         TransformerIdentityImpl transformerIdentity = PowerMockito.mock(TransformerIdentityImpl.class);
         TransformerFactory transformerFactory = PowerMockito.mock(TransformerFactory.class);
         PowerMockito.mockStatic(TransformerFactory.class);
         PowerMockito.when(TransformerFactory.newInstance()).thenReturn(transformerFactory);
         PowerMockito.when(transformerFactory.newTransformer()).thenReturn(transformerIdentity);
         PowerMockito.doNothing().when(transformerIdentity).transform(any(DOMSource.class), any(StreamResult.class));
-        registryXmlConfigurator.configure(carbonConfigDirPath, gatewayConfigs);
         Log4JConfigurator log4JConfigurator = new Log4JConfigurator();
         log4JConfigurator.configure(carbonConfigDirPath);
         Configurator.writeConfiguredLock(carbonHome);

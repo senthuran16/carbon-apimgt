@@ -21,7 +21,6 @@ package org.wso2.carbon.apimgt.hybrid.gateway.usage.publisher.tasks;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.apimgt.hybrid.gateway.usage.publisher.util.MicroGatewayAPIUsageConstants;
-import org.wso2.carbon.ntask.core.Task;
 import org.wso2.carbon.utils.CarbonUtils;
 
 import java.io.File;
@@ -34,24 +33,33 @@ import java.util.Map;
 /**
  * Task for cleaning up old usage files
  */
-public class APIUsageFileCleanupTask implements Task {
+public class APIUsageFileCleanupTask implements Runnable {
 
     private static final Log log = LogFactory.getLog(APIUsageFileCleanupTask.class);
-    private Map<String, String> properties;
+    static Map<String, String> properties;
 
     private DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
 
-    @Override
-    public void setProperties(Map<String, String> map) {
-        this.properties = map;
+    /**
+     * Return the {@link Date} up to which files should be retained
+     *
+     * @param fileRetentionDays No of days to retain the files
+     * @return {@link Date} up to which files should be retained
+     */
+    private Date getLastKeptDate(int fileRetentionDays) {
+        Date myDate = new Date(System.currentTimeMillis());
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(myDate);
+        cal.add(Calendar.DATE, -fileRetentionDays);
+        return cal.getTime();
     }
 
     @Override
-    public void init() {
-    }
-
-    @Override
-    public void execute() {
+    public void run() {
+        //Setting thread name
+        if(!Thread.currentThread().getName().equals("APIUsageFileCleanupTask")){
+            Thread.currentThread().setName("APIUsageFileCleanupTask");
+        }
         String fileRetentionDays = properties.get("fileRetentionDays");
         if (fileRetentionDays != null && !fileRetentionDays.isEmpty()) {
             Date lastKeptDate = getLastKeptDate(Integer.parseInt(fileRetentionDays));
@@ -83,19 +91,4 @@ public class APIUsageFileCleanupTask implements Task {
             }
         }
     }
-
-    /**
-     * Return the {@link Date} up to which files should be retained
-     *
-     * @param fileRetentionDays No of days to retain the files
-     * @return {@link Date} up to which files should be retained
-     */
-    private Date getLastKeptDate(int fileRetentionDays) {
-        Date myDate = new Date(System.currentTimeMillis());
-        Calendar cal = Calendar.getInstance();
-        cal.setTime(myDate);
-        cal.add(Calendar.DATE, -fileRetentionDays);
-        return cal.getTime();
-    }
-
 }

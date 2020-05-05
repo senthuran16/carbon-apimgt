@@ -21,42 +21,34 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.apimgt.hybrid.gateway.api.synchronizer.APISynchronizer;
 import org.wso2.carbon.apimgt.hybrid.gateway.api.synchronizer.exceptions.APISynchronizationException;
-import org.wso2.carbon.ntask.core.Task;
-
-import java.util.Map;
 
 /**
  * Class which performs the task of periodically checking for API Publish/Re-publish events and
  * updating the APIs accordingly
  */
-public class APISynchronizationTask implements Task {
+public class APISynchronizationTask implements Runnable{
 
     private static final Log log = LogFactory.getLog(APISynchronizationTask.class);
 
     @Override
-    public void setProperties(Map<String, String> map) {
-    }
-
-    @Override
-    public void init() {
-    }
-
-    @Override
-    public void execute() {
-        if (log.isDebugEnabled()) {
-            log.info("Starting API synchronization task.");
+    public void run() {
+        //Setting Thread Name
+        if(!Thread.currentThread().getName().equals("APISynchronizationTask")){
+            Thread.currentThread().setName("APISynchronizationTask");
         }
+        log.info("Starting API synchronization task.");
+//        if (log.isDebugEnabled()) {
+//            log.info("Starting API synchronization task.");
+//        }
         try {
             APISynchronizer synchronizer = new APISynchronizer();
             synchronizer.updateApis();
-            if (log.isDebugEnabled()) {
-                log.info("API synchronization task completed.");
-            }
+            log.info("API synchronization task completed.");
+//            if (log.isDebugEnabled()) {
+//                log.info("API synchronization task completed.");
+//            }
         } catch (APISynchronizationException e) {
             log.error("Failed to synchronize updated APIs.", e);
-        }
-        if (log.isDebugEnabled()) {
-            log.info("API synchronization task completed.");
         }
     }
 }

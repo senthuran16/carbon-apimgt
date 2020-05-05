@@ -19,25 +19,18 @@
 package org.wso2.carbon.apimgt.hybrid.gateway.throttling.synchronizer.tasks;
 
 import org.wso2.carbon.apimgt.hybrid.gateway.throttling.synchronizer.ThrottlingSynchronizer;
-import org.wso2.carbon.ntask.core.Task;
-
-import java.util.Map;
 
 /**
  * Task for Synchronizing throttling tiers
  */
-public class ThrottlingSyncTask implements Task {
+public class ThrottlingSyncTask implements Runnable{
 
     @Override
-    public void setProperties(Map<String, String> map) {
-    }
-
-    @Override
-    public void init() {
-    }
-
-    @Override
-    public void execute() {
+    public void run() {
+        //Setting thread name
+        if(!Thread.currentThread().getName().equals("ThrottlingSynchronizerTask")){
+            Thread.currentThread().setName("ThrottlingSynchronizerTask");
+        }
         ThrottlingSynchronizer synchronizer = new ThrottlingSynchronizer();
         synchronizer.initSynchronization();
     }

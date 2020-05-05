@@ -44,6 +44,7 @@ import org.wso2.carbon.apimgt.hybrid.gateway.api.synchronizer.dto.MediationListD
 import org.wso2.carbon.apimgt.hybrid.gateway.api.synchronizer.dto.SequenceDTO;
 import org.wso2.carbon.apimgt.hybrid.gateway.api.synchronizer.exceptions.APISynchronizationException;
 import org.wso2.carbon.apimgt.hybrid.gateway.api.synchronizer.internal.ServiceDataHolder;
+import org.wso2.carbon.apimgt.hybrid.gateway.api.synchronizer.tasks.APISynchronizationScheduler;
 import org.wso2.carbon.apimgt.hybrid.gateway.api.synchronizer.util.APIMappingUtil;
 import org.wso2.carbon.apimgt.hybrid.gateway.api.synchronizer.util.APISynchronizationConstants;
 import org.wso2.carbon.apimgt.hybrid.gateway.common.OnPremiseGatewayInitListener;
@@ -78,12 +79,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import javax.xml.namespace.QName;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -103,6 +99,7 @@ public class APISynchronizer implements OnPremiseGatewayInitListener {
     private String apiViewUrl = APISynchronizationConstants.EMPTY_STRING;
     private String apiViewAdminUrl = APISynchronizationConstants.EMPTY_STRING;
     private String mediationPolicyUrl = APISynchronizationConstants.EMPTY_STRING;
+    private static final String tenantDir = CarbonUtils.getCarbonTenantsDirPath();
     /** Label configured for this gateway (if configured) */
     private String label;
 
@@ -110,6 +107,7 @@ public class APISynchronizer implements OnPremiseGatewayInitListener {
     public void completedInitialization() {
         try {
             synchronizeApis();
+            APISynchronizationScheduler.schedule();
         } catch (APISynchronizationException e) {
             log.error("API Synchronization failed.", e);
         }
