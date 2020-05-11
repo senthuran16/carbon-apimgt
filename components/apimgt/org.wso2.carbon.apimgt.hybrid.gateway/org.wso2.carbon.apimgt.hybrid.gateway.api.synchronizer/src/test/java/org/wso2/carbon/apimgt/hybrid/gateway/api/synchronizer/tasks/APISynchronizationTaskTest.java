@@ -195,6 +195,6 @@ public class APISynchronizationTaskTest {
         Mockito.when(apimConfig.getFirstProperty(Constants.KEY_VALIDATOR_PASSWORD))
                 .thenReturn(Constants.PASSWORD);
         APISynchronizationTask task = new APISynchronizationTask();
-        task.execute();
+        task.run();
     }
 }

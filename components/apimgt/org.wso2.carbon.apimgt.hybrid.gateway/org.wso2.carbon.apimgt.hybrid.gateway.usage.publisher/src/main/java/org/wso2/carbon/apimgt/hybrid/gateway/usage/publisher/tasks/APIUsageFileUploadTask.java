@@ -52,7 +52,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
-import java.util.Map;
 
 /**
  * Task for uploading the usage file
@@ -65,10 +64,6 @@ public class APIUsageFileUploadTask implements Runnable {
 
     @Override
     public void run() {
-        //Setting thread name
-        if(!Thread.currentThread().getName().equals("APIUsageFileUploadTask")){
-            Thread.currentThread().setName("APIUsageFileUploadTask");
-        }
         log.info("Running API Usage File Upload Task.");
         try {
             configDTO = ConfigManager.getConfigurationDTO();

@@ -44,29 +44,12 @@ public class APIUsageFileCleanupTaskTest {
     }
 
     @Test
-    public void setProperties() throws Exception {
-        Map<String, String> map = new HashMap<>();
-        map.put("fileRetentionDays", "20");
-        APIUsageFileCleanupTask task = new APIUsageFileCleanupTask();
-        task.setProperties(map);
-    }
-
-    @Test
-    public void init() throws Exception {
-        APIUsageFileCleanupTask task = new APIUsageFileCleanupTask();
-        task.init();
-    }
-
-    @Test
     public void execute() throws Exception {
         String carbonHome = System.getProperty(Constants.CARBON_HOME);
         PowerMockito.mockStatic(CarbonUtils.class);
         PowerMockito.when(CarbonUtils.getCarbonHome()).thenReturn(carbonHome);
-        APIUsageFileCleanupTask task = new APIUsageFileCleanupTask();
-        Map<String, String> map = new HashMap<>();
-        map.put("fileRetentionDays", "20");
-        task.setProperties(map);
-        task.execute();
+        APIUsageFileCleanupTask task = new APIUsageFileCleanupTask("20");
+        task.run();
     }
 
 }

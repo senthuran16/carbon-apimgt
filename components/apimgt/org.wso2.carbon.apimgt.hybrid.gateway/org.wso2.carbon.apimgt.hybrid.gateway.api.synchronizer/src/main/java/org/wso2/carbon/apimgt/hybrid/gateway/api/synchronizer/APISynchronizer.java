@@ -81,8 +81,12 @@ import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.Charset;
-import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import javax.xml.namespace.QName;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -102,7 +106,6 @@ public class APISynchronizer implements OnPremiseGatewayInitListener {
     private String apiViewUrl = APISynchronizationConstants.EMPTY_STRING;
     private String apiViewAdminUrl = APISynchronizationConstants.EMPTY_STRING;
     private String mediationPolicyUrl = APISynchronizationConstants.EMPTY_STRING;
-    private static final String tenantDir = CarbonUtils.getCarbonTenantsDirPath();
     /** Label configured for this gateway (if configured) */
     private String label;
 
@@ -537,7 +540,7 @@ public class APISynchronizer implements OnPremiseGatewayInitListener {
                     for (LabelDTO labelDTO : apiDTO.getLabels()) {
                         //Trimming labels to remove trailing white spaces and prevent
                         //label mismatch during API synchronization
-                        if (label.trim().equals(labelDTO.getName().trim())) {
+                        if (StringUtils.equals(label.trim(), labelDTO.getName().trim())) {
                             apiDtoList.add(apiDTO);
                             break;
                         }
@@ -900,92 +903,94 @@ public class APISynchronizer implements OnPremiseGatewayInitListener {
      * Method to create health check API
      */
     private void createHealthCheckAPI() throws APISynchronizationException {
-        String sourceApiFilePath = "repository/resources/apim-synapse-config/_health-check-api_.xml";
+
+        String sourceApiFilePath = CarbonUtils.getCarbonHome() + File.separator +
+                APISynchronizationConstants.HEALTH_CHECK_API_PATH;
         try {
             boolean isMultiTenantEnabled = ConfigManager.getConfigurationDTO().isMulti_tenant_enabled();
-            if(isMultiTenantEnabled){
-                log.info("Multi Tenant enabled for the gateway.");
+            if (isMultiTenantEnabled) {
                 Map<String, String> multiTenantUserMap = MicroGatewayCommonUtil.getMultiTenantUserMap();
                 Set<String> tenantUsernameSet = multiTenantUserMap.keySet();
-                String[] userEmail = new String[2];
-                ArrayList<String> tenants = new ArrayList<String>();
                 for (String tenantUsername : tenantUsernameSet) {
-                    String[] tenantUsernameArray = tenantUsername.split("@");
-                    userEmail[0] =tenantUsernameArray[0];
-                    userEmail[1] =tenantUsernameArray[1];
-                    tenants.add(tenantUsernameArray[2]);
-                }
-                //Sorting tenants in alphabetical order
-                Collections.sort(tenants,String.CASE_INSENSITIVE_ORDER );
-                int tenantFolderNo = 1;
-                for(String tenantDomain: tenants){
-                    String tenantApisPath = Paths.get(tenantDir,Integer.toString(tenantFolderNo), "synapse-configs", "default", "api").toString();
-                    String healthCheckFileName = userEmail[0]+"-AT-"+userEmail[1]+
-                            "-AT-"+tenantDomain+"__wso2_health_check_API_v1.0.0.xml";
-                    File destFile1 = new File(tenantApisPath+"/"+healthCheckFileName);
-                    File sourceFile1 = new File(sourceApiFilePath);
-                    if(!destFile1.exists()){
-                        log.info("Creating health check API");
-                        String apiName = userEmail[0]+"-AT-"+userEmail[1]+
-                                "-AT-"+tenantDomain+"__wso2_health_check_API";
-                        modifyXmlAttribute(sourceApiFilePath, apiName, tenantDomain);
-                        try{
-                            FileUtils.copyFile(sourceFile1, destFile1);
-                            log.info("Health check API successfully created at "+tenantApisPath+"/"+healthCheckFileName);
+                    String tenantDomain = MultitenantUtils.getTenantDomain(tenantUsername);
+                    try {
+                        int tenantId = ServiceDataHolder.getInstance().getRealmService().getTenantManager()
+                                .getTenantId(tenantDomain);
+                        String tenantApisPath = CarbonUtils.getCarbonTenantsDirPath() + File.separator + tenantId +
+                                File.separator + "synapse-configs" + File.separator + "default" + File.separator +
+                                "api";
+                        String healthCheckFileName = tenantUsername.replace("@", "-AT-") +
+                                APISynchronizationConstants.HEALTH_CHECK_API_FILE_NAME;
+                        File destFile = new File(tenantApisPath + File.separator + healthCheckFileName);
+                        File sourceFile = new File(sourceApiFilePath);
+                        if (!destFile.exists()) {
+                            String apiName = tenantUsername.replace("@", "-AT-") +
+                                    APISynchronizationConstants.HEALTH_CHECK_API_NAME;
+                            modifyXmlAttribute(sourceApiFilePath, apiName, tenantDomain);
+                            try {
+                                FileUtils.copyFile(sourceFile, destFile);
+                                log.info("Health check API successfully created for tenant: " + tenantDomain);
+                            } catch (IOException e) {
+                                log.error("Error while copying health check API to destination folder of tenant:"
+                                        + tenantDomain, e);
+                            }
+                        } else {
+                            log.info("Health check API already exists for tenant:" + tenantDomain);
                         }
-                        catch(IOException e){
-                            log.error("Error while copying health check API to destination folder", e);
-                        }
-                    } else{
-                        log.info("Health check API already exists");
+                    } catch (UserStoreException e) {
+                        log.error("Error while getting tenant id of tenant" + tenantDomain, e);
                     }
-                    tenantFolderNo++;
-                }
 
-            } else{
+                }
+            } else {
                 APIManagerConfiguration config = ServiceDataHolder.getInstance().
                         getAPIManagerConfigurationService().getAPIManagerConfiguration();
                 String tenantUsername = config.getFirstProperty(APIConstants.API_KEY_VALIDATOR_USERNAME);
                 String tenantDomain = MultitenantUtils.getTenantDomain(tenantUsername);
-                String tenantApisPath = Paths.get(tenantDir,"1", "synapse-configs", "default", "api").toString();
-                String[] usernameArray = tenantUsername.split("@");
-                String healthCheckFileName = usernameArray[0]+"-AT-"+usernameArray[1]+
-                        "-AT-"+tenantDomain+"__wso2_health_check_API_v1.0.0.xml";
-                File destFile1 = new File(tenantApisPath+"/"+healthCheckFileName);
-                File sourceFile1 = new File(sourceApiFilePath);
-                if(!destFile1.exists()){
-                    log.info("Creating health check API");
-                    String apiName = usernameArray[0]+"-AT-"+usernameArray[1]+
-                            "-AT-"+tenantDomain+"__wso2_health_check_API";
-                    modifyXmlAttribute(sourceApiFilePath, apiName, tenantDomain);
-                    try{
-                        FileUtils.copyFile(sourceFile1, destFile1);
-                        log.info("Health check API successfully created at "+tenantApisPath+"/"+healthCheckFileName);
+                try {
+                    int tenantId = ServiceDataHolder.getInstance().getRealmService().getTenantManager()
+                            .getTenantId(tenantDomain);
+                    String tenantApisPath = CarbonUtils.getCarbonTenantsDirPath() + File.separator + tenantId +
+                            File.separator + "synapse-configs" + File.separator + "default" + File.separator + "api";
+                    String healthCheckFileName = tenantUsername.replace("@", "-AT-") +
+                            APISynchronizationConstants.HEALTH_CHECK_API_FILE_NAME;
+                    File destFile = new File(tenantApisPath + File.separator + healthCheckFileName);
+                    File sourceFile = new File(sourceApiFilePath);
+                    if (!destFile.exists()) {
+                        String apiName = tenantUsername.replace("@", "-AT-") +
+                                APISynchronizationConstants.HEALTH_CHECK_API_NAME;
+                        modifyXmlAttribute(sourceApiFilePath, apiName, tenantDomain);
+                        try {
+                            FileUtils.copyFile(sourceFile, destFile);
+                            log.info("Health check API successfully created for tenant: " + tenantDomain);
+                        } catch (IOException e) {
+                            log.error("Error while copying health check API to destination folder of tenant:"
+                                    + tenantDomain, e);
+                        }
+                    } else {
+                        log.info("Health check API already exists for tenant:" + tenantDomain);
                     }
-                    catch(IOException e){
-                        log.error("Error while copying health check API to destination folder", e);
-                    }
-                } else{
-                    log.info("Health check API already exists");
+                } catch (UserStoreException e) {
+                    log.error("Error while getting tenant id of tenant:" + tenantDomain, e);
                 }
 
             }
-        } catch(OnPremiseGatewayException e){
+        } catch (OnPremiseGatewayException e) {
             throw new APISynchronizationException(
                     "An error occurred while retrieving micro gateway configuration.", e);
         }
-
     }
 
     /**
      * Method to update health-check-api.xml with tenant details
-     * @param filePath File path to the _health-check-api_.xml template file
-     * @param apiName API name of the health check API to be created
+     *
+     * @param filePath     File path to the _health-check-api_.xml template file
+     * @param apiName      API name of the health check API to be created
      * @param tenantDomain Current Tenant domain
      */
+    private void modifyXmlAttribute(String filePath, String apiName, String tenantDomain) {
 
-    private void modifyXmlAttribute(String filePath, String apiName, String tenantDomain){
-        try{
+        try {
             DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
             dbFactory.setNamespaceAware(true);
             Document doc = dbFactory
@@ -997,16 +1002,13 @@ public class APISynchronizer implements OnPremiseGatewayInitListener {
             name.setTextContent(apiName);
             // Updating context attribute
             Node context = apiAttributes.getNamedItem("context");
-            context.setTextContent("/t/"+tenantDomain+"/__wso2_health/1.0.0");
+            context.setTextContent("/t/" + tenantDomain + APISynchronizationConstants.HEALTH_CHECK_API_CONTEXT);
             Transformer transformer = TransformerFactory.newInstance().newTransformer();
             transformer.transform(new DOMSource(doc), new StreamResult(new File(filePath)));
-
-        }
-        catch(SAXException | ParserConfigurationException | IOException
-                | TransformerException e){
+        } catch (SAXException | ParserConfigurationException | IOException
+                | TransformerException e) {
             log.error("Error occurred while modifying _health-check-api.xml_", e);
         }
-
     }
 
 }

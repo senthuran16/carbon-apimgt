@@ -42,4 +42,10 @@ public class APISynchronizationConstants {
     public static final String PAGINATION_LIMIT = "500";
     public static final String CHARSET_UTF8 = "UTF-8";
     public static final String SEQUENCE_NAME = "name";
+    public static final String HEALTH_CHECK_API_PATH = "repository/resources/apim-synapse-config/_health-check-api_.xml";
+    public static final String HEALTH_CHECK_API_FILE_NAME = "__wso2_health_check_API_v1.0.0.xml";
+    public static final String HEALTH_CHECK_API_NAME = "__wso2_health_check_API";
+    public static final String HEALTH_CHECK_API_CONTEXT = "/__wso2_health/1.0.0";
+
+
 }
