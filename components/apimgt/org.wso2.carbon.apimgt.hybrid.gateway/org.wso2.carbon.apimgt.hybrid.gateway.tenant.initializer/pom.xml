@@ -106,10 +106,6 @@
             <version>${slf4j.wso2.version}</version>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>org.wso2.carbon.apimgt</groupId>
-            <artifactId>org.wso2.carbon.apimgt.hybrid.gateway.usage.publisher</artifactId>
-        </dependency>
     </dependencies>
 
     <build>
@@ -166,7 +162,7 @@
                             org.wso2.carbon.user.core.*; version="${carbon.platform.package.import.version.range}",
                             org.wso2.carbon.base.*; version="${imp.pkg.version.org.wso2.carbon.base}",
                             org.apache.commons.io.*,
-                            org.wso2.carbon.apimgt.hybrid.gateway.usage.publisher.*
+                            org.wso2.carbon.ntask.core.*
                         </Import-Package>
                         <Export-Package>
                             !org.wso2.carbon.apimgt.hybrid.gateway.tenant.initializer.internal,
