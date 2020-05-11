@@ -29,8 +29,6 @@ import org.wso2.carbon.apimgt.hybrid.gateway.common.exception.OnPremiseGatewayEx
 import org.wso2.carbon.apimgt.hybrid.gateway.common.util.MicroGatewayCommonUtil;
 import org.wso2.carbon.apimgt.hybrid.gateway.tenant.initializer.internal.ServiceDataHolder;
 import org.wso2.carbon.apimgt.hybrid.gateway.tenant.initializer.utils.TenantInitializationConstants;
-import org.wso2.carbon.apimgt.hybrid.gateway.usage.publisher.tasks.APIUsageFileCleanupScheduler;
-import org.wso2.carbon.apimgt.hybrid.gateway.usage.publisher.tasks.APIUsageFileUploadScheduler;
 import org.wso2.carbon.apimgt.impl.APIConstants;
 import org.wso2.carbon.apimgt.impl.APIManagerConfiguration;
 import org.wso2.carbon.apimgt.impl.internal.ServiceReferenceHolder;
@@ -135,9 +133,6 @@ public class ServerStartupListener implements ServerStartupObserver {
                             loadTenant(username);
                         }
                         GatewayListenerNotifier.notifyListeners();
-                        //Scheduling APIUsageFileUploadTask and APIUsageFileCleanupTask
-                        APIUsageFileUploadScheduler.schedule();
-                        APIUsageFileCleanupScheduler.schedule();
                     } catch (Exception e) {
                         log.error("An error occurred while initializing tenant upon initial server " +
                                 "startup.", e);
