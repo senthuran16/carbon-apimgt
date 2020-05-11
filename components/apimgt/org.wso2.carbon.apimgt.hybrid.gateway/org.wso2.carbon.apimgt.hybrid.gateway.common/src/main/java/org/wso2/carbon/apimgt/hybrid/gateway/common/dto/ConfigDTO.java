@@ -591,7 +591,6 @@ public class ConfigDTO {
         this.throttling_synchronization_task_period = throttling_synchronization_task_period;
     }
 
-
     public long getUsage_upload_task_period() {
         return usage_upload_task_period;
     }
@@ -607,4 +606,5 @@ public class ConfigDTO {
     public void setUsage_upload_cleanup_task_period(long usage_upload_cleanup_task_period) {
         this.usage_upload_cleanup_task_period = usage_upload_cleanup_task_period;
     }
+
 }

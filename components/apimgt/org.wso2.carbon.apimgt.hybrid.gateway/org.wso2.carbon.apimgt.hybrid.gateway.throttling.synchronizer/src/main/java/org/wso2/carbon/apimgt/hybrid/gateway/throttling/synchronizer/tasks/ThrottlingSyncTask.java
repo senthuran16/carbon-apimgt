@@ -27,10 +27,6 @@ public class ThrottlingSyncTask implements Runnable{
 
     @Override
     public void run() {
-        //Setting thread name
-        if(!Thread.currentThread().getName().equals("ThrottlingSynchronizerTask")){
-            Thread.currentThread().setName("ThrottlingSynchronizerTask");
-        }
         ThrottlingSynchronizer synchronizer = new ThrottlingSynchronizer();
         synchronizer.initSynchronization();
     }

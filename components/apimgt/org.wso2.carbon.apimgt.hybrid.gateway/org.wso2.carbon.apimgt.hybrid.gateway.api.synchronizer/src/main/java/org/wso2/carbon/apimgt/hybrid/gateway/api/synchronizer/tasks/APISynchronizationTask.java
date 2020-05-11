@@ -32,21 +32,16 @@ public class APISynchronizationTask implements Runnable{
 
     @Override
     public void run() {
-        //Setting Thread Name
-        if(!Thread.currentThread().getName().equals("APISynchronizationTask")){
-            Thread.currentThread().setName("APISynchronizationTask");
+
+        if (log.isDebugEnabled()) {
+            log.info("Starting API synchronization task.");
         }
-        log.info("Starting API synchronization task.");
-//        if (log.isDebugEnabled()) {
-//            log.info("Starting API synchronization task.");
-//        }
         try {
             APISynchronizer synchronizer = new APISynchronizer();
             synchronizer.updateApis();
-            log.info("API synchronization task completed.");
-//            if (log.isDebugEnabled()) {
-//                log.info("API synchronization task completed.");
-//            }
+            if (log.isDebugEnabled()) {
+                log.info("API synchronization task completed.");
+            }
         } catch (APISynchronizationException e) {
             log.error("Failed to synchronize updated APIs.", e);
         }

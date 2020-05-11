@@ -28,7 +28,6 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.Map;
 
 /**
  * Task for cleaning up old usage files
@@ -36,9 +35,12 @@ import java.util.Map;
 public class APIUsageFileCleanupTask implements Runnable {
 
     private static final Log log = LogFactory.getLog(APIUsageFileCleanupTask.class);
-    static Map<String, String> properties;
-
+    private String fileRetentionDays;
     private DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+
+    public APIUsageFileCleanupTask(String fileRetentionDays) {
+        this.fileRetentionDays = fileRetentionDays;
+    }
 
     /**
      * Return the {@link Date} up to which files should be retained
@@ -56,11 +58,6 @@ public class APIUsageFileCleanupTask implements Runnable {
 
     @Override
     public void run() {
-        //Setting thread name
-        if(!Thread.currentThread().getName().equals("APIUsageFileCleanupTask")){
-            Thread.currentThread().setName("APIUsageFileCleanupTask");
-        }
-        String fileRetentionDays = properties.get("fileRetentionDays");
         if (fileRetentionDays != null && !fileRetentionDays.isEmpty()) {
             Date lastKeptDate = getLastKeptDate(Integer.parseInt(fileRetentionDays));
             log.info("API Usage data files will be cleaned up to : " +
