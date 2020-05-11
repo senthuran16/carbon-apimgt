@@ -166,7 +166,6 @@
                             org.wso2.carbon.user.core.*; version="${carbon.platform.package.import.version.range}",
                             org.wso2.carbon.base.*; version="${imp.pkg.version.org.wso2.carbon.base}",
                             org.apache.commons.io.*,
-                            org.wso2.carbon.ntask.core.*,
                             org.wso2.carbon.apimgt.hybrid.gateway.usage.publisher.*
                         </Import-Package>
                         <Export-Package>
