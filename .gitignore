@@ -7,6 +7,8 @@ target
 .idea
 features/apimgt/org.wso2.carbon.apimgt.core.feature/src/main/resources/repository/database/WSO2AM_DB.h2.db
 *.DS_Store
+.factorypath
+
 features/apimgt/org.wso2.carbon.apimgt.gateway.feature/src/main/resources/am#sample#calculator#*.war
 features/apimgt/org.wso2.carbon.apimgt.gateway.feature/src/main/resources/am#sample#pizzashack#*.war
 features/apimgt/org.wso2.carbon.apimgt.rest.api.dcr.feature/src/main/resources/client-registration#*.war

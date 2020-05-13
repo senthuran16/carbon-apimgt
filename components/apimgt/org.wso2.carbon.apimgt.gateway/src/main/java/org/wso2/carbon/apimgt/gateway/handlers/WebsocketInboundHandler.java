@@ -21,6 +21,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.codec.http.DefaultHttpHeaders;
 import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.QueryStringDecoder;
 import io.netty.handler.codec.http.websocketx.CloseWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.PingWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
@@ -58,6 +59,8 @@ import org.wso2.carbon.utils.multitenancy.MultitenantUtils;
 
 import java.net.InetSocketAddress;
 import java.net.URI;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -154,7 +157,6 @@ public class WebsocketInboundHandler extends ChannelInboundHandlerAdapter {
             }
 
             String useragent = req.headers().get(HttpHeaders.USER_AGENT);
-            String authorization = req.headers().get(HttpHeaders.AUTHORIZATION);
 
             // '-' is used for empty values to avoid possible errors in DAS side.
             // Required headers are stored one by one as validateOAuthHeader()
@@ -183,7 +185,9 @@ public class WebsocketInboundHandler extends ChannelInboundHandlerAdapter {
                     ((FullHttpRequest) msg).headers().set(jwtHeader, token);
                 }
                 ctx.fireChannelRead(msg);
+
                 // publish google analytics data
+                String authorization = headers.get(HttpHeaders.AUTHORIZATION);
                 GoogleAnalyticsData.DataBuilder gaData = new GoogleAnalyticsData.DataBuilder(null, null, null, null)
                         .setDocumentPath(uri)
                         .setDocumentHostName(DataPublisherUtil.getHostAddress())
@@ -237,12 +241,26 @@ public class WebsocketInboundHandler extends ChannelInboundHandlerAdapter {
             PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(tenantDomain, true);
             version = getVersionFromUrl(uri);
             APIKeyValidationInfoDTO info;
+
             if (!req.headers().contains(HttpHeaders.AUTHORIZATION)) {
-                log.error("No Authorization Header Present");
-                return false;
+                QueryStringDecoder decoder = new QueryStringDecoder(req.getUri());
+                Map<String, List<String>> parameters = decoder.parameters();
+
+                if (parameters.containsKey(APIConstants.AUTHORIZATION_QUERY_PARAM_DEFAULT)) {
+                    req.headers().add(APIConstants.AUTHORIZATION_HEADER_DEFAULT, APIConstants.CONSUMER_KEY_SEGMENT +
+                            ' ' + parameters.get(APIConstants.AUTHORIZATION_QUERY_PARAM_DEFAULT).get(0));
+                    parameters.remove(APIConstants.AUTHORIZATION_QUERY_PARAM_DEFAULT);
+                } else {
+                    log.error("No Authorization Header or access_token query parameter present");
+                    return false;
+                }
+
             }
             headers.add(HttpHeaders.AUTHORIZATION, req.headers().get(HttpHeaders.AUTHORIZATION));
-            String[] auth = req.headers().get(HttpHeaders.AUTHORIZATION).split(" ");
+            String authorizationHeader = req.headers().get(HttpHeaders.AUTHORIZATION);
+            headers.add(HttpHeaders.AUTHORIZATION, authorizationHeader);
+            String[] auth = authorizationHeader.split(" ");
+
             if (APIConstants.CONSUMER_KEY_SEGMENT.equals(auth[0])) {
                 String cacheKey;
                 String apiKey = auth[1];

@@ -44,7 +44,9 @@ include("/jagg/jagg.jag");
         tier = request.getParameter("tier");
         var groupId = "";
         if (jagg.isMultiGroupEnabled()) {
-            groupId = request.getParameter("groupId");
+            if (request.getParameter("groupId") != null) {
+                groupId = request.getParameter("groupId");
+            }
         }
 
         if(null == request.getParameter("callbackUrl")){
