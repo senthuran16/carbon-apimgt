@@ -39,7 +39,7 @@ public class ThrottlingSyncScheduler {
         try {
             ConfigDTO configDTO = ConfigManager.getConfigurationDTO();
             if (configDTO.isThrottling_synchronization_task_enabled()) {
-                long syncPeriod = configDTO.getApi_update_task_period();
+                long syncPeriod = configDTO.getThrottling_synchronization_task_period();
                 // Setting thread name
                 ThreadFactory threadFactory = runnable -> new Thread(runnable, "ThrottlingSyncTask");
                 ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1, threadFactory);
