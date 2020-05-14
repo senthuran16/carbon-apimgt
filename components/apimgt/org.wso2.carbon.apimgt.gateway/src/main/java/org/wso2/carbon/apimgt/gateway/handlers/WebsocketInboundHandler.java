@@ -234,8 +234,7 @@ public class WebsocketInboundHandler extends ChannelInboundHandlerAdapter {
      * @param req Full Http Request
      * @return true if the access token is valid
      */
-    private boolean validateOAuthHeader(FullHttpRequest req)
-            throws APIManagementException, APISecurityException {
+    private boolean validateOAuthHeader(FullHttpRequest req) throws APISecurityException {
         try {
             PrivilegedCarbonContext.startTenantFlow();
             PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(tenantDomain, true);
@@ -247,16 +246,17 @@ public class WebsocketInboundHandler extends ChannelInboundHandlerAdapter {
                 Map<String, List<String>> parameters = decoder.parameters();
 
                 if (parameters.containsKey(APIConstants.AUTHORIZATION_QUERY_PARAM_DEFAULT)) {
+                    String token = parameters.get(APIConstants.AUTHORIZATION_QUERY_PARAM_DEFAULT).get(0);
                     req.headers().add(APIConstants.AUTHORIZATION_HEADER_DEFAULT, APIConstants.CONSUMER_KEY_SEGMENT +
-                            ' ' + parameters.get(APIConstants.AUTHORIZATION_QUERY_PARAM_DEFAULT).get(0));
-                    parameters.remove(APIConstants.AUTHORIZATION_QUERY_PARAM_DEFAULT);
+                            ' ' + token);
+                    removeTokenFromQuery(parameters);
                 } else {
                     log.error("No Authorization Header or access_token query parameter present");
                     return false;
                 }
 
             }
-            headers.add(HttpHeaders.AUTHORIZATION, req.headers().get(HttpHeaders.AUTHORIZATION));
+
             String authorizationHeader = req.headers().get(HttpHeaders.AUTHORIZATION);
             headers.add(HttpHeaders.AUTHORIZATION, authorizationHeader);
             String[] auth = authorizationHeader.split(" ");
@@ -511,5 +511,18 @@ public class WebsocketInboundHandler extends ChannelInboundHandlerAdapter {
             }
         }
         return null;
+    }
+
+    private void removeTokenFromQuery(Map<String, List<String>> parameters) {
+        StringBuilder queryBuilder = new StringBuilder(uri.substring(0, uri.indexOf('?') + 1));
+
+        for (Map.Entry<String, List<String>> entry : parameters.entrySet()) {
+            if (!APIConstants.AUTHORIZATION_QUERY_PARAM_DEFAULT.equals(entry.getKey())) {
+                queryBuilder.append(entry.getKey()).append('=').append(entry.getValue().get(0)).append('&');
+            }
+        }
+
+        // remove trailing '?' or '&' from the built string
+        uri = queryBuilder.substring(0, queryBuilder.length() - 1);
     }
 }
