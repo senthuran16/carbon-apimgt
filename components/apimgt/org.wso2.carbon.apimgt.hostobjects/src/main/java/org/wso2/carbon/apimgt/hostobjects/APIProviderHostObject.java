@@ -1063,12 +1063,26 @@ public class APIProviderHostObject extends ScriptableObject {
      */
     public static String jsFunction_extractAndGetPath(Context cx, Scriptable thisObj, Object[] args, Function funObj)
             throws APIManagementException {
+
         FileHostObject wsdlFile = (FileHostObject) args[0];
-        WSDLArchiveInfo archiveInfo = null;
         try {
-            archiveInfo = APIUtil.extractAndValidateWSDLArchive(wsdlFile.getInputStream());
-            if (archiveInfo != null) {
-                return archiveInfo.getLocation();
+            if (wsdlFile != null) {
+                if (wsdlFile.getName() != null && wsdlFile.getName().endsWith(APIConstants.ZIP_FILE_EXTENSION)) {
+                    WSDLArchiveInfo archiveInfo = APIUtil.extractAndValidateWSDLArchive(wsdlFile.getInputStream());
+                    if (log.isDebugEnabled()) {
+                        log.debug("WSDL Archive in the file path " + archiveInfo.getAbsoluteFilePath()
+                                + "is extracted and validated.");
+                    }
+                    return archiveInfo.getLocation();
+                } else if (wsdlFile.getName() != null && wsdlFile.getName()
+                        .endsWith(APIConstants.WSDL_FILE_EXTENSION)) {
+                    String path = System.getProperty(APIConstants.JAVA_IO_TMPDIR) + File.separator
+                            + APIConstants.WSDL_ARCHIVES_TEMP_FOLDER + File.separator + UUID.randomUUID().toString();
+                    String wsdlFilePath = path + File.separator + APIConstants.WSDL_FILE
+                            + APIConstants.WSDL_FILE_EXTENSION;
+                    APIFileUtil.extractSingleWSDLFile(wsdlFile.getInputStream(), path, wsdlFilePath);
+                    return APIConstants.FILE_URI_PREFIX + wsdlFilePath;
+                }
             }
         } catch (ScriptException e) {
             throw new APIManagementException(e.getMessage(), e);
