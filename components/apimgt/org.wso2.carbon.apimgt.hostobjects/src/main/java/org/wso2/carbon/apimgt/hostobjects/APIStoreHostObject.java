@@ -26,6 +26,7 @@ import org.apache.axis2.context.ServiceContext;
 import org.apache.axis2.transport.http.HTTPConstants;
 import org.apache.axis2.transport.http.HttpTransportProperties;
 import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
@@ -610,6 +611,8 @@ public class APIStoreHostObject extends ScriptableObject {
         ConfigurationContext configurationContext = ServiceReferenceHolder.getInstance().getAxis2ConfigurationContext();
         APIManagerConfiguration config = HostObjectComponent.getAPIManagerConfiguration();
         String url = config.getFirstProperty(APIConstants.AUTH_MANAGER_URL);
+        Object clientProp = configurationContext.getProperty(HTTPConstants.CACHED_HTTP_CLIENT);
+
         if (url == null) {
             handleException("API key manager URL unspecified");
         }
@@ -617,6 +620,10 @@ public class APIStoreHostObject extends ScriptableObject {
         NativeObject row = new NativeObject();
 
         try {
+            if (clientProp instanceof HttpClient) {
+                HttpClient cacheClient = (HttpClient) clientProp;
+                cacheClient.getState().clearCookies();
+            }
             AuthenticationAdminStub authAdminStub = new AuthenticationAdminStub(configurationContext, url +
                     "AuthenticationAdmin");
             ServiceClient client = authAdminStub._getServiceClient();

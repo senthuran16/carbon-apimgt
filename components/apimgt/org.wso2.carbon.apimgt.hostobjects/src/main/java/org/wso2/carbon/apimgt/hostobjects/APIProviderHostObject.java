@@ -251,6 +251,13 @@ public class APIProviderHostObject extends ScriptableObject {
         boolean isTenantFlowStarted = false;
         try {
             ConfigurationContext configurationContext = ServiceReferenceHolder.getInstance().getAxis2ConfigurationContext();
+            Object clientProp = configurationContext.getProperty(HTTPConstants.CACHED_HTTP_CLIENT);
+
+            if (clientProp instanceof org.apache.commons.httpclient.HttpClient) {
+                org.apache.commons.httpclient.HttpClient cln = (org.apache.commons.httpclient.HttpClient) clientProp;
+                cln.getState().clearCookies();
+            }
+
             AuthenticationAdminStub authAdminStub = new AuthenticationAdminStub(configurationContext, url +
                     "AuthenticationAdmin");
             ServiceClient client = authAdminStub._getServiceClient();
