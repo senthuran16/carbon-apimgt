@@ -54,7 +54,7 @@ public class DefaultGroupIDExtractorImpl implements NewPostLoginExecutor {
                 organization = tenantDomain + "/" + organization.trim();
             }
         } catch (JSONException e) {
-            log.error("Exception occured while trying to get group Identifier from login response", e);
+            log.error("Exception occurred while trying to get group Identifier from login response", e);
         } catch (org.wso2.carbon.user.api.UserStoreException e) {
             log.error("Error while checking user existence for " + username, e);
         }
@@ -110,7 +110,7 @@ public class DefaultGroupIDExtractorImpl implements NewPostLoginExecutor {
                 groupIdArray = new String[] {};
             }
         } catch (JSONException e) {
-            log.error("Exception occured while trying to get group Identifier from login response", e);
+            log.error("Exception occurred while trying to get group Identifier from login response", e);
         } catch (org.wso2.carbon.user.api.UserStoreException e) {
             log.error("Error while checking user existence for " + username, e);
         }
