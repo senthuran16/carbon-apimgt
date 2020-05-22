@@ -1493,8 +1493,7 @@
                     version:"<%=api.version%>",
                     provider: "<%=api.provider%>",
                     status: "Publish",
-                    publishToGateway:true,
-                    requireResubscription:true
+                    publishToGateway:true
                 },
                 success: function(responseText){
                     $("body").unbind('api_saved');
