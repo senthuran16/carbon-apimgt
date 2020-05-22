@@ -943,7 +943,7 @@ public class ThrottleHandler extends AbstractHandler implements ManagedLifecycle
                  * */
                 if (propertyFromMap != null) {
                     for (String mapKey : propertyFromMap.keySet()) {
-                        key = key.replaceAll("\\$customProperty", (String) propertyFromMap.get(mapKey));
+                        key = key.replaceAll("\\$customProperty." + mapKey, (String) propertyFromMap.get(mapKey));
                     }
                 }
                 if (getThrottleDataHolder().isThrottled(key)) {
