@@ -3,7 +3,7 @@
     var policyName = request.getParameter("policyName");
     var pageTitle = i18n.localize("Add Custom Policy");
     var nameFieldDisableStatus = "";
-    var streamParameters = "apiContext,apiVersion,resourceKey,userId,appId,apiTenant,appTenant,clientIp,customProperty";
+    var streamParameters = "apiContext,apiVersion,resourceKey,userId,appId,apiTenant,appTenant,clientIp,customProperty.property-name";
 
     if(policyName != null) {
         pageTitle = i18n.localize("Edit Custom Policy");
@@ -141,8 +141,10 @@ var isNewPolicy = true;
         $.each( arr, function( key, value ) {
             if (value.indexOf("\$") == 0) {
                 value = value.replace(/\$/gi, "");
-                if($.inArray( value, parameterArray ) == -1 ){
-                    validated = false; 
+                if($.inArray( value, parameterArray ) == -1){
+                    if (!(value.startsWith("customProperty."))){
+                        validated = false;
+                    }
                 }
             }else{
                 validated = false; 
