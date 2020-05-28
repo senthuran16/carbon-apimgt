@@ -4,10 +4,17 @@ var generateClientSDK = function (language, apiName, apiVersion, apiProvider){
     var generator = new sdkGen();
     var object = null;
     var log = new Log();
+    var user = jagg.getUser();
+    if (!user) {
+        return {
+            error:true,
+            message:"Error occurred while getting the logged in user."
+        }
+    }
 
     try {
         var result = Packages.java.utils.Map;
-        result = generator.generateSDK(language, apiName, apiVersion, apiProvider);
+        result = generator.generateSDK(language, apiName, apiVersion, apiProvider, user.username);
         if(result!=null){
             var zipFileName = result.get("zipFileName");
             var zipFilePath =  result.get("zipFilePath");
