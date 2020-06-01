@@ -25,7 +25,6 @@ import org.junit.runner.RunWith;
 import org.mockito.Mockito;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.core.classloader.annotations.SuppressStaticInitializationFor;
 import org.powermock.modules.junit4.PowerMockRunner;
 import org.wso2.carbon.apimgt.api.APIManagementException;
 import org.wso2.carbon.apimgt.api.model.Application;
@@ -37,15 +36,12 @@ import org.wso2.carbon.apimgt.impl.APIConstants;
 import org.wso2.carbon.apimgt.impl.dao.ApiMgtDAO;
 import org.wso2.carbon.apimgt.impl.dto.ApplicationRegistrationWorkflowDTO;
 import org.wso2.carbon.apimgt.impl.factory.KeyManagerHolder;
-import org.wso2.carbon.context.PrivilegedCarbonContext;
-
-import static org.wso2.carbon.h2.osgi.utils.CarbonConstants.CARBON_HOME;
 
 /**
  * ApplicationRegistrationSimpleWorkflowExecutor test cases
  */
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({ApiMgtDAO.class, KeyManagerHolder.class, PrivilegedCarbonContext.class})
+@PrepareForTest({ApiMgtDAO.class, KeyManagerHolder.class})
 public class ApplicationRegistrationSimpleWorkflowExecutorTest {
 
     private ApplicationRegistrationSimpleWorkflowExecutor applicationRegistrationSimpleWorkflowExecutor;
@@ -55,14 +51,11 @@ public class ApplicationRegistrationSimpleWorkflowExecutorTest {
     private KeyManager keyManager;
     private OAuthAppRequest oAuthAppRequest;
     private OAuthApplicationInfo oAuthApplicationInfo;
-    PrivilegedCarbonContext privilegedCarbonContext;
 
     @Before
     public void init() {
-        System.setProperty(CARBON_HOME, "");
-        privilegedCarbonContext = Mockito.mock(PrivilegedCarbonContext.class);
-        PowerMockito.mockStatic(PrivilegedCarbonContext.class);
-        PowerMockito.when(PrivilegedCarbonContext.getThreadLocalCarbonContext()).thenReturn(privilegedCarbonContext);
+        PowerMockito.mockStatic(ApiMgtDAO.class);
+        PowerMockito.mockStatic(KeyManagerHolder.class);
         apiMgtDAO = Mockito.mock(ApiMgtDAO.class);
         keyManager = Mockito.mock(KeyManager.class);
         application = new Application("test", new Subscriber("testUser"));
