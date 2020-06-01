@@ -56,8 +56,6 @@ public class ApplicationRegistrationSimpleWorkflowExecutorTest {
     private OAuthAppRequest oAuthAppRequest;
     private OAuthApplicationInfo oAuthApplicationInfo;
     PrivilegedCarbonContext privilegedCarbonContext;
-    private String tenantDomain = "carbon.super";
-    private int tenantID = -1234;
 
     @Before
     public void init() {
@@ -65,8 +63,6 @@ public class ApplicationRegistrationSimpleWorkflowExecutorTest {
         privilegedCarbonContext = Mockito.mock(PrivilegedCarbonContext.class);
         PowerMockito.mockStatic(PrivilegedCarbonContext.class);
         PowerMockito.when(PrivilegedCarbonContext.getThreadLocalCarbonContext()).thenReturn(privilegedCarbonContext);
-        PowerMockito.when(privilegedCarbonContext.getTenantDomain()).thenReturn(tenantDomain);
-        PowerMockito.when(privilegedCarbonContext.getTenantId()).thenReturn(tenantID);
         apiMgtDAO = Mockito.mock(ApiMgtDAO.class);
         keyManager = Mockito.mock(KeyManager.class);
         application = new Application("test", new Subscriber("testUser"));

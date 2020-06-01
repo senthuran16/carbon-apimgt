@@ -70,8 +70,6 @@ public class ApplicationRegistrationWSWorkflowExecutorTest {
     private String adminPassword = "admin";
     private String callBaclURL = "http://localhost:8090/playground2.0/oauth2client";
     PrivilegedCarbonContext privilegedCarbonContext;
-    private String tenantDomain = "carbon.super";
-    private int tenantID = -1234;
 
 
     @Before
@@ -80,8 +78,6 @@ public class ApplicationRegistrationWSWorkflowExecutorTest {
         privilegedCarbonContext = Mockito.mock(PrivilegedCarbonContext.class);
         PowerMockito.mockStatic(PrivilegedCarbonContext.class);
         PowerMockito.when(PrivilegedCarbonContext.getThreadLocalCarbonContext()).thenReturn(privilegedCarbonContext);
-        PowerMockito.when(privilegedCarbonContext.getTenantDomain()).thenReturn(tenantDomain);
-        PowerMockito.when(privilegedCarbonContext.getTenantId()).thenReturn(tenantID);
         ServiceReferenceHolder serviceReferenceHolder = TestUtils.getServiceReferenceHolder();
         ConfigurationContextService configurationContextService = Mockito.mock(ConfigurationContextService.class);
         configurationContext = Mockito.mock(ConfigurationContext.class);
