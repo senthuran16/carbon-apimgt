@@ -39,11 +39,12 @@ import org.wso2.carbon.apimgt.impl.dto.ApplicationRegistrationWorkflowDTO;
 import org.wso2.carbon.apimgt.impl.factory.KeyManagerHolder;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 
+import static org.wso2.carbon.h2.osgi.utils.CarbonConstants.CARBON_HOME;
+
 /**
  * ApplicationRegistrationSimpleWorkflowExecutor test cases
  */
 @RunWith(PowerMockRunner.class)
-@SuppressStaticInitializationFor("org.wso2.carbon.context.PrivilegedCarbonContext")
 @PrepareForTest({ApiMgtDAO.class, KeyManagerHolder.class, PrivilegedCarbonContext.class})
 public class ApplicationRegistrationSimpleWorkflowExecutorTest {
 
@@ -54,14 +55,18 @@ public class ApplicationRegistrationSimpleWorkflowExecutorTest {
     private KeyManager keyManager;
     private OAuthAppRequest oAuthAppRequest;
     private OAuthApplicationInfo oAuthApplicationInfo;
+    PrivilegedCarbonContext privilegedCarbonContext;
+    private String tenantDomain = "carbon.super";
+    private int tenantID = -1234;
 
     @Before
     public void init() {
+        System.setProperty(CARBON_HOME, "");
+        privilegedCarbonContext = Mockito.mock(PrivilegedCarbonContext.class);
         PowerMockito.mockStatic(PrivilegedCarbonContext.class);
-        PrivilegedCarbonContext carbonContext = Mockito.mock(PrivilegedCarbonContext.class);
-        PowerMockito.when(PrivilegedCarbonContext.getThreadLocalCarbonContext()).thenReturn(carbonContext);
-        PowerMockito.mockStatic(ApiMgtDAO.class);
-        PowerMockito.mockStatic(KeyManagerHolder.class);
+        PowerMockito.when(PrivilegedCarbonContext.getThreadLocalCarbonContext()).thenReturn(privilegedCarbonContext);
+        PowerMockito.when(privilegedCarbonContext.getTenantDomain()).thenReturn(tenantDomain);
+        PowerMockito.when(privilegedCarbonContext.getTenantId()).thenReturn(tenantID);
         apiMgtDAO = Mockito.mock(ApiMgtDAO.class);
         keyManager = Mockito.mock(KeyManager.class);
         application = new Application("test", new Subscriber("testUser"));
