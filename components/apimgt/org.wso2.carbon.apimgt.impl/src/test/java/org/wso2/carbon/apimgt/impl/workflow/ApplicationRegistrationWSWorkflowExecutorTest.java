@@ -30,7 +30,6 @@ import org.junit.runner.RunWith;
 import org.mockito.Mockito;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.core.classloader.annotations.SuppressStaticInitializationFor;
 import org.powermock.modules.junit4.PowerMockRunner;
 import org.wso2.carbon.apimgt.api.APIManagementException;
 import org.wso2.carbon.apimgt.api.model.AccessTokenRequest;
@@ -44,19 +43,16 @@ import org.wso2.carbon.apimgt.impl.dao.ApiMgtDAO;
 import org.wso2.carbon.apimgt.impl.dto.ApplicationRegistrationWorkflowDTO;
 import org.wso2.carbon.apimgt.impl.factory.KeyManagerHolder;
 import org.wso2.carbon.apimgt.impl.internal.ServiceReferenceHolder;
-import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.utils.ConfigurationContextService;
 
 import javax.xml.stream.XMLStreamException;
-
-import static org.wso2.carbon.h2.osgi.utils.CarbonConstants.CARBON_HOME;
 
 /**
  * ApplicationRegistrationWSWorkflowExecutor test cases
  */
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({ApiMgtDAO.class, ApplicationRegistrationWSWorkflowExecutor.class,
-        ServiceReferenceHolder.class, AXIOMUtil.class, KeyManagerHolder.class, PrivilegedCarbonContext.class})
+        ServiceReferenceHolder.class, AXIOMUtil.class, KeyManagerHolder.class})
 public class ApplicationRegistrationWSWorkflowExecutorTest {
 
     private ApplicationRegistrationWSWorkflowExecutor applicationRegistrationWSWorkflowExecutor;
@@ -69,15 +65,10 @@ public class ApplicationRegistrationWSWorkflowExecutorTest {
     private String adminUsername = "admin";
     private String adminPassword = "admin";
     private String callBaclURL = "http://localhost:8090/playground2.0/oauth2client";
-    PrivilegedCarbonContext privilegedCarbonContext;
 
 
     @Before
     public void init() throws Exception {
-        System.setProperty(CARBON_HOME, "");
-        privilegedCarbonContext = Mockito.mock(PrivilegedCarbonContext.class);
-        PowerMockito.mockStatic(PrivilegedCarbonContext.class);
-        PowerMockito.when(PrivilegedCarbonContext.getThreadLocalCarbonContext()).thenReturn(privilegedCarbonContext);
         ServiceReferenceHolder serviceReferenceHolder = TestUtils.getServiceReferenceHolder();
         ConfigurationContextService configurationContextService = Mockito.mock(ConfigurationContextService.class);
         configurationContext = Mockito.mock(ConfigurationContext.class);
