@@ -68,13 +68,12 @@ public class ApplicationRegistrationWSWorkflowExecutorTest {
     private String adminUsername = "admin";
     private String adminPassword = "admin";
     private String callBaclURL = "http://localhost:8090/playground2.0/oauth2client";
-    private PrivilegedCarbonContext carbonContext;
 
 
     @Before
     public void init() throws Exception {
-        carbonContext = Mockito.mock(PrivilegedCarbonContext.class);
         PowerMockito.mockStatic(PrivilegedCarbonContext.class);
+        PrivilegedCarbonContext carbonContext = Mockito.mock(PrivilegedCarbonContext.class);
         PowerMockito.when(PrivilegedCarbonContext.getThreadLocalCarbonContext()).thenReturn(carbonContext);
         ServiceReferenceHolder serviceReferenceHolder = TestUtils.getServiceReferenceHolder();
         ConfigurationContextService configurationContextService = Mockito.mock(ConfigurationContextService.class);

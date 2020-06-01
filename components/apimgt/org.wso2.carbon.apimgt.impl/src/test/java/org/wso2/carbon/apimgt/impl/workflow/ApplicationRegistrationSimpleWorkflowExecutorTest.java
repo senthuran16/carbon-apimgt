@@ -54,12 +54,11 @@ public class ApplicationRegistrationSimpleWorkflowExecutorTest {
     private KeyManager keyManager;
     private OAuthAppRequest oAuthAppRequest;
     private OAuthApplicationInfo oAuthApplicationInfo;
-    private PrivilegedCarbonContext carbonContext;
 
     @Before
     public void init() {
-        carbonContext = Mockito.mock(PrivilegedCarbonContext.class);
         PowerMockito.mockStatic(PrivilegedCarbonContext.class);
+        PrivilegedCarbonContext carbonContext = Mockito.mock(PrivilegedCarbonContext.class);
         PowerMockito.when(PrivilegedCarbonContext.getThreadLocalCarbonContext()).thenReturn(carbonContext);
         PowerMockito.mockStatic(ApiMgtDAO.class);
         PowerMockito.mockStatic(KeyManagerHolder.class);
