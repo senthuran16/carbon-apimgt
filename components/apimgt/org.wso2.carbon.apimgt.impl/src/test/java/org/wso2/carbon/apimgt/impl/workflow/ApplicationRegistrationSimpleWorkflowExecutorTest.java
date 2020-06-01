@@ -25,6 +25,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mockito;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.core.classloader.annotations.SuppressStaticInitializationFor;
 import org.powermock.modules.junit4.PowerMockRunner;
 import org.wso2.carbon.apimgt.api.APIManagementException;
 import org.wso2.carbon.apimgt.api.model.Application;
@@ -42,6 +43,7 @@ import org.wso2.carbon.context.PrivilegedCarbonContext;
  * ApplicationRegistrationSimpleWorkflowExecutor test cases
  */
 @RunWith(PowerMockRunner.class)
+@SuppressStaticInitializationFor("org.wso2.carbon.context.PrivilegedCarbonContext")
 @PrepareForTest({ApiMgtDAO.class, KeyManagerHolder.class, PrivilegedCarbonContext.class})
 public class ApplicationRegistrationSimpleWorkflowExecutorTest {
 
