@@ -400,9 +400,19 @@ public class APIKeyMgtSubscriberService extends AbstractAdmin {
                 String appName = appMgtService.getServiceProviderNameByClientId(consumerKey, "oauth2", tenantDomain);
                 ServiceProvider serviceProvider =
                                         appMgtService.getApplicationExcludingFileBasedSPs(appName, tenantDomain);
+                ServiceProvider serviceProviderUpdate = new ServiceProvider();
                 if (serviceProvider != null) {
-                    serviceProvider.setApplicationName(applicationName);
-                    serviceProvider.setDescription("Service Provider for application " + applicationName);
+                    serviceProviderUpdate.setApplicationID(serviceProvider.getApplicationID());
+                    serviceProviderUpdate.setCertificateContent(serviceProvider.getCertificateContent());
+                    serviceProviderUpdate.setClaimConfig(serviceProvider.getClaimConfig());
+                    serviceProviderUpdate.setInboundAuthenticationConfig(serviceProvider.getInboundAuthenticationConfig());
+                    serviceProviderUpdate.setInboundProvisioningConfig(serviceProvider.getInboundProvisioningConfig());
+                    serviceProviderUpdate.setLocalAndOutBoundAuthenticationConfig(serviceProvider.getLocalAndOutBoundAuthenticationConfig());
+                    serviceProviderUpdate.setOutboundProvisioningConfig(serviceProvider.getOutboundProvisioningConfig());
+                    serviceProviderUpdate.setOwner(serviceProvider.getOwner());
+                    serviceProviderUpdate.setPermissionAndRoleConfig(serviceProvider.getPermissionAndRoleConfig());
+                    serviceProviderUpdate.setRequestPathAuthenticatorConfigs(serviceProvider.getRequestPathAuthenticatorConfigs());
+                    serviceProviderUpdate.setSaasApp(serviceProvider.isSaasApp());
                     ServiceProviderProperty[] serviceProviderPropertiesArray = serviceProvider.getSpProperties();
                     ArrayList<ServiceProviderProperty> serviceProviderProperties = new ArrayList<>();
                     if (serviceProviderPropertiesArray != null) {
@@ -424,10 +434,10 @@ public class APIKeyMgtSubscriberService extends AbstractAdmin {
                         serviceProviderProperty.setValue(displayName);
                         serviceProviderProperties.add(serviceProviderProperty);
                     }
-                    serviceProvider.setSpProperties(serviceProviderProperties.toArray(new ServiceProviderProperty[0]));
-                    serviceProvider.setApplicationName(applicationName);
-                    serviceProvider.setDescription("Service Provider for application " + applicationName);
-                    appMgtService.updateApplication(serviceProvider, tenantDomain, userName);
+                    serviceProviderUpdate.setSpProperties(serviceProviderProperties.toArray(new ServiceProviderProperty[0]));
+                    serviceProviderUpdate.setApplicationName(applicationName);
+                    serviceProviderUpdate.setDescription("Service Provider for application " + applicationName);
+                    appMgtService.updateApplication(serviceProviderUpdate, tenantDomain, userName);
                     log.debug("Service Provider Name Updated to : " + applicationName);
                 }
 
