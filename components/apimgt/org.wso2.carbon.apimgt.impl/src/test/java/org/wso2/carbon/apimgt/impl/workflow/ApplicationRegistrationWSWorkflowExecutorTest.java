@@ -43,6 +43,7 @@ import org.wso2.carbon.apimgt.impl.dao.ApiMgtDAO;
 import org.wso2.carbon.apimgt.impl.dto.ApplicationRegistrationWorkflowDTO;
 import org.wso2.carbon.apimgt.impl.factory.KeyManagerHolder;
 import org.wso2.carbon.apimgt.impl.internal.ServiceReferenceHolder;
+import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.utils.ConfigurationContextService;
 
 import javax.xml.stream.XMLStreamException;
@@ -52,7 +53,7 @@ import javax.xml.stream.XMLStreamException;
  */
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({ApiMgtDAO.class, ApplicationRegistrationWSWorkflowExecutor.class,
-        ServiceReferenceHolder.class, AXIOMUtil.class, KeyManagerHolder.class})
+        ServiceReferenceHolder.class, AXIOMUtil.class, KeyManagerHolder.class, PrivilegedCarbonContext.class})
 public class ApplicationRegistrationWSWorkflowExecutorTest {
 
     private ApplicationRegistrationWSWorkflowExecutor applicationRegistrationWSWorkflowExecutor;
@@ -65,10 +66,14 @@ public class ApplicationRegistrationWSWorkflowExecutorTest {
     private String adminUsername = "admin";
     private String adminPassword = "admin";
     private String callBaclURL = "http://localhost:8090/playground2.0/oauth2client";
+    private PrivilegedCarbonContext carbonContext;
 
 
     @Before
     public void init() throws Exception {
+        carbonContext = Mockito.mock(PrivilegedCarbonContext.class);
+        PowerMockito.mockStatic(PrivilegedCarbonContext.class);
+        PowerMockito.when(PrivilegedCarbonContext.getThreadLocalCarbonContext()).thenReturn(carbonContext);
         ServiceReferenceHolder serviceReferenceHolder = TestUtils.getServiceReferenceHolder();
         ConfigurationContextService configurationContextService = Mockito.mock(ConfigurationContextService.class);
         configurationContext = Mockito.mock(ConfigurationContext.class);

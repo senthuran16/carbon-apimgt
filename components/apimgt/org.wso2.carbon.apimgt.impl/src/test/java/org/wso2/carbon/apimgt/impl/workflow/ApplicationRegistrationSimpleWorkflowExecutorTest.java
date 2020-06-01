@@ -36,12 +36,13 @@ import org.wso2.carbon.apimgt.impl.APIConstants;
 import org.wso2.carbon.apimgt.impl.dao.ApiMgtDAO;
 import org.wso2.carbon.apimgt.impl.dto.ApplicationRegistrationWorkflowDTO;
 import org.wso2.carbon.apimgt.impl.factory.KeyManagerHolder;
+import org.wso2.carbon.context.PrivilegedCarbonContext;
 
 /**
  * ApplicationRegistrationSimpleWorkflowExecutor test cases
  */
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({ApiMgtDAO.class, KeyManagerHolder.class})
+@PrepareForTest({ApiMgtDAO.class, KeyManagerHolder.class, PrivilegedCarbonContext.class})
 public class ApplicationRegistrationSimpleWorkflowExecutorTest {
 
     private ApplicationRegistrationSimpleWorkflowExecutor applicationRegistrationSimpleWorkflowExecutor;
@@ -51,9 +52,13 @@ public class ApplicationRegistrationSimpleWorkflowExecutorTest {
     private KeyManager keyManager;
     private OAuthAppRequest oAuthAppRequest;
     private OAuthApplicationInfo oAuthApplicationInfo;
+    private PrivilegedCarbonContext carbonContext;
 
     @Before
     public void init() {
+        carbonContext = Mockito.mock(PrivilegedCarbonContext.class);
+        PowerMockito.mockStatic(PrivilegedCarbonContext.class);
+        PowerMockito.when(PrivilegedCarbonContext.getThreadLocalCarbonContext()).thenReturn(carbonContext);
         PowerMockito.mockStatic(ApiMgtDAO.class);
         PowerMockito.mockStatic(KeyManagerHolder.class);
         apiMgtDAO = Mockito.mock(ApiMgtDAO.class);
