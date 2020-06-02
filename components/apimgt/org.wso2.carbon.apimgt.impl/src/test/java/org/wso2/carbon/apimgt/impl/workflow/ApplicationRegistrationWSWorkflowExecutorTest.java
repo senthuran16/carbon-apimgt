@@ -43,6 +43,7 @@ import org.wso2.carbon.apimgt.impl.dao.ApiMgtDAO;
 import org.wso2.carbon.apimgt.impl.dto.ApplicationRegistrationWorkflowDTO;
 import org.wso2.carbon.apimgt.impl.factory.KeyManagerHolder;
 import org.wso2.carbon.apimgt.impl.internal.ServiceReferenceHolder;
+import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.utils.ConfigurationContextService;
 
 import javax.xml.stream.XMLStreamException;
@@ -52,7 +53,7 @@ import javax.xml.stream.XMLStreamException;
  */
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({ApiMgtDAO.class, ApplicationRegistrationWSWorkflowExecutor.class,
-        ServiceReferenceHolder.class, AXIOMUtil.class, KeyManagerHolder.class})
+        ServiceReferenceHolder.class, AXIOMUtil.class, KeyManagerHolder.class, PrivilegedCarbonContext.class})
 public class ApplicationRegistrationWSWorkflowExecutorTest {
 
     private ApplicationRegistrationWSWorkflowExecutor applicationRegistrationWSWorkflowExecutor;
@@ -204,6 +205,10 @@ public class ApplicationRegistrationWSWorkflowExecutorTest {
 
     @Test
     public void testCompletingApplicationRegistrationWSWFWhenWFApproved() throws Exception {
+        System.setProperty("carbon.home", "");
+        PrivilegedCarbonContext carbonContext = Mockito.mock(PrivilegedCarbonContext.class);
+        PowerMockito.mockStatic(PrivilegedCarbonContext.class);
+        Mockito.when(PrivilegedCarbonContext.getThreadLocalCarbonContext()).thenReturn(carbonContext);
         applicationRegistrationWSWorkflowExecutor.setUsername(adminUsername);
         applicationRegistrationWSWorkflowExecutor.setPassword(adminPassword.toCharArray());
         workflowDTO.setStatus(WorkflowStatus.APPROVED);
@@ -216,6 +221,10 @@ public class ApplicationRegistrationWSWorkflowExecutorTest {
 
     @Test
     public void testFailureToCompleteApplicationRegistrationWSWFWhenKeyGenerationFailed() throws Exception {
+        System.setProperty("carbon.home", "");
+        PrivilegedCarbonContext carbonContext = Mockito.mock(PrivilegedCarbonContext.class);
+        PowerMockito.mockStatic(PrivilegedCarbonContext.class);
+        Mockito.when(PrivilegedCarbonContext.getThreadLocalCarbonContext()).thenReturn(carbonContext);
         applicationRegistrationWSWorkflowExecutor.setUsername(adminUsername);
         applicationRegistrationWSWorkflowExecutor.setPassword(adminPassword.toCharArray());
         workflowDTO.setStatus(WorkflowStatus.APPROVED);
