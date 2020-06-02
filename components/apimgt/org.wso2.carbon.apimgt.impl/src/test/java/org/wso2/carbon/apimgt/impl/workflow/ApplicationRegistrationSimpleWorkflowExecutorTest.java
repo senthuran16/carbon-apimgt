@@ -36,12 +36,13 @@ import org.wso2.carbon.apimgt.impl.APIConstants;
 import org.wso2.carbon.apimgt.impl.dao.ApiMgtDAO;
 import org.wso2.carbon.apimgt.impl.dto.ApplicationRegistrationWorkflowDTO;
 import org.wso2.carbon.apimgt.impl.factory.KeyManagerHolder;
+import org.wso2.carbon.context.PrivilegedCarbonContext;
 
 /**
  * ApplicationRegistrationSimpleWorkflowExecutor test cases
  */
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({ApiMgtDAO.class, KeyManagerHolder.class})
+@PrepareForTest({ApiMgtDAO.class, KeyManagerHolder.class, PrivilegedCarbonContext.class})
 public class ApplicationRegistrationSimpleWorkflowExecutorTest {
 
     private ApplicationRegistrationSimpleWorkflowExecutor applicationRegistrationSimpleWorkflowExecutor;
@@ -74,6 +75,10 @@ public class ApplicationRegistrationSimpleWorkflowExecutorTest {
 
     @Test
     public void testExecutingApplicationRegistrationWorkFlow() throws APIManagementException {
+        System.setProperty("carbon.home", "");
+        PrivilegedCarbonContext carbonContext = Mockito.mock(PrivilegedCarbonContext.class);
+        PowerMockito.mockStatic(PrivilegedCarbonContext.class);
+        Mockito.when(PrivilegedCarbonContext.getThreadLocalCarbonContext()).thenReturn(carbonContext);
         PowerMockito.doNothing().when(apiMgtDAO).createApplicationRegistrationEntry(workflowDTO, false);
         oAuthApplicationInfo.setJsonString("{\"client_credentials\":\"Client Credentials\"}");
         Mockito.when(keyManager.createApplication(oAuthAppRequest)).thenReturn(oAuthApplicationInfo);
@@ -88,6 +93,10 @@ public class ApplicationRegistrationSimpleWorkflowExecutorTest {
 
     @Test
     public void testFailureWhileExecutingApplicationRegistrationWorkFlow() throws APIManagementException {
+        System.setProperty("carbon.home", "");
+        PrivilegedCarbonContext carbonContext = Mockito.mock(PrivilegedCarbonContext.class);
+        PowerMockito.mockStatic(PrivilegedCarbonContext.class);
+        Mockito.when(PrivilegedCarbonContext.getThreadLocalCarbonContext()).thenReturn(carbonContext);
         PowerMockito.doNothing().when(apiMgtDAO).createApplicationRegistrationEntry(workflowDTO, false);
         oAuthApplicationInfo.setJsonString("{\"client_credentials\":\"Client Credentials\"}");
         Mockito.when(keyManager.createApplication(oAuthAppRequest)).thenThrow(new APIManagementException(""));
