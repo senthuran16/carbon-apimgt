@@ -67,6 +67,7 @@ import org.wso2.carbon.metrics.manager.Level;
 import org.wso2.carbon.metrics.manager.MetricManager;
 import org.wso2.carbon.metrics.manager.Timer;
 
+import java.math.BigInteger;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
@@ -935,7 +936,7 @@ public class ThrottleHandler extends AbstractHandler implements ManagedLifecycle
                 key = key.replaceAll("\\$apiTenant", apiTenant);
                 key = key.replaceAll("\\$appId", appId);
                 if (clientIp != null && clientIp.length() > 0) {
-                    key = key.replaceAll("\\$clientIp", Long.valueOf(APIUtil.ipToLong(clientIp)).toString());
+                    key = key.replaceAll("\\$clientIp", APIUtil.ipToBigInteger(clientIp).toString());
                 }
                 /* The Key $customProperty is treated as an actual map even though only one value
                  * can be assigned to the key. This is because in the current implementation stream parameters are

@@ -43,9 +43,11 @@ import org.wso2.carbon.apimgt.api.model.policy.SubscriptionPolicy;
 import org.wso2.carbon.apimgt.impl.APIConstants;
 import org.wso2.carbon.apimgt.impl.APIManagerConfigurationService;
 import org.wso2.carbon.apimgt.impl.internal.ServiceReferenceHolder;
+import org.wso2.carbon.apimgt.impl.utils.APIUtil;
 
 import java.io.File;
 import java.io.StringWriter;
+import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -63,7 +65,7 @@ public class ThrottlePolicyTemplateBuilder {
     private String policyTemplateLocation = "repository" + File.separator + "resources" + File.separator
             + "policy_templates" + File.separator;
     private static String velocityLogPath = "not-defined";
-    
+
     /**
      * Set the location of the policy templates. If not set, default location is used
      * @param path
@@ -72,14 +74,14 @@ public class ThrottlePolicyTemplateBuilder {
         policyTemplateLocation = path;
     }
 
-    
+
 
     /**
      * Generate policy for api level throttling
-     * 
-     * @param policy Policy with level 'api'. isAcrossAllUsers() method in policy is used to identify the level in 
-     *            the api level. Policy can have multiple pipelines and a default condition which will be used as 
-     *            else condition  
+     *
+     * @param policy Policy with level 'api'. isAcrossAllUsers() method in policy is used to identify the level in
+     *            the api level. Policy can have multiple pipelines and a default condition which will be used as
+     *            else condition
      * @return
      * @throws APITemplateException
      */
@@ -90,7 +92,7 @@ public class ThrottlePolicyTemplateBuilder {
         }
         Map<String, String> policyArray = new HashMap<String, String>();
         Set<String> conditionsSet = new HashSet<String>();
-        
+
         if(!(policy instanceof APIPolicy)){
             throw new APITemplateException("Invalid  policy level : Has to be 'api'");
         }
@@ -219,9 +221,9 @@ public class ThrottlePolicyTemplateBuilder {
     }
 
     /**
-     * Generate policy for global level. 
+     * Generate policy for global level.
      * @param policy policy with level 'global'. Multiple pipelines are not allowed. Can define more than one condition
-     * as set of conditions. all these conditions should be passed as a single pipeline 
+     * as set of conditions. all these conditions should be passed as a single pipeline
      * @return
      * @throws APITemplateException
      */
@@ -269,7 +271,7 @@ public class ThrottlePolicyTemplateBuilder {
 
     /**
      * Generate application level policy.
-     * 
+     *
      * @param policy policy with level 'app'. Multiple pipelines are not allowed. Can define more than one condition
      *            as set of conditions. all these conditions should be passed as a single pipeline
      * @return
@@ -315,7 +317,7 @@ public class ThrottlePolicyTemplateBuilder {
     /**
      * Generate policy for subscription level.
      * @param policy policy with level 'sub'. Multiple pipelines are not allowed. Can define more than one condition
-     * as set of conditions. all these conditions should be passed as a single pipeline 
+     * as set of conditions. all these conditions should be passed as a single pipeline
      * @return
      * @throws APITemplateException
      */
@@ -428,11 +430,23 @@ public class ThrottlePolicyTemplateBuilder {
             tempCondition.put(condition.getType().toLowerCase(), conditionJson);
             if (PolicyConstants.IP_SPECIFIC_TYPE.equals(condition.getType())) {
                 IPCondition ipCondition = (IPCondition) condition;
-                conditionJson.put("specificIp", ipCondition.ipToLong(ipCondition.getSpecificIP()));
+                if (IPCondition.isIPv6Address(ipCondition.getSpecificIP())) {
+                    conditionJson.put("specificIp", String.valueOf(APIUtil.ipToBigInteger(ipCondition.getSpecificIP())));
+                } else {
+                    conditionJson.put("specificIp", ipCondition.ipToLong(ipCondition.getSpecificIP()));
+                }
             } else if (PolicyConstants.IP_RANGE_TYPE.equals(condition.getType())) {
                 IPCondition ipRangeCondition = (IPCondition) condition;
-                conditionJson.put("startingIp", ipRangeCondition.ipToLong(ipRangeCondition.getStartingIP()));
-                conditionJson.put("endingIp", ipRangeCondition.ipToLong(ipRangeCondition.getEndingIP()));
+                if (IPCondition.isIPv6Address(ipRangeCondition.getStartingIP()) &&
+                        IPCondition.isIPv6Address(ipRangeCondition.getEndingIP())) {
+                    conditionJson.put("startingIp",
+                            String.valueOf(APIUtil.ipToBigInteger(ipRangeCondition.getStartingIP())));
+                    conditionJson.put("endingIp",
+                            String.valueOf(APIUtil.ipToBigInteger(ipRangeCondition.getEndingIP())));
+                } else {
+                    conditionJson.put("startingIp", ipRangeCondition.ipToLong(ipRangeCondition.getStartingIP()));
+                    conditionJson.put("endingIp", ipRangeCondition.ipToLong(ipRangeCondition.getEndingIP()));
+                }
             } else if (condition instanceof QueryParameterCondition) {
                 QueryParameterCondition queryParameterCondition = (QueryParameterCondition) condition;
                 JSONObject values;
@@ -490,7 +504,7 @@ public class ThrottlePolicyTemplateBuilder {
     }
 
     /**
-     * Generate the condition for the default query. This returns the condition to check thing that are not in 
+     * Generate the condition for the default query. This returns the condition to check thing that are not in
      * any of the other conditions
      * @param conditionsSet
      * @return
@@ -514,7 +528,7 @@ public class ThrottlePolicyTemplateBuilder {
 
         return conditionString;
     }
-    
+
     private static void setConstantContext(VelocityContext context){
         context.put("ACROSS_ALL",PolicyConstants.ACROSS_ALL);
         context.put("PER_USER",PolicyConstants.PER_USER);
@@ -524,6 +538,6 @@ public class ThrottlePolicyTemplateBuilder {
         context.put("POLICY_LEVEL_GLOBAL",PolicyConstants.POLICY_LEVEL_GLOBAL);
         context.put("REQUEST_COUNT_TYPE",PolicyConstants.REQUEST_COUNT_TYPE);
         context.put("BANDWIDTH_TYPE",PolicyConstants.BANDWIDTH_TYPE);
-        
+
     }
 }
