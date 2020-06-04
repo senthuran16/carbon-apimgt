@@ -57,8 +57,12 @@ import org.wso2.carbon.ganalytics.publisher.GoogleAnalyticsData;
 import org.wso2.carbon.utils.multitenancy.MultitenantConstants;
 import org.wso2.carbon.utils.multitenancy.MultitenantUtils;
 
+import java.net.Inet4Address;
+import java.net.Inet6Address;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.URI;
+import java.net.UnknownHostException;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -68,19 +72,19 @@ import java.util.UUID;
  * authentication and throttling for the websocket handshake and subsequent websocket frames.
  */
 public class WebsocketInboundHandler extends ChannelInboundHandlerAdapter {
-	private static final Log log = LogFactory.getLog(WebsocketInboundHandler.class);
-	private static volatile ThrottleDataPublisher throttleDataPublisher = null;
-	private String tenantDomain;
-	private static APIMgtUsageDataPublisher usageDataPublisher;
-	private String uri;
-	private String apiContextUri;
-	private String version;
-	private APIKeyValidationInfoDTO infoDTO = new APIKeyValidationInfoDTO();
-	private io.netty.handler.codec.http.HttpHeaders headers = new DefaultHttpHeaders();
-	private String token;
-	private static String websocketCustomHeader = null;
+    private static final Log log = LogFactory.getLog(WebsocketInboundHandler.class);
+    private static volatile ThrottleDataPublisher throttleDataPublisher = null;
+    private String tenantDomain;
+    private static APIMgtUsageDataPublisher usageDataPublisher;
+    private String uri;
+    private String apiContextUri;
+    private String version;
+    private APIKeyValidationInfoDTO infoDTO = new APIKeyValidationInfoDTO();
+    private io.netty.handler.codec.http.HttpHeaders headers = new DefaultHttpHeaders();
+    private String token;
+    private static String websocketCustomHeader = null;
 
-	public WebsocketInboundHandler() {
+    public WebsocketInboundHandler() {
         if (throttleDataPublisher == null) {
             // The publisher initializes in the first request only
             synchronized (this) {
@@ -148,7 +152,7 @@ public class WebsocketInboundHandler extends ChannelInboundHandlerAdapter {
             uri = req.getUri();
             URI uriTemp = new URI(uri);
             apiContextUri = new URI(uriTemp.getScheme(), uriTemp.getAuthority(), uriTemp.getPath(),
-                     null, uriTemp.getFragment()).toString();
+                    null, uriTemp.getFragment()).toString();
 
             if (req.getUri().contains("/t/")) {
                 tenantDomain = MultitenantUtils.getTenantDomainFromUrl(req.getUri());
@@ -199,8 +203,8 @@ public class WebsocketInboundHandler extends ChannelInboundHandlerAdapter {
                 gaUtils.publishGATrackingData(gaData, req.headers().get(HttpHeaders.USER_AGENT), authorization);
             } else {
                 ctx.writeAndFlush(new TextWebSocketFrame(APISecurityConstants.API_AUTH_INVALID_CREDENTIALS_MESSAGE));
-                if (log.isDebugEnabled()){
-                    log.debug("Authentication Failure for the websocket context: " + apiContextUri );
+                if (log.isDebugEnabled()) {
+                    log.debug("Authentication Failure for the websocket context: " + apiContextUri);
                 }
                 throw new APISecurityException(APISecurityConstants.API_AUTH_INVALID_CREDENTIALS,
                         APISecurityConstants.API_AUTH_INVALID_CREDENTIALS_MESSAGE);
@@ -358,12 +362,25 @@ public class WebsocketInboundHandler extends ChannelInboundHandlerAdapter {
         String subscriptionLevelThrottleKey = appId + ":" + apiContext + ":" + apiVersion;
         String messageId = UIDGenerator.generateURNString();
         String remoteIP = getRemoteIP(ctx);
+
+        if (log.isDebugEnabled()) {
+            log.debug("Remote IP address : " + remoteIP);
+        }
         if (remoteIP.indexOf(":") > 0) {
             remoteIP = remoteIP.substring(1, remoteIP.indexOf(":"));
         }
         JSONObject jsonObMap = new JSONObject();
         if (remoteIP != null && remoteIP.length() > 0) {
-            jsonObMap.put(APIThrottleConstants.IP, APIUtil.ipToLong(remoteIP));
+            try {
+                InetAddress address = APIUtil.getAddress(remoteIP);
+                if (address instanceof Inet4Address) {
+                    jsonObMap.put(APIThrottleConstants.IP, APIUtil.ipToLong(remoteIP));
+                } else if (address instanceof Inet6Address) {
+                    jsonObMap.put(APIThrottleConstants.IPv6, APIUtil.ipToBigInteger(remoteIP));
+                }
+            } catch (UnknownHostException e) {
+                log.error("Error while parsing host IP " + remoteIP, e);
+            }
         }
         jsonObMap.put(APIThrottleConstants.MESSAGE_SIZE, msg.content().capacity());
         try {
