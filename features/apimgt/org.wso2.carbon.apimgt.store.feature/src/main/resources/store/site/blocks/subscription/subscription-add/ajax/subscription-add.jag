@@ -674,7 +674,8 @@ include("/jagg/jagg.jag");
         var groupingId=session.get("groupId");
         var username = user.username;
         mod = jagg.module("subscription");
-        result = mod.cleanUpApplicationRegistrationByApplicationId(applicationName, keyType, groupingId, username, applicationId);
+        result = mod.cleanUpApplicationRegistrationByApplicationId(applicationName, keyType, groupingId,
+                username, applicationId);
         if (result.error) {
             obj = {
                 error:result.error,

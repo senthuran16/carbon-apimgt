@@ -51,7 +51,8 @@ var getAllSubscriptionsOfApplicationById = function (username, selectedAppId, st
     store = jagg.module("manager").getAPIStoreObj();
     try {
         var groupingId = session.get("groupId");
-	    result = store.getAllSubscriptionsOfApplicationById(username , selectedAppId, String(startSubIndex), String(endSubIndex), groupingId);
+	    result = store.getAllSubscriptionsOfApplicationById(username , selectedAppId, String(startSubIndex),
+	            String(endSubIndex), groupingId);
 	    if (log.isDebugEnabled()) {
             log.debug("getAllSubscriptionsOfApplicationById : " + stringify(result));
         }

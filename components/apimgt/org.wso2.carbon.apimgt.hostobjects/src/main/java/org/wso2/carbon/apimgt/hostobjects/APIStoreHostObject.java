@@ -3220,8 +3220,8 @@ public class APIStoreHostObject extends ScriptableObject {
         return getAllSubscriptions(cx, thisObj, args, funObj, true);
     }
 
-    public static NativeObject jsFunction_getAllSubscriptionsOfApplicationById(Context cx,
-                                                                               Scriptable thisObj, Object[] args, Function funObj)
+    public static NativeObject jsFunction_getAllSubscriptionsOfApplicationById(Context cx, Scriptable thisObj,
+                                                                               Object[] args, Function funObj)
             throws ScriptException, APIManagementException, ApplicationNotFoundException {
 
         if (args == null || args.length == 0) {
@@ -3278,7 +3278,8 @@ public class APIStoreHostObject extends ScriptableObject {
                             application.getId(), groupingId);
                     //get subscribed APIs set as per the starting and ending indexes for application.
                     Set<SubscribedAPI> subscribedAPIs;
-                    subscribedAPIs = apiConsumer.getPaginatedSubscribedAPIs(subscriber, application.getId(), startSubIndex, endSubIndex, groupingId);
+                    subscribedAPIs = apiConsumer.getPaginatedSubscribedAPIs(subscriber, application.getId(),
+                            startSubIndex, endSubIndex, groupingId);
 
                     List<APIIdentifier> identifiers = new ArrayList<APIIdentifier>();
                     for (SubscribedAPI subscribedAPI : subscribedAPIs) {

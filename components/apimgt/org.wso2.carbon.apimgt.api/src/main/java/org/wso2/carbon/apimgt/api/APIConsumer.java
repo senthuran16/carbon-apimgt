@@ -248,7 +248,8 @@ public interface APIConsumer extends APIManager {
      * @return
      * @throws APIManagementException
      */
-    Set<SubscribedAPI> getPaginatedSubscribedAPIs(Subscriber subscriber, int applicationId, int startSubIndex, int endSubIndex, String groupingId)
+    Set<SubscribedAPI> getPaginatedSubscribedAPIs(Subscriber subscriber, int applicationId,
+                                                  int startSubIndex, int endSubIndex, String groupingId)
             throws APIManagementException;
 
     /**

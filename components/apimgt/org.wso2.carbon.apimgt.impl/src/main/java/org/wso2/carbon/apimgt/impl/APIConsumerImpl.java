@@ -2283,7 +2283,8 @@ public class APIConsumerImpl extends AbstractAPIManager implements APIConsumer {
      *
      */
     @Override
-    public Set<SubscribedAPI> getSubscribedAPIsByApplicationId(Subscriber subscriber, int applicationId, String groupingId) throws APIManagementException {
+    public Set<SubscribedAPI> getSubscribedAPIsByApplicationId(Subscriber subscriber, int applicationId, String groupingId)
+            throws APIManagementException {
 
         Set<SubscribedAPI> subscribedAPIs = null;
         try {
@@ -3473,7 +3474,9 @@ public class APIConsumerImpl extends AbstractAPIManager implements APIConsumer {
     }
 
     @Override
-    public Map<String, String> completeApplicationRegistration(String userId, int applicationId, String tokenType, String tokenScope, String groupingId) throws APIManagementException {
+    public Map<String, String> completeApplicationRegistration(String userId, int applicationId, String tokenType,
+                                                               String tokenScope, String groupingId)
+            throws APIManagementException {
 
         Application application = apiMgtDAO.getApplicationById(applicationId);
         String status = apiMgtDAO.getRegistrationApprovalState(application.getId(), tokenType);
