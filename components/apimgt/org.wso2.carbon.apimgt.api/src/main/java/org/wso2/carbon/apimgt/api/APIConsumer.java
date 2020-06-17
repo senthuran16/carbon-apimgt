@@ -177,6 +177,18 @@ public interface APIConsumer extends APIManager {
             throws APIManagementException;
 
     /**
+     * Returns a set of SubscribedAPIs filtered by the given application id.
+     *
+     * @param subscriber Subscriber
+     * @param applicationId Application Id
+     * @param groupingId the groupId of the subscriber
+     * @return Set<API>
+     * @throws APIManagementException if failed to get API for subscriber
+     */
+    Set<SubscribedAPI> getSubscribedAPIsByApplicationId(Subscriber subscriber, int applicationId, String groupingId)
+            throws APIManagementException;
+
+    /**
      *
      * @param jsonString this string will contain oAuth app details
      * @param userName user name of logged in user.
@@ -202,6 +214,14 @@ public interface APIConsumer extends APIManager {
     void cleanUpApplicationRegistration(String applicationName, String tokenType, String groupId, String userName)
             throws APIManagementException;
 
+    /**
+     *This method will delete from application key mapping table and application registration table.
+     *@param applicationId application id
+     *@param tokenType Token Type.
+     *@return
+     *@throws APIManagementException
+     */
+    void cleanUpApplicationRegistrationByApplicationId(String applicationId, String tokenType) throws APIManagementException;
 
     /**
      * Returns a set of SubscribedAPIs filtered by the given application name and in between starting and ending indexes.
@@ -217,7 +237,21 @@ public interface APIConsumer extends APIManager {
     Set<SubscribedAPI> getPaginatedSubscribedAPIs(Subscriber subscriber, String applicationName, int startSubIndex, int endSubIndex, String groupingId)
             throws APIManagementException;
 
-      /**
+    /**
+     * Returns a set of SubscribedAPIs filtered by the given application name and in between starting and ending indexes.
+     *
+     * @param subscriber Subscriber
+     * @param applicationId Application needed to find subscriptions
+     * @param startSubIndex Starting index of subscriptions to be listed
+     * @param endSubIndex Ending index of Subscriptions to be listed
+     * @param groupingId the group id of the application
+     * @return
+     * @throws APIManagementException
+     */
+    Set<SubscribedAPI> getPaginatedSubscribedAPIs(Subscriber subscriber, int applicationId, int startSubIndex, int endSubIndex, String groupingId)
+            throws APIManagementException;
+
+    /**
      * Returns true if a given user has subscribed to the API
      *
      * @param apiIdentifier APIIdentifier
@@ -247,6 +281,17 @@ public interface APIConsumer extends APIManager {
      * @throws APIManagementException if failed to count the number of subscriptions.
      */
     Integer getSubscriptionCount(Subscriber subscriber,String applicationName,String groupingId) throws APIManagementException;
+
+    /**
+     * Returns the number of subscriptions for the given subscriber and app.
+     *
+     * @param subscriber Subscriber
+     * @param applicationId Application id
+     * @return The number of subscriptions
+     * @throws APIManagementException if failed to count the number of subscriptions.
+     */
+    Integer getSubscriptionCountByApplicationId(Subscriber subscriber,int applicationId,String groupingId)
+            throws APIManagementException;
 
     /**
      * Add new Subscriber
@@ -400,6 +445,17 @@ public interface APIConsumer extends APIManager {
                                                                         String tokenScope, String groupingId, String jsonString)
         throws APIManagementException;
 
+    /**
+     * Creates a request for getting Approval for Application Registration.
+     * application is referred by the application id.
+     *
+     * @param appInfo contains userId, applicationName, tokenType, callbackUrl, allowedDomains, validityTime, groupingId,
+     *                jsonString, tokenScope
+     *
+     * @throws APIManagementException if failed to applications for given subscriber
+     */
+    Map<String,Object> requestApprovalForApplicationRegistrationByApplicationId(Map<String, Object> appInfo)
+            throws APIManagementException;
 
     /**
      * Creates a request for application update.
@@ -422,6 +478,30 @@ public interface APIConsumer extends APIManager {
                                                String tokenScope,
                                                String groupingId,
                                                String jsonString)
+            throws APIManagementException;
+
+    /**
+     * Creates a request for application update.
+     *
+     * @param userId Subsriber name.
+     * @param applicationName of the Application.
+     * @param applicationId of the Application.
+     * @param tokenType Token type (PRODUCTION | SANDBOX)
+     * @param callbackUrl callback URL
+     * @param allowedDomains allowedDomains for token.
+     * @param validityTime validity time period.
+     * @param groupingId APIM application id.
+     * @param jsonString Callback URL for the Application.
+     * @param tokenScope Scopes for the requested tokens.
+     * @throws APIManagementException if failed to applications for given subscriber
+     */
+    OAuthApplicationInfo updateAuthClientByAppId(String userId, String applicationName, int applicationId,
+                                                 String tokenType,
+                                                 String callbackUrl, String[] allowedDomains,
+                                                 String validityTime,
+                                                 String tokenScope,
+                                                 String groupingId,
+                                                 String jsonString)
             throws APIManagementException;
 
     /**
@@ -501,6 +581,17 @@ public interface APIConsumer extends APIManager {
      * @throws APIManagementException
      */
     Application getApplicationById(int id) throws APIManagementException;
+
+    /**
+     * Returns the corresponding application given the Id, user id and groups
+     *
+     * @param id      Id of the Application
+     * @param userId  APIM subscriber ID.
+     * @param groupId Group id.
+     * @return it will return Application corresponds to the id.
+     * @throws APIManagementException
+     */
+    Application getApplicationById(int id, String userId, String groupId) throws APIManagementException;
  
     /**
      * @param subscriber the subscriber in relation to the identifiers
@@ -600,6 +691,22 @@ public interface APIConsumer extends APIManager {
 															   String groupingId)
 		    throws APIManagementException;
 
+    /**
+     * Complete Application Registration process.If the Application registration fails before
+     * generating the Access Tokens, this method should be used to resume registration.
+     *
+     * @param applicationId Id of the Application
+     * @param tokenType     Type of the Token (PRODUCTION | SANDBOX)
+     * @param tokenScope    scope of the token
+     * @param groupingId    the application belongs to.
+     * @return a Map containing the details of the OAuth application.
+     * @throws APIManagementException if failed to get the tiers
+     */
+    Map<String, String> completeApplicationRegistration(String userId,
+                                                        int applicationId,
+                                                        String tokenType, String tokenScope,
+                                                        String groupingId)
+            throws APIManagementException;
 
     /**
      * Returns details of an API information in low profile
