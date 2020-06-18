@@ -20,10 +20,9 @@ function triggerSubscribe() {
         + '<span class="spinner"><i class="fw fw-loader5" title="button-loader"></i></span>'
     ).attr('disabled', 'disabled');
 
-    jagg.post("/site/blocks/subscription/subscription-add/ajax/subscription-add.jag?name=" + api.name + "&appId=" +
-    applicationId, {
-        action:"addSubscription",
-        applicationId:applicationId,
+    jagg.post("/site/blocks/subscription/subscription-add/ajax/subscription-add.jag?name=" + api.name, {
+        action:"addAPISubscriptionByAppId",
+        appId:applicationId,
         version:api.version,
         provider:api.provider,
         tier:tier,
@@ -119,7 +118,7 @@ function triggerSubscribe() {
                     window.location.reload();
                 });
                 $('#messageModal a.btn-primary').click(function() {
-                    urlPrefix = "name=" + applicationName + "&" + urlPrefix;
+                    urlPrefix = "name=" + applicationName + "&appId=" + applicationId + "&" + urlPrefix;
                     location.href = "../site/pages/application.jag?" + urlPrefix+"#subscription";
                  });
                    $('#messageModal').modal();
