@@ -42,6 +42,8 @@
     var oidcTokenReponse = oidcRelyingParty.getIdTokenResponse(authorizationCode);
     // Check OIDC signature valid and set session as a authenticated if success
     var isSignatureValid = oidcRelyingParty.validateOIDCSignature(oidcTokenReponse, session.get("NONCE"), sessionId);
+    var tokenResponse = JSON.parse(oidcTokenReponse);
+    var idToken = tokenResponse.id_token;
 
     if (!Boolean(isSignatureValid)) {
         log.error("OIDC signature is verification failed.");
@@ -59,7 +61,7 @@
     var oidcUser = oidcRelyingParty.getLoggedInUser(sessionId);
 
     
-var manager = jagg.module("manager");
+    var manager = jagg.module("manager");
     var  store = manager.getAPIStoreObj();
     var groupIdArray = store.getGroupIds(oidcTokenReponse);
     //Store and empty string instead of null if no group Id is found. This is done so that when checking for a string array
@@ -144,6 +146,7 @@ var manager = jagg.module("manager");
             subscriber = store.getSubscriber(username);
         }
         session.put("hasPublisherAccess", hasPublisherAccess);
+        session.put("idToken", idToken);
         response.sendRedirect(requestedURI);
     }
 
@@ -151,5 +154,4 @@ var manager = jagg.module("manager");
 %>
 </body>
 </html>
-
 
