@@ -3820,7 +3820,7 @@ public class APIStoreHostObject extends ScriptableObject {
                 row.put("status", row, application.getStatus());
                 row.put("description", row, application.getDescription());
                 row.put("groupId", row, application.getGroupId());
-//                row.put("tokenType", row, application.getTokenType());
+                row.put("tokenType", row, application.getTokenType());
                 try {
                     row.put("applicationAttributes", row,
                             new ObjectMapper().writeValueAsString(application.getApplicationAttributes()));
@@ -3952,6 +3952,7 @@ public class APIStoreHostObject extends ScriptableObject {
             application.setTier(tier);
             application.setCallbackUrl(callbackUrl);
             application.setDescription(description);
+            application.setTokenType(tokenType);
             if (groupId != null) {
                 application.setGroupId(groupId);
             }
