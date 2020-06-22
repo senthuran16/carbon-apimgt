@@ -1508,8 +1508,6 @@ public class APIConsumerImpl extends AbstractAPIManager implements APIConsumer {
 
     @Override
     public Set<Tag> getTagsWithAttributes(String tenantDomain) throws APIManagementException {
-        // Fetch the all the tags first.
-        Set<Tag> tags = getAllTags(tenantDomain);
         // For each and every tag get additional attributes from the registry.
         String descriptionPathPattern = APIConstants.TAGS_INFO_ROOT_LOCATION + "/%s/description.txt";
         String thumbnailPathPattern = APIConstants.TAGS_INFO_ROOT_LOCATION + "/%s/thumbnail.png";
@@ -1522,6 +1520,9 @@ public class APIConsumerImpl extends AbstractAPIManager implements APIConsumer {
                 handleException("Cannot get super tenant domain name", e);
             }
         }
+
+        // Fetch the all the tags first.
+        Set<Tag> tags = getAllTags(tenantDomain);
 
         //get the registry instance related to the tenant domain
         UserRegistry govRegistry = null;
