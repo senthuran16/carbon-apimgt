@@ -91,7 +91,7 @@ var addAPISubscriptionByAppId = function (api, tier, applicationId, username) {
     try {
         var groupingId = session.get("groupId");
         var subscriptionResponse = Packages.org.wso2.carbon.apimgt.api.model.SubscriptionResponse;
-		subscriptionResponse = store.addAPISubscriptionByAppId(api.provider, api.name, api.version, tier, applicationId,
+		subscriptionResponse = store.addSubscription(api.provider, api.name, api.version, tier, parseInt(applicationId),
 		                    username, groupingId);
         var workflowResponse = Packages.org.wso2.carbon.apimgt.api.WorkflowResponse;
         workflowResponse = subscriptionResponse.getWorkflowResponse();
