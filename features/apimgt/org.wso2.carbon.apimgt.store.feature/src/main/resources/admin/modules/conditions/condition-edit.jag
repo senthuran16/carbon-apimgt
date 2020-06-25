@@ -32,7 +32,7 @@ var addCondition = function (conditionType, conditionValue) {
             result: conditions
         };
     } catch (ex) {
-        var errorMessage = "Error occurred while adding conditions: " + ex.message.split("APIManagementException:")[1];
+        var errorMessage = "Error occurred while adding conditions: " + ex.message.split("Exception:")[1];
         log.error(errorMessage);
         return {
             error: true,
