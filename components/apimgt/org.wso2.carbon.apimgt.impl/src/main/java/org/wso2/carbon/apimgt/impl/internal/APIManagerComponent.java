@@ -38,6 +38,7 @@ import org.wso2.carbon.apimgt.impl.APIManagerFactory;
 import org.wso2.carbon.apimgt.impl.PasswordResolverFactory;
 import org.wso2.carbon.apimgt.impl.certificatemgt.CertificateManager;
 import org.wso2.carbon.apimgt.impl.certificatemgt.CertificateManagerImpl;
+import org.wso2.carbon.apimgt.impl.certificatemgt.reloader.CertificateReLoaderUtil;
 import org.wso2.carbon.apimgt.impl.dao.ApiMgtDAO;
 import org.wso2.carbon.apimgt.impl.dto.ThrottleProperties;
 import org.wso2.carbon.apimgt.impl.factory.KeyManagerHolder;
@@ -50,6 +51,7 @@ import org.wso2.carbon.apimgt.impl.utils.APIMgtDBUtil;
 import org.wso2.carbon.apimgt.impl.utils.APIUtil;
 import org.wso2.carbon.apimgt.impl.workflow.events.APIMgtWorkflowDataPublisher;
 import org.wso2.carbon.base.MultitenantConstants;
+import org.wso2.carbon.base.ServerConfiguration;
 import org.wso2.carbon.context.CarbonContext;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.context.RegistryType;
@@ -85,11 +87,12 @@ import org.wso2.carbon.utils.ConfigurationContextService;
 import org.wso2.carbon.utils.FileUtil;
 
 import javax.cache.Cache;
-import java.io.File;
-import java.io.FilenameFilter;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.nio.charset.Charset;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -283,6 +286,25 @@ public class APIManagerComponent {
                 ServiceReferenceHolder.getInstance().setApiMgtWorkflowDataPublisher(new APIMgtWorkflowDataPublisher());
             }
             APIUtil.init();
+
+            // Read the trust store
+            ServerConfiguration config = CarbonUtils.getServerConfiguration();
+            String trustStorePassword = config.getFirstProperty(APIConstants.TRUST_STORE_PASSWORD);
+            String trustStoreLocation = config.getFirstProperty(APIConstants.TRUST_STORE_LOCATION);
+            if (trustStoreLocation != null && trustStorePassword != null) {
+                File trustStoreFile = new File(trustStoreLocation);
+                try (FileInputStream trustStoreStream = new FileInputStream(new File(trustStoreLocation))) {
+                    KeyStore trustStore = KeyStore.getInstance(KeyStore.getDefaultType());
+                    trustStore.load(trustStoreStream, trustStorePassword.toCharArray());
+                    CertificateReLoaderUtil.setLastUpdatedTimeStamp(trustStoreFile.lastModified());
+                    CertificateReLoaderUtil.startCertificateReLoader();
+                    ServiceReferenceHolder.getInstance().setTrustStore(trustStore);
+                } catch (IOException | KeyStoreException | CertificateException | NoSuchAlgorithmException e) {
+                    log.error("Error in loading trust store.", e);
+                }
+            } else {
+                log.error("Error in loading trust store. Configurations are not set.");
+            }
         } catch (APIManagementException e) {
             log.error("Error while initializing the API manager component", e);
         } catch (APIManagerDatabaseException e) {
@@ -294,6 +316,7 @@ public class APIManagerComponent {
         if (log.isDebugEnabled()) {
             log.debug("Deactivating API manager component");
         }
+        CertificateReLoaderUtil.shutDownCertificateReLoader();
         registration.unregister();
         APIManagerFactory.getInstance().clearAll();
         org.wso2.carbon.apimgt.impl.utils.AuthorizationManager.getInstance().destroy();

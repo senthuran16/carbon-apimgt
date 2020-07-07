@@ -220,6 +220,10 @@
             <artifactId>aspectjrt</artifactId>
             <version>1.8.7</version>
         </dependency>
+        <dependency>
+            <groupId>org.wso2.carbon.apimgt</groupId>
+            <artifactId>org.wso2.carbon.apimgt.api</artifactId>
+        </dependency>
     </dependencies>
 
     <build>

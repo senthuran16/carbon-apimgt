@@ -1496,4 +1496,25 @@ public final class APIConstants {
     public static final String AM_ACTIVITY_ID = "activityid";
     
     public static final String WSO2_ANONYMOUS_USER = "wso2.anonymous.user";
+
+    public static class CertificateReLoaderConfiguration {
+
+        public static final String CERTIFICATE_RELOADER_CONFIGURATION_ROOT = "CertificateReLoaderConfiguration";
+        public static final String PERIOD = CERTIFICATE_RELOADER_CONFIGURATION_ROOT + ".Period";
+    }
+
+    public static class MutualSSL {
+
+        public static final String MUTUAL_SSL_CONFIG_ROOT = "MutualSSL";
+        public static final String CLIENT_CERTIFICATE_HEADER = MUTUAL_SSL_CONFIG_ROOT + ".ClientCertificateHeader";
+        public static final String ENABLE_CLIENT_CERTIFICATE_VALIDATION = MUTUAL_SSL_CONFIG_ROOT +
+                ".EnableClientCertificateValidation";
+    }
+
+    /**
+     * Constants for trust store access
+     *
+     * */
+    public static final String TRUST_STORE_PASSWORD = "Security.TrustStore.Password";
+    public static final String TRUST_STORE_LOCATION = "Security.TrustStore.Location";
 }
