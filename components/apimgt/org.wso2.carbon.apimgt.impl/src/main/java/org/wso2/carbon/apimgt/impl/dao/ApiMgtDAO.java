@@ -1889,7 +1889,7 @@ public class ApiMgtDAO {
 
             result = ps.executeQuery();
 
-            Map<String, Set<SubscribedAPI>> map = new TreeMap<String, Set<SubscribedAPI>>();
+            Map<Integer, Set<SubscribedAPI>> map = new TreeMap();
             LRUCache<Integer, Application> applicationCache = new LRUCache<Integer, Application>(100);
 
             while (result.next()) {
@@ -1923,8 +1923,8 @@ public class ApiMgtDAO {
                 }
                 subscribedAPI.setApplication(application);
 
-                if (!map.containsKey(application.getName())) {
-                    map.put(application.getName(), new TreeSet<>(new Comparator<SubscribedAPI>() {
+                if (!map.containsKey(applicationId)) {
+                    map.put(applicationId, new TreeSet<>(new Comparator<SubscribedAPI>() {
                         public int compare(SubscribedAPI o1, SubscribedAPI o2) {
                             int placement = o1.getApiId().getApiName().compareTo(o2.getApiId().getApiName());
                             if (placement == 0) {
@@ -1935,10 +1935,10 @@ public class ApiMgtDAO {
                         }
                     }));
                 }
-                map.get(application.getName()).add(subscribedAPI);
+                map.get(applicationId).add(subscribedAPI);
             }
 
-            for (Map.Entry<String, Set<SubscribedAPI>> entry : map.entrySet()) {
+            for (Map.Entry<Integer, Set<SubscribedAPI>> entry : map.entrySet()) {
                 subscribedAPIs.addAll(entry.getValue());
             }
         } catch (SQLException e) {
