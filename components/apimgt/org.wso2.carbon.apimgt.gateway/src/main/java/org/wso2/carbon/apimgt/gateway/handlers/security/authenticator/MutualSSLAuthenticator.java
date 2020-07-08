@@ -92,13 +92,6 @@ public class MutualSSLAuthenticator implements Authenticator {
         org.apache.axis2.context.MessageContext axis2MessageContext = ((Axis2MessageContext) messageContext)
                 .getAxis2MessageContext();
         // try to retrieve the certificate
-//        Object sslCertObject = axis2MessageContext.getProperty(NhttpConstants.SSL_CLIENT_AUTH_CERT_X509);
-//        Map headers = (Map) ((Axis2MessageContext) messageContext).getAxis2MessageContext().
-//                getProperty(org.apache.axis2.context.MessageContext.TRANSPORT_HEADERS);
-//
-//        if (headers != null) {
-//            requestOrigin = (String) headers.get("Origin");
-//        }
         X509Certificate sslCertObject;
         try {
             sslCertObject = Utils.getClientCertificate(axis2MessageContext);
