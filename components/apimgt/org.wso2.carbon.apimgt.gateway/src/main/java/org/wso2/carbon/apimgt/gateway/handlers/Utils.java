@@ -38,6 +38,8 @@ import org.apache.synapse.rest.RESTConstants;
 import org.apache.synapse.transport.nhttp.NhttpConstants;
 import org.wso2.carbon.apimgt.api.APIManagementException;
 import org.wso2.carbon.apimgt.gateway.APIMgtGatewayConstants;
+import org.wso2.carbon.apimgt.gateway.handlers.security.APISecurityConstants;
+import org.wso2.carbon.apimgt.gateway.handlers.security.APISecurityException;
 import org.wso2.carbon.apimgt.gateway.internal.ServiceReferenceHolder;
 import org.wso2.carbon.apimgt.impl.APIConstants;
 import org.wso2.carbon.apimgt.impl.APIManagerConfiguration;
@@ -268,7 +270,7 @@ public class Utils {
     }
 
     public static X509Certificate getClientCertificate(org.apache.axis2.context.MessageContext axis2MessageContext)
-            throws APIManagementException {
+            throws APISecurityException {
 
         Map headers =
                 (Map) axis2MessageContext.getProperty(org.apache.axis2.context.MessageContext.TRANSPORT_HEADERS);
@@ -298,18 +300,20 @@ public class Utils {
                                 log.debug("Certificate in Header didn't exist in truststore");
                                 return null;
                             }
-                        } catch (IOException | CertificateException | APIManagementException e) {
+                        } catch (IOException | CertificateException e) {
                             String msg = "Error while converting into X509Certificate";
                             log.error(msg, e);
-                            throw new APIManagementException(msg, e);
+                            throw new APISecurityException(APISecurityConstants.API_AUTH_GENERAL_ERROR,
+                                    APISecurityConstants.API_AUTH_GENERAL_ERROR_MESSAGE);
                         }
                     }
 
                 }
-            } catch (APIManagementException e) {
+            } catch (APISecurityException | APIManagementException e) {
                 String msg = "Error while validating into Certificate Existence";
                 log.error(msg, e);
-                throw new APIManagementException(msg, e);
+                throw new APISecurityException(APISecurityConstants.API_AUTH_GENERAL_ERROR,
+                        APISecurityConstants.API_AUTH_GENERAL_ERROR_MESSAGE);
 
             }
 

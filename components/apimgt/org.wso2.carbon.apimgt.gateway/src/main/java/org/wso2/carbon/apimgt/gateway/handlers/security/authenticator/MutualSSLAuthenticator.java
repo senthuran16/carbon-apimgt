@@ -23,7 +23,6 @@ import org.apache.synapse.MessageContext;
 import org.apache.synapse.core.SynapseEnvironment;
 import org.apache.synapse.core.axis2.Axis2MessageContext;
 import org.apache.synapse.rest.RESTConstants;
-import org.wso2.carbon.apimgt.api.APIManagementException;
 import org.wso2.carbon.apimgt.api.model.APIIdentifier;
 import org.wso2.carbon.apimgt.gateway.APIMgtGatewayConstants;
 import org.wso2.carbon.apimgt.gateway.handlers.Utils;
@@ -95,7 +94,8 @@ public class MutualSSLAuthenticator implements Authenticator {
         X509Certificate sslCertObject;
         try {
             sslCertObject = Utils.getClientCertificate(axis2MessageContext);
-        } catch (APIManagementException e) {
+        } catch (APISecurityException e) {
+            log.error("Mutual SSL authentication failure" + e.getMessage());
             return false;
         }
 
