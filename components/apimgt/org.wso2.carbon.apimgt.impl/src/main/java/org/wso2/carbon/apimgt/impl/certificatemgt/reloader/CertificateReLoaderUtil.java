@@ -67,6 +67,6 @@ public class CertificateReLoaderUtil {
         if (StringUtils.isNotEmpty(certificateReloaderPeriod)) {
             return Long.parseLong(certificateReloaderPeriod);
         }
-        return 2L;
+        return 600L;
     }
 }
