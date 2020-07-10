@@ -25,6 +25,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.synapse.MessageContext;
 import org.apache.synapse.core.axis2.Axis2MessageContext;
 import org.apache.synapse.rest.AbstractHandler;
+import org.wso2.carbon.apimgt.api.APIManagementException;
 import org.wso2.carbon.apimgt.gateway.APIMgtGatewayConstants;
 import org.wso2.carbon.apimgt.gateway.handlers.Utils;
 import org.wso2.carbon.apimgt.gateway.handlers.security.APISecurityException;
@@ -56,7 +57,7 @@ public class MutualSSLCertificateHandler extends AbstractHandler {
                 base64EncodedString = Base64.encodeBase64URLSafeString(base64EncodedString.getBytes());
                 headers.put(Utils.getClientCertificateHeader(), base64EncodedString);
             }
-        } catch (CertificateEncodingException | APISecurityException e) {
+        } catch (CertificateEncodingException | APIManagementException e) {
             log.error("Error while converting client certificate", e);
         }
         return true;

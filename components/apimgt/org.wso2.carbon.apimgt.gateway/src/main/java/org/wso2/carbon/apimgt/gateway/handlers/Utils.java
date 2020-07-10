@@ -270,7 +270,7 @@ public class Utils {
     }
 
     public static X509Certificate getClientCertificate(org.apache.axis2.context.MessageContext axis2MessageContext)
-            throws APISecurityException {
+            throws APIManagementException {
 
         Map headers =
                 (Map) axis2MessageContext.getProperty(org.apache.axis2.context.MessageContext.TRANSPORT_HEADERS);
@@ -300,21 +300,17 @@ public class Utils {
                                 log.debug("Certificate in Header didn't exist in truststore");
                                 return null;
                             }
-                        } catch (IOException | CertificateException e) {
+                        } catch (IOException | CertificateException | APIManagementException e) {
                             String msg = "Error while converting into X509Certificate";
                             log.error(msg, e);
-                            throw new APISecurityException(APISecurityConstants.API_AUTH_GENERAL_ERROR,
-                                    APISecurityConstants.API_AUTH_GENERAL_ERROR_MESSAGE);
+                            throw new APIManagementException(msg, e);
                         }
                     }
-
                 }
-            } catch (APISecurityException | APIManagementException e) {
+            } catch (APIManagementException e) {
                 String msg = "Error while validating into Certificate Existence";
                 log.error(msg, e);
-                throw new APISecurityException(APISecurityConstants.API_AUTH_GENERAL_ERROR,
-                        APISecurityConstants.API_AUTH_GENERAL_ERROR_MESSAGE);
-
+                throw new APIManagementException(msg, e);
             }
 
         }
