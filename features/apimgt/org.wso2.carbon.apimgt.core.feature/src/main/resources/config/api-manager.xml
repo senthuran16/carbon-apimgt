@@ -50,6 +50,10 @@
         <!--ConsumerDialectURI>http://wso2.org/claims</ConsumerDialectURI-->
         <!--ConvertClaimsToConsumerDialect>false</ConvertClaimsToConsumerDialect-->
 
+        <!-- Making the following property true will result in including the public cert to sign the
+         JWT token to the JWT header for the x5c attribute -->
+        <!--EnableX5C>false</EnableX5C-->
+
         <!-- Signature algorithm. Accepts "SHA256withRSA" or "NONE". To disable signing explicitly specify "NONE". -->
         <!--SignatureAlgorithm>SHA256withRSA</SignatureAlgorithm-->
 

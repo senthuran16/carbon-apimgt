@@ -352,6 +352,7 @@ public final class APIConstants {
     public static final String CLAIMS_RETRIEVER_CLASS = JWT_CONFIGS + "ClaimsRetrieverImplClass";
     public static final String CONSUMER_DIALECT_URI = JWT_CONFIGS + "ConsumerDialectURI";
     public static final String JWT_SIGNATURE_ALGORITHM = JWT_CONFIGS + "SignatureAlgorithm";
+    public static final String JWT_X5C_ENABLED = JWT_CONFIGS + "EnableX5C";
     public static final String CONVERT_CLAIMS_TO_CONSUMER_DIALECT = JWT_CONFIGS + "ConvertClaimsToConsumerDialect";
 
     public static final String OAUTH_CONFIGS = "OAuthConfigurations.";
