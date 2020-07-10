@@ -23,15 +23,11 @@ import org.apache.synapse.MessageContext;
 import org.apache.synapse.core.SynapseEnvironment;
 import org.apache.synapse.core.axis2.Axis2MessageContext;
 import org.apache.synapse.rest.RESTConstants;
-import org.apache.synapse.transport.nhttp.NhttpConstants;
+import org.wso2.carbon.apimgt.api.APIManagementException;
 import org.wso2.carbon.apimgt.api.model.APIIdentifier;
 import org.wso2.carbon.apimgt.gateway.APIMgtGatewayConstants;
-import org.wso2.carbon.apimgt.gateway.handlers.security.APIAuthenticationHandler;
-import org.wso2.carbon.apimgt.gateway.handlers.security.APISecurityConstants;
-import org.wso2.carbon.apimgt.gateway.handlers.security.APISecurityException;
-import org.wso2.carbon.apimgt.gateway.handlers.security.APISecurityUtils;
-import org.wso2.carbon.apimgt.gateway.handlers.security.AuthenticationContext;
-import org.wso2.carbon.apimgt.gateway.handlers.security.Authenticator;
+import org.wso2.carbon.apimgt.gateway.handlers.Utils;
+import org.wso2.carbon.apimgt.gateway.handlers.security.*;
 import org.wso2.carbon.apimgt.gateway.internal.ServiceReferenceHolder;
 import org.wso2.carbon.apimgt.impl.APIConstants;
 import org.wso2.carbon.apimgt.impl.dto.VerbInfoDTO;
@@ -41,7 +37,6 @@ import javax.naming.ldap.LdapName;
 import javax.naming.ldap.Rdn;
 import javax.security.cert.X509Certificate;
 import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Authenticator responsible for handle API requests with mutual SSL.
@@ -97,12 +92,11 @@ public class MutualSSLAuthenticator implements Authenticator {
         org.apache.axis2.context.MessageContext axis2MessageContext = ((Axis2MessageContext) messageContext)
                 .getAxis2MessageContext();
         // try to retrieve the certificate
-        Object sslCertObject = axis2MessageContext.getProperty(NhttpConstants.SSL_CLIENT_AUTH_CERT_X509);
-        Map headers = (Map) ((Axis2MessageContext) messageContext).getAxis2MessageContext().
-                getProperty(org.apache.axis2.context.MessageContext.TRANSPORT_HEADERS);
-
-        if (headers != null) {
-            requestOrigin = (String) headers.get("Origin");
+        X509Certificate sslCertObject;
+        try {
+            sslCertObject = Utils.getClientCertificate(axis2MessageContext);
+        } catch (APIManagementException e) {
+            throw new APISecurityException(APISecurityConstants.API_AUTH_GENERAL_ERROR, e.getMessage());
         }
 
         /* If the certificate cannot be retrieved from the axis2Message context, then mutual SSL authentication has
@@ -124,16 +118,13 @@ public class MutualSSLAuthenticator implements Authenticator {
      * To set the authentication context in current message context.
      *
      * @param messageContext Relevant message context.
-     * @param sslCertObject  SSL certificate object.
+     * @param x509Certificate  SSL certificate.
      * @throws APISecurityException API Security Exception.
      */
-    private void setAuthContext(MessageContext messageContext, Object sslCertObject) throws APISecurityException {
+    private void setAuthContext(MessageContext messageContext, X509Certificate x509Certificate) throws APISecurityException {
 
-        X509Certificate[] certs = (X509Certificate[]) sslCertObject;
-        X509Certificate x509Certificate = certs[0];
         String subjectDN = x509Certificate.getSubjectDN().getName();
-        String uniqueIdentifier = String
-                .valueOf(x509Certificate.getSerialNumber() + "_" + x509Certificate.getIssuerDN()).replaceAll(",",
+        String uniqueIdentifier = (x509Certificate.getSerialNumber() + "_" + x509Certificate.getIssuerDN()).replaceAll(",",
                         "#").replaceAll("\"", "'").trim();
         String tier = certificates.get(uniqueIdentifier);
         if (StringUtils.isEmpty(tier)) {
@@ -214,4 +205,5 @@ public class MutualSSLAuthenticator implements Authenticator {
     public String getRequestOrigin() {
         return requestOrigin;
     }
+
 }

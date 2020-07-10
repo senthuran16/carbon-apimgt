@@ -653,4 +653,12 @@
         </ClientGeneration>
     </SwaggerCodegen>
 
+    <CertificateReLoaderConfiguration>
+        <Period>10</Period>
+    </CertificateReLoaderConfiguration>
+    <MutualSSL>
+        <ClientCertificateHeader>X-WSO2-CLIENT-CERTIFICATE</ClientCertificateHeader>
+        <EnableClientCertificateValidation>true</EnableClientCertificateValidation>
+    </MutualSSL>
+
 </APIManager>

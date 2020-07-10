@@ -181,12 +181,7 @@ import org.wso2.carbon.utils.NetworkUtils;
 import org.wso2.carbon.utils.multitenancy.MultitenantUtils;
 import org.xml.sax.SAXException;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FilenameFilter;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.RoundingMode;
@@ -206,6 +201,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -229,6 +225,8 @@ import javax.cache.Cache;
 import javax.cache.CacheConfiguration;
 import javax.cache.CacheManager;
 import javax.cache.Caching;
+import javax.security.cert.CertificateEncodingException;
+import javax.security.cert.X509Certificate;
 import javax.xml.XMLConstants;
 import javax.xml.namespace.QName;
 import javax.xml.parsers.DocumentBuilder;
@@ -7823,6 +7821,38 @@ public final class APIUtil {
             roleList = Arrays.asList("");
         }
         return roleList;
+    }
+
+    /**
+     * Validate Certificate exist in TrustStore
+     * @param certificate
+     * @return true if certificate exist in truststore
+     * @throws APIManagementException
+     */
+    public static boolean isCertificateExistsInTrustStore(X509Certificate certificate) throws APIManagementException {
+
+        if (certificate != null) {
+            try {
+                KeyStore trustStore = ServiceReferenceHolder.getInstance().getTrustStore();
+                if (trustStore != null) {
+                    CertificateFactory cf = CertificateFactory.getInstance("X.509");
+                    byte[] certificateEncoded = certificate.getEncoded();
+                    try (ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(certificateEncoded)) {
+                        java.security.cert.X509Certificate x509Certificate =
+                                (java.security.cert.X509Certificate) cf.generateCertificate(byteArrayInputStream);
+                        String certificateAlias = trustStore.getCertificateAlias(x509Certificate);
+                        if (certificateAlias != null) {
+                            return true;
+                        }
+                    }
+                }
+            } catch (KeyStoreException | CertificateException | CertificateEncodingException | IOException e) {
+                String msg = "Error in validating certificate existence";
+                log.error(msg, e);
+                throw new APIManagementException(msg, e);
+            }
+        }
+        return false;
     }
     
 }

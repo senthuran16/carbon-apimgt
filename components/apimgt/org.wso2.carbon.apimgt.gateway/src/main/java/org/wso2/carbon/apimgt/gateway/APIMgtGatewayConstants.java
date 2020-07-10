@@ -105,5 +105,12 @@ public class APIMgtGatewayConstants {
     public static final String CLIENT_IP = "clientIp";
 
     public static final String HTTP_RESPONSE_STATUS_CODE = "HTTP_RESPONSE_STATUS_CODE";
+
+    /**
+     * Mutual SSL Certificate Header related Constants
+     */
+    public static final String BASE64_ENCODED_CLIENT_CERTIFICATE_HEADER = "X-WSO2-CLIENT-CERTIFICATE";
+    public static final String BEGIN_CERTIFICATE_STRING = "-----BEGIN CERTIFICATE-----\n";
+    public static final String END_CERTIFICATE_STRING = "-----END CERTIFICATE-----";
 }
 
