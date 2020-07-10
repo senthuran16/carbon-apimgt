@@ -540,7 +540,7 @@ public abstract class AbstractJWTGenerator implements TokenGenerator {
 
     public Application getApplicationbyId(int applicationId) {
         try {
-            Application application = dao.getApplicationById(applicationId);
+            Application application = dao.getLightweightApplicationById(applicationId);
             return application;
         } catch (APIManagementException e) {
             log.error("Error in retrieving application with the id: " + applicationId);
