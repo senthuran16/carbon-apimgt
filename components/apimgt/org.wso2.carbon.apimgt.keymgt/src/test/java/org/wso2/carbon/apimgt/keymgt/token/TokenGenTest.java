@@ -22,6 +22,8 @@ import java.security.KeyStore;
 import java.security.MessageDigest;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
+
+import org.apache.commons.codec.binary.Base64;
 import org.junit.Assert;
 import org.junit.runner.RunWith;
 import org.mockito.Mockito;
@@ -35,16 +37,18 @@ import org.junit.Before;
 import org.junit.Test;
 import org.wso2.carbon.apimgt.impl.APIConstants;
 import org.wso2.carbon.apimgt.impl.APIManagerConfiguration;
+import org.wso2.carbon.apimgt.impl.APIManagerConfigurationService;
 import org.wso2.carbon.apimgt.impl.APIManagerConfigurationServiceImpl;
 import org.wso2.carbon.apimgt.impl.dto.APIKeyValidationInfoDTO;
 import org.wso2.carbon.apimgt.impl.internal.ServiceReferenceHolder;
 import org.wso2.carbon.apimgt.impl.utils.APIUtil;
 import org.wso2.carbon.apimgt.keymgt.service.TokenValidationContext;
 import org.wso2.carbon.core.util.KeyStoreManager;
+import org.wso2.carbon.user.core.service.RealmService;
 //import org.wso2.carbon.apimgt.impl.utils.TokenGenUtil;
 
 @RunWith(PowerMockRunner.class)
-@PrepareForTest( {AbstractJWTGenerator.class,APIUtil.class,KeyStoreManager.class, System.class})
+@PrepareForTest( {ServiceReferenceHolder.class, AbstractJWTGenerator.class,APIUtil.class,KeyStoreManager.class, System.class})
 public class TokenGenTest {
     private static final Log log = LogFactory.getLog(TokenGenTest.class);
 
@@ -198,7 +202,7 @@ public class TokenGenTest {
         PowerMockito.doNothing().when(APIUtil.class, "loadTenantRegistry", Mockito.anyInt());
         KeyStoreManager keyStoreManager = Mockito.mock(KeyStoreManager.class);
         PowerMockito.when(keyStoreManager.getInstance(Mockito.anyInt())).thenReturn(keyStoreManager);
-        //Read public certificat
+        //Read public certificate
         InputStream inputStream = new FileInputStream("src/test/resources/wso2carbon.jks");
         KeyStore keystore = KeyStore.getInstance("JKS");
         char[] pwd = "wso2carbon".toCharArray();
@@ -221,6 +225,91 @@ public class TokenGenTest {
         Assert.assertTrue(header.contains(encodedThumbprint));
     }
 
+    @Test public void testJWTx5cEnable() throws Exception {
+        //Preparing mocks
+        ServiceReferenceHolder serviceReferenceHolder = Mockito.mock(ServiceReferenceHolder.class);
+        PowerMockito.mockStatic(ServiceReferenceHolder.class);
+        PowerMockito.when(ServiceReferenceHolder.getInstance()).thenReturn(serviceReferenceHolder);
+
+        APIManagerConfigurationService apiManagerConfigurationService = Mockito
+                .mock(APIManagerConfigurationService.class);
+        RealmService realmService = Mockito.mock(org.wso2.carbon.user.core.service.RealmService.class);
+        Mockito.when(serviceReferenceHolder.getRealmService()).thenReturn(realmService);
+        Mockito.when(serviceReferenceHolder.getAPIManagerConfigurationService())
+                .thenReturn(apiManagerConfigurationService);
+        APIManagerConfiguration apiManagerConfiguration = Mockito.mock(APIManagerConfiguration.class);
+        Mockito.when(apiManagerConfigurationService.getAPIManagerConfiguration()).thenReturn(apiManagerConfiguration);
+
+        Mockito.when(apiManagerConfiguration.getFirstProperty(APIConstants.JWT_X5C_ENABLED)).thenReturn("true");
+
+        System.setProperty("x5tEncoding", "base64Url");
+        AbstractJWTGenerator jwtGenerator = new JWTGenerator();
+        PowerMockito.mockStatic(APIUtil.class);
+        PowerMockito.mockStatic(KeyStoreManager.class);
+        PowerMockito.doNothing().when(APIUtil.class, "loadTenantRegistry", Mockito.anyInt());
+        KeyStoreManager keyStoreManager = Mockito.mock(KeyStoreManager.class);
+        PowerMockito.when(keyStoreManager.getInstance(Mockito.anyInt())).thenReturn(keyStoreManager);
+        //Read public certificate
+        InputStream inputStream = new FileInputStream("src/test/resources/wso2carbon.jks");
+        KeyStore keystore = KeyStore.getInstance("JKS");
+        char[] pwd = "wso2carbon".toCharArray();
+        keystore.load(inputStream, pwd);
+        Certificate cert = keystore.getCertificate("wso2carbon");
+
+        Mockito.when(keyStoreManager.getDefaultPrimaryCertificate()).thenReturn((X509Certificate) cert);
+        //Generate JWT header using the above certificate
+        String header = jwtGenerator.addCertToHeader("admin@carbon.super");
+
+        //Get the public certificate encoded
+        Base64 base64 = new Base64(true);
+        String x5c = base64.encodeToString(cert.getEncoded()).trim();
+        //Check if the encoded pub cert present in JWT
+        Assert.assertTrue("JWT header doest not contain x5c value", header.contains(x5c));
+        Assert.assertTrue("JWT header doest not contain x5c key", header.contains("x5c"));
+    }
+
+    @Test public void testJWTx5cDisable() throws Exception {
+        //Preparing mocks
+        ServiceReferenceHolder serviceReferenceHolder = Mockito.mock(ServiceReferenceHolder.class);
+        PowerMockito.mockStatic(ServiceReferenceHolder.class);
+        PowerMockito.when(ServiceReferenceHolder.getInstance()).thenReturn(serviceReferenceHolder);
+
+        APIManagerConfigurationService apiManagerConfigurationService = Mockito
+                .mock(APIManagerConfigurationService.class);
+        RealmService realmService = Mockito.mock(org.wso2.carbon.user.core.service.RealmService.class);
+        Mockito.when(serviceReferenceHolder.getRealmService()).thenReturn(realmService);
+        Mockito.when(serviceReferenceHolder.getAPIManagerConfigurationService())
+                .thenReturn(apiManagerConfigurationService);
+        APIManagerConfiguration apiManagerConfiguration = Mockito.mock(APIManagerConfiguration.class);
+        Mockito.when(apiManagerConfigurationService.getAPIManagerConfiguration()).thenReturn(apiManagerConfiguration);
+
+        Mockito.when(apiManagerConfiguration.getFirstProperty(APIConstants.JWT_X5C_ENABLED)).thenReturn("false");
+
+        System.setProperty("x5tEncoding", "base64Url");
+        AbstractJWTGenerator jwtGenerator = new JWTGenerator();
+        PowerMockito.mockStatic(APIUtil.class);
+        PowerMockito.mockStatic(KeyStoreManager.class);
+        PowerMockito.doNothing().when(APIUtil.class, "loadTenantRegistry", Mockito.anyInt());
+        KeyStoreManager keyStoreManager = Mockito.mock(KeyStoreManager.class);
+        PowerMockito.when(keyStoreManager.getInstance(Mockito.anyInt())).thenReturn(keyStoreManager);
+        //Read public certificat
+        InputStream inputStream = new FileInputStream("src/test/resources/wso2carbon.jks");
+        KeyStore keystore = KeyStore.getInstance("JKS");
+        char[] pwd = "wso2carbon".toCharArray();
+        keystore.load(inputStream, pwd);
+        Certificate cert = keystore.getCertificate("wso2carbon");
+
+        Mockito.when(keyStoreManager.getDefaultPrimaryCertificate()).thenReturn((X509Certificate) cert);
+        //Generate JWT header using the above certificate
+        String header = jwtGenerator.addCertToHeader("admin@carbon.super");
+
+        //Get the public certificate encoded
+        Base64 base64 = new Base64(true);
+        String x5c = base64.encodeToString(cert.getEncoded()).trim();
+        //Check if the encoded pub cert is present in JWT header with x5c property
+        Assert.assertTrue("JWT Header contains x5c value", !header.contains(x5c));
+        Assert.assertTrue("JWT Header contains x5c key", !header.contains("x5c"));
+    }
 
     /**
      * Helper method to hexify a byte array.

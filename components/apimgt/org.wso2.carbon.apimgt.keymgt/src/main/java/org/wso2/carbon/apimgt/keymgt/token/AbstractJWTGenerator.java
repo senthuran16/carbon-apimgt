@@ -461,6 +461,12 @@ public abstract class AbstractJWTGenerator implements TokenGenerator {
 
                 if (enableX5C) {
                     // If the "EnableX5C" property is true
+                    /**
+                     * Sample header
+                     * {"typ":"JWT", "alg":"SHA256withRSA", "x5t":"a_jhNus21KVuoFx65LmkW2O_l10",
+                     * "kid":"a_jhNus21KVuoFx65LmkW2O_l10_RS256",
+                     * "x5c":"MIdsadasdasd..........Iwq"}
+                     */
                     String base64UrlEncodedpublicCert = base64.encodeToString(publicCert.getEncoded()).trim();
                     jwtHeader.append("\",");
                     jwtHeader.append("\"x5c\":\"");
