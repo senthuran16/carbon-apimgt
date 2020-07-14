@@ -467,13 +467,15 @@ public abstract class AbstractJWTGenerator implements TokenGenerator {
                      * "kid":"a_jhNus21KVuoFx65LmkW2O_l10_RS256",
                      * "x5c":"MIdsadasdasd..........Iwq"}
                      */
-                    String base64UrlEncodedpublicCert = base64.encodeToString(publicCert.getEncoded()).trim();
+                    String base64UrlEncodedpublicCert = com.nimbusds.jose.util.Base64
+                            .encode(publicCert.getEncoded()).toJSONString();
                     jwtHeader.append("\",");
-                    jwtHeader.append("\"x5c\":\"");
+                    jwtHeader.append("\"x5c\":[");
                     jwtHeader.append(base64UrlEncodedpublicCert);
+                    jwtHeader.append("]");
+                } else {
+                    jwtHeader.append("\"");
                 }
-
-                jwtHeader.append("\"");
                 jwtHeader.append("}");
                 return jwtHeader.toString();
             } else {

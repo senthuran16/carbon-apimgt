@@ -262,7 +262,7 @@ public class TokenGenTest {
 
         //Get the public certificate encoded
         Base64 base64 = new Base64(true);
-        String x5c = base64.encodeToString(cert.getEncoded()).trim();
+        String x5c = com.nimbusds.jose.util.Base64.encode(cert.getEncoded()).toJSONString();
         //Check if the encoded pub cert present in JWT
         Assert.assertTrue("JWT header doest not contain x5c value", header.contains(x5c));
         Assert.assertTrue("JWT header doest not contain x5c key", header.contains("x5c"));
@@ -305,7 +305,7 @@ public class TokenGenTest {
 
         //Get the public certificate encoded
         Base64 base64 = new Base64(true);
-        String x5c = base64.encodeToString(cert.getEncoded()).trim();
+        String x5c = com.nimbusds.jose.util.Base64.encode(cert.getEncoded()).toJSONString();
         //Check if the encoded pub cert is present in JWT header with x5c property
         Assert.assertTrue("JWT Header contains x5c value", !header.contains(x5c));
         Assert.assertTrue("JWT Header contains x5c key", !header.contains("x5c"));
