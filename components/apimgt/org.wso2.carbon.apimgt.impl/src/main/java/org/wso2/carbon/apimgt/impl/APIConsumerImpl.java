@@ -127,6 +127,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
@@ -4428,21 +4429,23 @@ public class APIConsumerImpl extends AbstractAPIManager implements APIConsumer {
                     WSDLArchiveInfo archiveInfo = APIUtil
                             .extractAndValidateWSDLArchive((InputStream) docResourceMap.get("Data"));
                     File folderToImport = new File(
-                            archiveInfo.getLocation() + File.separator + APIConstants.API_WSDL_EXTRACTED_DIRECTORY);
+                            archiveInfo.getLocation() + File.separator);
                     Collection<File> wsdlFiles = APIFileUtil
                             .searchFilesWithMatchingExtension(folderToImport, APIFileUtil.WSDL_FILE_EXTENSION);
                     Collection<File> xsdFiles = APIFileUtil
                             .searchFilesWithMatchingExtension(folderToImport, APIFileUtil.XSD_FILE_EXTENSION);
                     if (wsdlFiles != null) {
-                        for (File foundWSDLFile : wsdlFiles) {
+                        ListIterator<File> iter = (ListIterator<File>) wsdlFiles.iterator();
+                        while (iter.hasNext()) {
+                            File foundWSDLFile = iter.next();
                             Path fileLocation = Paths.get(foundWSDLFile.getAbsolutePath());
                             byte[] updatedWSDLContent = this
                                     .getUpdatedWSDLByEnvironment(resourceUrl, Files.readAllBytes(fileLocation),
                                             environmentName, environmentType, apiName, apiVersion, apiProvider);
                             File updatedWSDLFile = new File(foundWSDLFile.getPath());
-                            wsdlFiles.remove(foundWSDLFile);
+                            iter.remove();
                             FileUtils.writeByteArrayToFile(updatedWSDLFile, updatedWSDLContent);
-                            wsdlFiles.add(updatedWSDLFile);
+                            iter.add(updatedWSDLFile);
                         }
                         wsdlFiles.addAll(xsdFiles);
                         getZipFileFromFileList(folderToImport.getCanonicalPath() + APIConstants.UPDATED_WSDL_ZIP,
