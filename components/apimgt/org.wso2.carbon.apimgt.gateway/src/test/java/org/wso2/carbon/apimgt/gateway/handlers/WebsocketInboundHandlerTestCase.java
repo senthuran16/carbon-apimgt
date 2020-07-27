@@ -519,9 +519,10 @@ public class WebsocketInboundHandlerTestCase {
         ByteBuf content = Mockito.mock(ByteBuf.class);
         Mockito.when(webSocketFrame.content()).thenReturn(content);
 
+        PowerMockito.mockStatic(APIUtil.class);
+        PowerMockito.when(APIUtil.isAdvanceThrottlingEnabled()).thenReturn(true);
         websocketInboundHandler.doThrottle(channelHandlerContext, webSocketFrame);
     }
-
 
     /*
     *  Test for NumberFormatException throws when remoteIP is mis formatted
@@ -549,5 +550,33 @@ public class WebsocketInboundHandlerTestCase {
         } catch (Exception e) {
             Assert.assertTrue(e instanceof NumberFormatException);
         }
+    }
+
+    /*
+     *  Test for doThrottle() happy path when advanced throttling is disabled
+     *
+     * */
+    @Test
+    public void testDoThrottle2() throws APIManagementException {
+        String publisherClass = "publisherClass";
+        PowerMockito.mockStatic(DataPublisherUtil.class);
+        APIManagerAnalyticsConfiguration apiMngAnalyticsConfig = Mockito.mock(APIManagerAnalyticsConfiguration.class);
+        PowerMockito.when(DataPublisherUtil.getApiManagerAnalyticsConfiguration()).thenReturn(apiMngAnalyticsConfig);
+        Mockito.when(apiMngAnalyticsConfig.getPublisherClass()).thenReturn(publisherClass);
+        //todo
+        ChannelHandlerContext channelHandlerContext = Mockito.mock(ChannelHandlerContext.class);
+        WebSocketFrame webSocketFrame = Mockito.mock(WebSocketFrame.class);
+        WebsocketInboundHandler websocketInboundHandler = new WebsocketInboundHandler() {
+            @Override
+            protected String getRemoteIP(ChannelHandlerContext ctx) {
+                return "192.168.0.100";
+            }
+        };
+        ByteBuf content = Mockito.mock(ByteBuf.class);
+        Mockito.when(webSocketFrame.content()).thenReturn(content);
+
+        PowerMockito.mockStatic(APIUtil.class);
+        PowerMockito.when(APIUtil.isAdvanceThrottlingEnabled()).thenReturn(false);
+        websocketInboundHandler.doThrottle(channelHandlerContext, webSocketFrame);
     }
 }

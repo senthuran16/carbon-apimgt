@@ -383,33 +383,38 @@ public class WebsocketInboundHandler extends ChannelInboundHandlerAdapter {
             }
         }
         jsonObMap.put(APIThrottleConstants.MESSAGE_SIZE, msg.content().capacity());
+        boolean advancedThrottlingEnabled =  APIUtil.isAdvanceThrottlingEnabled();
         try {
             PrivilegedCarbonContext.startTenantFlow();
             PrivilegedCarbonContext.getThreadLocalCarbonContext()
                     .setTenantDomain(tenantDomain, true);
-            boolean isThrottled = WebsocketUtil
-                    .isThrottled(resourceLevelThrottleKey, subscriptionLevelThrottleKey,
-                            applicationLevelThrottleKey);
-            if (isThrottled) {
-                if (APIUtil.isAnalyticsEnabled()) {
-                    publishThrottleEvent();
+            if (advancedThrottlingEnabled) {
+                boolean isThrottled = WebsocketUtil
+                        .isThrottled(resourceLevelThrottleKey, subscriptionLevelThrottleKey,
+                                applicationLevelThrottleKey);
+                if (isThrottled) {
+                    if (APIUtil.isAnalyticsEnabled()) {
+                        publishThrottleEvent();
+                    }
+                    return false;
                 }
-                return false;
             }
         } finally {
             PrivilegedCarbonContext.endTenantFlow();
         }
-        Object[] objects =
-                new Object[]{messageId, applicationLevelThrottleKey, applicationLevelTier,
-                        apiLevelThrottleKey, apiLevelTier, subscriptionLevelThrottleKey,
-                        subscriptionLevelTier, resourceLevelThrottleKey, resourceLevelTier,
-                        authorizedUser, apiContext, apiVersion, appTenant, apiTenant, appId,
-                        apiName, jsonObMap.toString()};
-        org.wso2.carbon.databridge.commons.Event event =
-                new org.wso2.carbon.databridge.commons.Event(
-                        "org.wso2.throttle.request.stream:1.0.0", System.currentTimeMillis(), null,
-                        null, objects);
-        throttleDataPublisher.getDataPublisher().tryPublish(event);
+        if (advancedThrottlingEnabled) {
+            Object[] objects =
+                    new Object[]{messageId, applicationLevelThrottleKey, applicationLevelTier,
+                            apiLevelThrottleKey, apiLevelTier, subscriptionLevelThrottleKey,
+                            subscriptionLevelTier, resourceLevelThrottleKey, resourceLevelTier,
+                            authorizedUser, apiContext, apiVersion, appTenant, apiTenant, appId,
+                            apiName, jsonObMap.toString()};
+            org.wso2.carbon.databridge.commons.Event event =
+                    new org.wso2.carbon.databridge.commons.Event(
+                            "org.wso2.throttle.request.stream:1.0.0", System.currentTimeMillis(), null,
+                            null, objects);
+            throttleDataPublisher.getDataPublisher().tryPublish(event);
+        }
         return true;
     }
 
