@@ -65,7 +65,7 @@ var inSequencesLoaded = false;
             var path = $(e.currentTarget).attr("data-path");
             var method = $(e.currentTarget).attr("data-method");
             designer.api_doc.paths[path][method]["x-throttling-tier"] = $(e.currentTarget).val();
-            $(".throttling_select[data-path='$.paths."+path+"."+method+"']").text($(e.currentTarget).val());
+            $("a.throttling_select[data-path='$.paths."+path+"."+method+"']").text($(e.currentTarget).val());
         },
 
         select_adv_policy_for_resource: function(e){
