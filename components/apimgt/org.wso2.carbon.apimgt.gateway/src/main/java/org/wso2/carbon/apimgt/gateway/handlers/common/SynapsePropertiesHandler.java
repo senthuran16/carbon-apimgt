@@ -50,7 +50,7 @@ public class SynapsePropertiesHandler extends AbstractHandler{
             if (headers.get("Host") != null || !("").equals(headers.get("Host"))) {
                 // Derive the outward facing host and port from host header
                 String hostHeader = (String) headers.get("Host");
-                // Set it as a message context property to retrive in HandleResponse method
+                // Set it as a message context property to retrieve in HandleResponse method
                 messageContext.setProperty("HostHeader", hostHeader);
             }
         }
@@ -82,8 +82,18 @@ public class SynapsePropertiesHandler extends AbstractHandler{
                 String kmHost = messageContext.getProperty("keyManager.hostname") + ":" + messageContext
                         .getProperty("keyManager.port");
                 String hostHeader = (String) messageContext.getProperty("HostHeader");
-                // Replacing KM host with Gateway host
-                locationURI = locationURI.replaceFirst(kmHost, hostHeader);
+
+                // This check to change the location header is done to make sure that only location headers of the
+                // appropriate endpoints which have been proxied are changed. Without this check condition to change
+                // the location header, any endpoint which is having KM host as part of the URL will be redirected
+                // which could lead to wrong endpoints.
+                if (locationURI.contains("/authenticationendpoint") || locationURI.contains("/oauth2/authorize")
+                        || locationURI.contains("/commonauth") || locationURI.contains("/logincontext") || locationURI
+                        .contains("/oidc")) {
+                    // Replacing KM host with Gateway host
+                    locationURI = locationURI.replaceFirst(kmHost, hostHeader);
+                }
+
                 ((Axis2MessageContext) messageContext).getAxis2MessageContext()
                         .setProperty("PRE_LOCATION_HEADER", locationURI);
                 if (messageContext.getProperty("REST_API_CONTEXT").equals("/commonauth")) {
