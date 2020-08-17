@@ -90,8 +90,10 @@ public class TiersApiServiceImpl extends TiersApiService {
                     Set<TierPermission> TierPermissions = apiConsumer.getTierPermissions();
                     for (TierPermission tierPermission : TierPermissions) {
                         Tier tier = apiTierMap.get(tierPermission.getTierName());
-                        tier.setTierPermission(tierPermission);
-                        apiTierMap.put(tierPermission.getTierName(), tier);
+                        if (tier != null) {
+                            tier.setTierPermission(tierPermission);
+                            apiTierMap.put(tierPermission.getTierName(), tier);
+                        }
                     }
 
                     // Removing denied Tiers

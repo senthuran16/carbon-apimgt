@@ -234,6 +234,8 @@ function validateInputs() {
     var illegalChars = $('#errorMessageIllegalChar').val();
     var policyName = $('#policyName');
     var policyNameTxt = policyName.val();
+    var roles = $('#roles');
+    var rolesTxt = roles.val();
 
     var defaultQuotaPolicy = $('input[name=select-quota-type]:checked').val();
     var defaultRequestCount = $('#defaultRequestCount');
@@ -245,6 +247,9 @@ function validateInputs() {
     var rateLimitCount = $('#rateLimitCount');
     var rateLimitCountTxt = rateLimitCount.val();
 
+    if (!validateInput(rolesTxt, roles, requiredMsg)) {
+        return false;
+    }
 
     if (!validateInput(policyNameTxt, policyName, requiredMsg)) {
         return false;
