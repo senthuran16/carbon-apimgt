@@ -112,5 +112,18 @@ public class APIMgtGatewayConstants {
     public static final String BASE64_ENCODED_CLIENT_CERTIFICATE_HEADER = "X-WSO2-CLIENT-CERTIFICATE";
     public static final String BEGIN_CERTIFICATE_STRING = "-----BEGIN CERTIFICATE-----\n";
     public static final String END_CERTIFICATE_STRING = "-----END CERTIFICATE-----";
+
+    /**
+     * Synapse Properties related Constants
+     */
+    public static final String HOST = "Host";
+    public static final String HOST_HEADER = "HostHeader";
+    public static final String LOCATION = "Location";
+    public static final String AUTHORIZE_CONTEXT = "/authorize";
+    public static final String COMMON_AUTH_CONTEXT = "/commonauth";
+    public static final String OIDC_CONTEXT = "/oidc";
+    public static final String AUTHENTICATION_ENDPOINT_CONTEXT = "/authenticationendpoint";
+    public static final String LOGIN_CONTEXT = "/logincontext";
+    public static final String OAUTH2_CONTEXT = "/oauth2";
 }
 
