@@ -643,6 +643,7 @@ public final class APIConstants {
     public static final String AUTH_MANAGER_USERNAME = AUTH_MANAGER + "Username";
     public static final String AUTH_MANAGER_PASSWORD = AUTH_MANAGER + "Password";
     public static final String ENABLE_MTLS_FOR_APIS = "EnableMTLSForAPIs";
+    public static final String IS_KM_REVERSE_PROXY_ENABLED = "ISKMReverseProxyEnabled";
 
     public static final String SELF_SIGN_UP = "SelfSignUp.";
     public static final String SELF_SIGN_UP_ENABLED = SELF_SIGN_UP + "Enabled";
