@@ -33,7 +33,7 @@ import java.util.TreeMap;
 
 public class SynapsePropertiesHandler extends AbstractHandler {
 
-    APIManagerConfiguration config = null;
+    private static APIManagerConfiguration config = null;
     private static boolean iskmReverseProxyEnabled = false;
 
     public boolean handleRequest(MessageContext messageContext) {
@@ -82,7 +82,8 @@ public class SynapsePropertiesHandler extends AbstractHandler {
             // Retrieve the ISKMReverseProxyEnabled property value from api manager configurations.
             // This value indicates whether the IS Authentication endpoint has been reverse proxied through
             // the Gateway.
-            config = ServiceReferenceHolder.getInstance().getApiManagerConfigurationService().getAPIManagerConfiguration();
+            config = ServiceReferenceHolder.getInstance().getApiManagerConfigurationService()
+                    .getAPIManagerConfiguration();
             iskmReverseProxyEnabled = Boolean.parseBoolean(
                     config.getFirstProperty(APIConstants.AUTH_MANAGER + APIConstants.IS_KM_REVERSE_PROXY_ENABLED));
         }
