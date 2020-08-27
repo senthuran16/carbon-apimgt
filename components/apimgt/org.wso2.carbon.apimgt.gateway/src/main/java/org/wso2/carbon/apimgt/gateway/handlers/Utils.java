@@ -283,22 +283,32 @@ public class Utils {
             certificateFromMessageContext = certs[0];
         }
         if (headers.containsKey(Utils.getClientCertificateHeader())) {
-
             try {
                 if (!isClientCertificateValidationEnabled() || APIUtil
                         .isCertificateExistsInTrustStore(certificateFromMessageContext)){
-                    String base64EncodedCertificate = (String) headers.get(Utils.getClientCertificateHeader());
-                    if (base64EncodedCertificate != null) {
-                        base64EncodedCertificate = URLDecoder.decode(base64EncodedCertificate).
-                                replaceAll(APIMgtGatewayConstants.BEGIN_CERTIFICATE_STRING, "")
-                                .replaceAll(APIMgtGatewayConstants.END_CERTIFICATE_STRING, "");
-
-                        byte[] bytes = Base64.decodeBase64(base64EncodedCertificate);
+                    String certificate = (String) headers.get(Utils.getClientCertificateHeader());
+                    byte[] bytes;
+                    if (certificate != null) {
+                        if (!isClientCertificateEncoded()) {
+                            certificate = certificate
+                                    .replaceAll(APIMgtGatewayConstants.BEGIN_CERTIFICATE_STRING, "")
+                                    .replaceAll(APIMgtGatewayConstants.BEGIN_CERTIFICATE_STRING_SPACE, "")
+                                    .replaceAll(APIMgtGatewayConstants.END_CERTIFICATE_STRING, "");
+                            certificate = certificate.replaceAll(" ", "\n");
+                            certificate = APIMgtGatewayConstants.BEGIN_CERTIFICATE_STRING + certificate
+                                    + APIMgtGatewayConstants.END_CERTIFICATE_STRING;
+                            bytes = certificate.getBytes();
+                        } else {
+                            certificate = URLDecoder.decode(certificate)
+                                    .replaceAll(APIMgtGatewayConstants.BEGIN_CERTIFICATE_STRING, "")
+                                    .replaceAll(APIMgtGatewayConstants.END_CERTIFICATE_STRING, "");
+                            bytes = Base64.decodeBase64(certificate);
+                        }
                         try (InputStream inputStream = new ByteArrayInputStream(bytes)) {
                             X509Certificate x509Certificate = X509Certificate.getInstance(inputStream);
                             if (APIUtil.isCertificateExistsInTrustStore(x509Certificate)) {
                                 return x509Certificate;
-                            }else{
+                            } else {
                                 log.debug("Certificate in Header didn't exist in truststore");
                                 return null;
                             }
@@ -314,7 +324,6 @@ public class Utils {
                 log.error(msg, e);
                 throw new APIManagementException(msg, e);
             }
-
         }
         return certificateFromMessageContext;
     }
@@ -330,5 +339,21 @@ public class Utils {
         }
         return false;
     }
+
+    private static boolean isClientCertificateEncoded() {
+        APIManagerConfiguration apiManagerConfiguration =
+                ServiceReferenceHolder.getInstance().getAPIManagerConfiguration();
+        if (apiManagerConfiguration != null) {
+            String firstProperty = apiManagerConfiguration
+                    .getFirstProperty(APIConstants.MutualSSL.CLIENT_CERTIFICATE_ENCODE);
+            if (firstProperty != null) {
+                return Boolean.parseBoolean(firstProperty);
+            } else {
+                return true;
+            }
+        }
+        return true;
+    }
+
 
 }
