@@ -575,6 +575,12 @@ public class APIProviderHostObject extends ScriptableObject {
             //Read URI Templates from swagger resource and set to api object
             Set<URITemplate> uriTemplates =
                     definitionFromOpenAPISpec.getURITemplates(api, String.valueOf(apiData.get("swagger", apiData)));
+
+            if (uriTemplates.isEmpty()) {
+                log.error("Could not find API resources in swagger definition of " + api.getId());
+                throw new APIManagementException("Could not find API resources in swagger definition of " + api.getId());
+            }
+
             api.setUriTemplates(uriTemplates);
 
             //scopes
@@ -729,6 +735,12 @@ public class APIProviderHostObject extends ScriptableObject {
             //Read URI Templates from swagger resource and set to api object
             Set<URITemplate> uriTemplates = definitionFromOpenAPISpec.getURITemplates(api,
                     (String) apiData.get("swagger", apiData));
+
+            if (uriTemplates.isEmpty()) {
+                log.error("Could not find API resources in swagger definition of " + api.getId());
+                throw new APIManagementException("Could not find API resources in swagger definition of " + api.getId());
+            }
+
             api.setUriTemplates(uriTemplates);
 
             apiProvider.saveSwagger20Definition(api.getId(), (String) apiData.get("swagger", apiData));
@@ -1051,6 +1063,12 @@ public class APIProviderHostObject extends ScriptableObject {
             // Read URI Templates from swagger resource and set it to api object
             Set<URITemplate> uriTemplates = definitionFromOpenAPISpec.getURITemplates(api,
                     (String) apiData.get("swagger", apiData));
+
+            if (uriTemplates.isEmpty()) {
+                log.error("Could not find API resources in swagger definition of " + api.getId());
+                throw new APIManagementException("Could not find API resources in swagger definition of " + api.getId());
+            }
+
             api.setUriTemplates(uriTemplates);
             apiProvider.validateResourceThrottlingTiers(api, tenantDomain);
             // Save the swagger definition in the registry
