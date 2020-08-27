@@ -577,7 +577,8 @@ public class APIProviderHostObject extends ScriptableObject {
                     definitionFromOpenAPISpec.getURITemplates(api, String.valueOf(apiData.get("swagger", apiData)));
 
             if (uriTemplates.isEmpty()) {
-                log.error("Could not find API resources in swagger definition of " + api.getId());
+                log.error("Could not find API resources in swagger definition of " + api.getId() +
+                        ". Swagger object: " + String.valueOf(apiData.get("swagger", apiData)));
                 throw new APIManagementException("Could not find API resources in swagger definition of " + api.getId());
             }
 
@@ -737,7 +738,8 @@ public class APIProviderHostObject extends ScriptableObject {
                     (String) apiData.get("swagger", apiData));
 
             if (uriTemplates.isEmpty()) {
-                log.error("Could not find API resources in swagger definition of " + api.getId());
+                log.error("Could not find API resources in swagger definition of " + api.getId() +
+                        ". Swagger object: " + String.valueOf(apiData.get("swagger", apiData)));
                 throw new APIManagementException("Could not find API resources in swagger definition of " + api.getId());
             }
 
@@ -1065,7 +1067,8 @@ public class APIProviderHostObject extends ScriptableObject {
                     (String) apiData.get("swagger", apiData));
 
             if (uriTemplates.isEmpty()) {
-                log.error("Could not find API resources in swagger definition of " + api.getId());
+                log.error("Could not find API resources in swagger definition of " + api.getId() +
+                        ". Swagger object: " + String.valueOf(apiData.get("swagger", apiData)));
                 throw new APIManagementException("Could not find API resources in swagger definition of " + api.getId());
             }
 
