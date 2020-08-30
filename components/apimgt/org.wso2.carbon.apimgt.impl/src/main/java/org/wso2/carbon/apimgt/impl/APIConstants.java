@@ -1509,6 +1509,7 @@ public final class APIConstants {
 
         public static final String MUTUAL_SSL_CONFIG_ROOT = "MutualSSL";
         public static final String CLIENT_CERTIFICATE_HEADER = MUTUAL_SSL_CONFIG_ROOT + ".ClientCertificateHeader";
+        public static final String CLIENT_CERTIFICATE_ENCODE = MUTUAL_SSL_CONFIG_ROOT + ".ClientCertificateEncode";
         public static final String ENABLE_CLIENT_CERTIFICATE_VALIDATION = MUTUAL_SSL_CONFIG_ROOT +
                 ".EnableClientCertificateValidation";
     }
