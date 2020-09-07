@@ -85,14 +85,16 @@ public class WebsocketInboundHandler extends ChannelInboundHandlerAdapter {
     private static String websocketCustomHeader = null;
 
     public WebsocketInboundHandler() {
-        if (throttleDataPublisher == null) {
-            // The publisher initializes in the first request only
-            synchronized (this) {
-                throttleDataPublisher = new ThrottleDataPublisher();
-            }
-        }
         initializeDataPublisher();
         websocketCustomHeader = getWebsocketParameters();
+    }
+
+    /**
+     * This method will initialize data publisher and this data publisher will be used to push events to central policy
+     * server.
+     */
+    public static void initThrottleDataPublisher() {
+        throttleDataPublisher = new ThrottleDataPublisher();
     }
 
     private void initializeDataPublisher() {
@@ -413,6 +415,11 @@ public class WebsocketInboundHandler extends ChannelInboundHandlerAdapter {
                     new org.wso2.carbon.databridge.commons.Event(
                             "org.wso2.throttle.request.stream:1.0.0", System.currentTimeMillis(), null,
                             null, objects);
+            if (throttleDataPublisher == null) {
+                log.error("Cannot publish events to traffic manager because ThrottleDataPublisher " +
+                        "has not been initialised");
+                return false;
+            }
             throttleDataPublisher.getDataPublisher().tryPublish(event);
         }
         return true;

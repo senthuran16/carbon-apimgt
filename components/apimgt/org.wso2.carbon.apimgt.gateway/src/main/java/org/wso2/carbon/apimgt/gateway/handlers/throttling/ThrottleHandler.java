@@ -127,17 +127,14 @@ public class ThrottleHandler extends AbstractHandler implements ManagedLifecycle
             log.debug("Throttle Handler initialized");
         }
         this.roleBasedAccessController = new RoleBasedAccessRateController();
+    }
 
-        /**
-         * This method will initialize data publisher and this data publisher will be used to push events to central policy
-         * server.
-         */
-        if (throttleDataPublisher == null) {
-            // The publisher initializes in the first request only
-            synchronized (this) {
-                throttleDataPublisher = new ThrottleDataPublisher();
-            }
-        }
+    /**
+     * This method will initialize data publisher and this data publisher will be used to push events to central policy
+     * server.
+     */
+    public static void initThrottleDataPublisher() {
+        throttleDataPublisher = new ThrottleDataPublisher();
     }
 
     /**
@@ -490,6 +487,11 @@ public class ThrottleHandler extends AbstractHandler implements ManagedLifecycle
      * false to notify error with handler
      */
     public boolean handleRequest(MessageContext messageContext) {
+        if (throttleDataPublisher == null) {
+            log.error("Cannot publish events to traffic manager because ThrottleDataPublisher " +
+                    "has not been initialised");
+            return false;
+        }
 
         Timer timer3 = getTimer(MetricManager.name(
                 APIConstants.METRICS_PREFIX, this.getClass().getSimpleName(), THROTTLE_MAIN));
