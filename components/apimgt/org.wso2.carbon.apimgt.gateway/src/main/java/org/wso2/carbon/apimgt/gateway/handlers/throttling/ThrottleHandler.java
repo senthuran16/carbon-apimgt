@@ -490,7 +490,7 @@ public class ThrottleHandler extends AbstractHandler implements ManagedLifecycle
         if (throttleDataPublisher == null) {
             log.error("Cannot publish events to traffic manager because ThrottleDataPublisher " +
                     "has not been initialised");
-            return false;
+            return true;
         }
 
         Timer timer3 = getTimer(MetricManager.name(

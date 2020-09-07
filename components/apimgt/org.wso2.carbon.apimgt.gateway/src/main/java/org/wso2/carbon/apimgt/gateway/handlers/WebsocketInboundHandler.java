@@ -418,7 +418,7 @@ public class WebsocketInboundHandler extends ChannelInboundHandlerAdapter {
             if (throttleDataPublisher == null) {
                 log.error("Cannot publish events to traffic manager because ThrottleDataPublisher " +
                         "has not been initialised");
-                return false;
+                return true;
             }
             throttleDataPublisher.getDataPublisher().tryPublish(event);
         }
