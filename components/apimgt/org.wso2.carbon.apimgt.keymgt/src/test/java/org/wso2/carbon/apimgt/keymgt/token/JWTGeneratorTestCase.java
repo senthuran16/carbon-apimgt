@@ -24,6 +24,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mockito;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.core.classloader.annotations.SuppressStaticInitializationFor;
 import org.wso2.carbon.apimgt.impl.APIConstants;
 import org.wso2.carbon.apimgt.impl.APIManagerConfiguration;
 import org.wso2.carbon.apimgt.impl.APIManagerConfigurationService;
@@ -33,7 +34,11 @@ import org.powermock.modules.junit4.PowerMockRunner;
 import org.wso2.carbon.apimgt.impl.utils.APIUtil;
 import org.wso2.carbon.apimgt.keymgt.service.TokenValidationContext;
 import org.wso2.carbon.core.util.KeyStoreManager;
+import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.oauth.cache.AuthorizationGrantCache;
+import org.wso2.carbon.identity.oauth.config.OAuthServerConfiguration;
+import org.wso2.carbon.identity.oauth.dao.OAuthAppDO;
+import org.wso2.carbon.identity.oauth2.util.OAuth2Util;
 import org.wso2.carbon.user.api.RealmConfiguration;
 import org.wso2.carbon.user.core.UserRealm;
 import org.wso2.carbon.user.core.UserStoreException;
@@ -53,7 +58,8 @@ import java.util.Map;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({ServiceReferenceHolder.class, MultitenantUtils.class, APIUtil.class, KeyStoreManager.class,
-        MessageDigest.class, AuthorizationGrantCache.class })
+        MessageDigest.class, AuthorizationGrantCache.class, OAuth2Util.class, IdentityUtil.class, OAuthServerConfiguration.class })
+@SuppressStaticInitializationFor("org.wso2.carbon.identity.oauth2.util.OAuth2Util")
 public class JWTGeneratorTestCase {
 
     private void mockAPIMConfiguration(Map<String, String> configMap) {
@@ -211,6 +217,17 @@ public class JWTGeneratorTestCase {
         AuthorizationGrantCache authorizationGrantCache = Mockito.mock(AuthorizationGrantCache.class);
         PowerMockito.when(AuthorizationGrantCache.getInstance()).thenReturn(authorizationGrantCache);
 
+        OAuthServerConfiguration oauthServerConfigurationMock = Mockito
+                .mock(OAuthServerConfiguration.class);
+        PowerMockito.mockStatic(OAuthServerConfiguration.class);
+        PowerMockito.when(OAuthServerConfiguration.getInstance()).thenReturn(oauthServerConfigurationMock);
+        PowerMockito.mockStatic(OAuth2Util.class);
+        OAuth2Util oAuth2Util = Mockito.mock(OAuth2Util.class);
+        OAuthAppDO oAuthAppDO = Mockito.mock(OAuthAppDO.class);
+        String[] audiences = {"aud1", "aud2"};
+        PowerMockito.when(oAuth2Util.getAppInformationByClientId(Mockito.anyString())).thenReturn(oAuthAppDO);
+        PowerMockito.when(oAuthAppDO.getAudiences()).thenReturn(audiences);
+
         String dialectUri = "dialect_uri";
         Map<String, String> configMap = new HashMap<String, String>();
         configMap.put(APIConstants.CONSUMER_DIALECT_URI, dialectUri);
@@ -264,6 +281,17 @@ public class JWTGeneratorTestCase {
         AuthorizationGrantCache authorizationGrantCache = Mockito.mock(AuthorizationGrantCache.class);
         PowerMockito.when(AuthorizationGrantCache.getInstance()).thenReturn(authorizationGrantCache);
 
+        OAuthServerConfiguration oauthServerConfigurationMock = Mockito
+                .mock(OAuthServerConfiguration.class);
+        PowerMockito.mockStatic(OAuthServerConfiguration.class);
+        PowerMockito.when(OAuthServerConfiguration.getInstance()).thenReturn(oauthServerConfigurationMock);
+        PowerMockito.mockStatic(OAuth2Util.class);
+        OAuth2Util oAuth2Util = Mockito.mock(OAuth2Util.class);
+        OAuthAppDO oAuthAppDO = Mockito.mock(OAuthAppDO.class);
+        String[] audiences = {"aud1", "aud2"};
+        PowerMockito.when(oAuth2Util.getAppInformationByClientId(Mockito.anyString())).thenReturn(oAuthAppDO);
+        PowerMockito.when(oAuthAppDO.getAudiences()).thenReturn(audiences);
+
         String dialectUri = "dialect_uri";
         Map<String, String> configMap = new HashMap<String, String>();
         configMap.put(APIConstants.CONSUMER_DIALECT_URI, dialectUri);
@@ -307,6 +335,18 @@ public class JWTGeneratorTestCase {
         PowerMockito.mockStatic(AuthorizationGrantCache.class);
         AuthorizationGrantCache authorizationGrantCache = Mockito.mock(AuthorizationGrantCache.class);
         PowerMockito.when(AuthorizationGrantCache.getInstance()).thenReturn(authorizationGrantCache);
+
+        OAuthServerConfiguration oauthServerConfigurationMock = Mockito
+                .mock(OAuthServerConfiguration.class);
+        PowerMockito.mockStatic(OAuthServerConfiguration.class);
+        PowerMockito.when(OAuthServerConfiguration.getInstance()).thenReturn(oauthServerConfigurationMock);
+        PowerMockito.mockStatic(OAuth2Util.class);
+        OAuth2Util oAuth2Util = Mockito.mock(OAuth2Util.class);
+        OAuthAppDO oAuthAppDO = Mockito.mock(OAuthAppDO.class);
+        String[] audiences = {"aud1", "aud2"};
+        PowerMockito.when(oAuth2Util.getAppInformationByClientId(Mockito.anyString())).thenReturn(oAuthAppDO);
+        PowerMockito.when(oAuthAppDO.getAudiences()).thenReturn(audiences);
+
 
         String dialectUri = "dialect_uri";
         Map<String, String> configMap = new HashMap<String, String>();
@@ -362,6 +402,17 @@ public class JWTGeneratorTestCase {
         AuthorizationGrantCache authorizationGrantCache = Mockito.mock(AuthorizationGrantCache.class);
         PowerMockito.when(AuthorizationGrantCache.getInstance()).thenReturn(authorizationGrantCache);
 
+        OAuthServerConfiguration oauthServerConfigurationMock = Mockito
+                .mock(OAuthServerConfiguration.class);
+        PowerMockito.mockStatic(OAuthServerConfiguration.class);
+        PowerMockito.when(OAuthServerConfiguration.getInstance()).thenReturn(oauthServerConfigurationMock);
+        PowerMockito.mockStatic(OAuth2Util.class);
+        OAuth2Util oAuth2Util = Mockito.mock(OAuth2Util.class);
+        OAuthAppDO oAuthAppDO = Mockito.mock(OAuthAppDO.class);
+        String[] audiences = {"aud1", "aud2"};
+        PowerMockito.when(oAuth2Util.getAppInformationByClientId(Mockito.anyString())).thenReturn(oAuthAppDO);
+        PowerMockito.when(oAuthAppDO.getAudiences()).thenReturn(audiences);
+
         String dialectUri = "dialect_uri";
         Map<String, String> configMap = new HashMap<String, String>();
         configMap.put(APIConstants.CONSUMER_DIALECT_URI, dialectUri);
@@ -416,6 +467,17 @@ public class JWTGeneratorTestCase {
         AuthorizationGrantCache authorizationGrantCache = Mockito.mock(AuthorizationGrantCache.class);
         PowerMockito.when(AuthorizationGrantCache.getInstance()).thenReturn(authorizationGrantCache);
 
+        OAuthServerConfiguration oauthServerConfigurationMock = Mockito
+                .mock(OAuthServerConfiguration.class);
+        PowerMockito.mockStatic(OAuthServerConfiguration.class);
+        PowerMockito.when(OAuthServerConfiguration.getInstance()).thenReturn(oauthServerConfigurationMock);
+        PowerMockito.mockStatic(OAuth2Util.class);
+        OAuth2Util oAuth2Util = Mockito.mock(OAuth2Util.class);
+        OAuthAppDO oAuthAppDO = Mockito.mock(OAuthAppDO.class);
+        String[] audiences = {"aud1", "aud2"};
+        PowerMockito.when(oAuth2Util.getAppInformationByClientId(Mockito.anyString())).thenReturn(oAuthAppDO);
+        PowerMockito.when(oAuthAppDO.getAudiences()).thenReturn(audiences);
+
         String dialectUri = "dialect_uri";
         Map<String, String> configMap = new HashMap<String, String>();
         configMap.put(APIConstants.CONSUMER_DIALECT_URI, dialectUri);
@@ -461,6 +523,17 @@ public class JWTGeneratorTestCase {
         PowerMockito.mockStatic(AuthorizationGrantCache.class);
         AuthorizationGrantCache authorizationGrantCache = Mockito.mock(AuthorizationGrantCache.class);
         PowerMockito.when(AuthorizationGrantCache.getInstance()).thenReturn(authorizationGrantCache);
+
+        OAuthServerConfiguration oauthServerConfigurationMock = Mockito
+                .mock(OAuthServerConfiguration.class);
+        PowerMockito.mockStatic(OAuthServerConfiguration.class);
+        PowerMockito.when(OAuthServerConfiguration.getInstance()).thenReturn(oauthServerConfigurationMock);
+        PowerMockito.mockStatic(OAuth2Util.class);
+        OAuth2Util oAuth2Util = Mockito.mock(OAuth2Util.class);
+        OAuthAppDO oAuthAppDO = Mockito.mock(OAuthAppDO.class);
+        String[] audiences = {"aud1", "aud2"};
+        PowerMockito.when(oAuth2Util.getAppInformationByClientId(Mockito.anyString())).thenReturn(oAuthAppDO);
+        PowerMockito.when(oAuthAppDO.getAudiences()).thenReturn(audiences);
 
         String dialectUri = "dialect_uri";
         Map<String, String> configMap = new HashMap<String, String>();
@@ -538,6 +611,17 @@ public class JWTGeneratorTestCase {
         PowerMockito.mockStatic(AuthorizationGrantCache.class);
         AuthorizationGrantCache authorizationGrantCache = Mockito.mock(AuthorizationGrantCache.class);
         PowerMockito.when(AuthorizationGrantCache.getInstance()).thenReturn(authorizationGrantCache);
+
+        OAuthServerConfiguration oauthServerConfigurationMock = Mockito
+                .mock(OAuthServerConfiguration.class);
+        PowerMockito.mockStatic(OAuthServerConfiguration.class);
+        PowerMockito.when(OAuthServerConfiguration.getInstance()).thenReturn(oauthServerConfigurationMock);
+        PowerMockito.mockStatic(OAuth2Util.class);
+        OAuth2Util oAuth2Util = Mockito.mock(OAuth2Util.class);
+        OAuthAppDO oAuthAppDO = Mockito.mock(OAuthAppDO.class);
+        String[] audiences = {"aud1", "aud2"};
+        PowerMockito.when(oAuth2Util.getAppInformationByClientId(Mockito.anyString())).thenReturn(oAuthAppDO);
+        PowerMockito.when(oAuthAppDO.getAudiences()).thenReturn(audiences);
 
         String dialectUri = "dialect_uri";
         Map<String, String> configMap = new HashMap<String, String>();
