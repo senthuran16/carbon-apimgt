@@ -281,8 +281,12 @@ var log = new Log();
 
             if (jsonObj.components.securitySchemes == undefined) {
                 jsonObj.components.securitySchemes = {};
+                jsonObj.components.securitySchemes.default = default_implicit_openapi;
+            } else if (jsonObj.components.securitySchemes != undefined && jsonObj.components.securitySchemes.default == undefined) {
+                jsonObj.components.securitySchemes.default = default_implicit_openapi;
+            } else {
+                // Use provided default definition by user. No need to provide default definition explicitly.
             }
-            jsonObj.components.securitySchemes.default = default_implicit_openapi;
 
         } else if (jsonObj.swagger) {
             jsonObj.host = host;
@@ -316,8 +320,12 @@ var log = new Log();
 
             if (jsonObj.securityDefinitions == undefined) {
                 jsonObj.securityDefinitions = {};
+                jsonObj.components.securitySchemes.default = default_implicit_openapi;
+            } else if (jsonObj.components.securitySchemes != undefined && jsonObj.components.securitySchemes.default == undefined) {
+                jsonObj.components.securitySchemes.default = default_implicit_openapi;
+            } else {
+                // Use provided default definition by user. No need to provide default definition explicitly.
             }
-            jsonObj.securityDefinitions.default = default_implicit_swagger;
         }
 
         jsonObj.paths = paths;
