@@ -38,6 +38,10 @@ import org.wso2.carbon.identity.claim.metadata.mgt.exception.ClaimMetadataExcept
 import org.wso2.carbon.identity.oauth.cache.AuthorizationGrantCache;
 import org.wso2.carbon.identity.oauth.cache.AuthorizationGrantCacheEntry;
 import org.wso2.carbon.identity.oauth.cache.AuthorizationGrantCacheKey;
+import org.wso2.carbon.identity.oauth.common.exception.InvalidOAuthClientException;
+import org.wso2.carbon.identity.oauth.dao.OAuthAppDO;
+import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
+import org.wso2.carbon.identity.oauth2.util.OAuth2Util;
 import org.wso2.carbon.user.api.UserStoreException;
 import org.wso2.carbon.user.api.UserStoreManager;
 import org.wso2.carbon.utils.multitenancy.MultitenantUtils;
@@ -47,6 +51,9 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.Date;
+import java.util.List;
+import java.util.Arrays;
 
 import static org.apache.commons.collections.MapUtils.isNotEmpty;
 
@@ -63,6 +70,7 @@ public class JWTGenerator extends AbstractJWTGenerator {
         long currentTime = System.currentTimeMillis();
         long expireIn = currentTime + getTTL() * 1000;
 
+        Date currentTimeDate = new Date(currentTime);
         String dialect;
         ClaimsRetriever claimsRetriever = getClaimsRetriever();
         if (claimsRetriever != null) {
@@ -89,9 +97,33 @@ public class JWTGenerator extends AbstractJWTGenerator {
         }
 
         Map<String, String> claims = new LinkedHashMap<String, String>(20);
+        OAuthAppDO oAuthAppDO = null;
+        try {
+            oAuthAppDO = OAuth2Util.
+                    getAppInformationByClientId(validationContext.getValidationInfoDTO().getConsumerKey());
+        } catch (IdentityOAuth2Exception e) {
+            log.error("Error occurred while getting JWT Token client ID : "
+                    + validationContext.getValidationInfoDTO().getConsumerKey() + " when getting oAuth App " +
+                    "information", e);
+            throw new APIManagementException("Error occurred while getting JWT Token client ID : "
+                    + validationContext.getValidationInfoDTO().getConsumerKey(), e);
+        } catch (InvalidOAuthClientException e) {
+            log.error("Error occurred while getting JWT Token client ID : "
+                    + validationContext.getValidationInfoDTO().getConsumerKey() + " when getting oAuth App " +
+                    "information", e);
+            throw new APIManagementException("Error occurred while getting JWT Token client ID : "
+                    + validationContext.getValidationInfoDTO().getConsumerKey(), e);
+        }
+        if (oAuthAppDO != null && oAuthAppDO.getAudiences() != null) {
+            String[] audience = oAuthAppDO.getAudiences();
+            List<String> audienceList = Arrays.asList(audience);
+            claims.put("aud", audienceList.toString());
+        }
 
         claims.put("iss", API_GATEWAY_ID);
         claims.put("exp", String.valueOf(expireIn));
+        claims.put("iat", currentTimeDate.toString());
+        claims.put("sub", subscriber);
         claims.put(dialect + "/subscriber", subscriber);
         claims.put(dialect + "/applicationid", applicationId);
         claims.put(dialect + "/applicationname", applicationName);
