@@ -18,9 +18,11 @@
 
 package org.wso2.carbon.apimgt.jms.listener.utils;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.json.simple.parser.ParseException;
+import org.wso2.carbon.apimgt.gateway.handlers.Utils;
 import org.wso2.carbon.apimgt.gateway.handlers.throttling.APIThrottleConstants;
 import org.wso2.carbon.apimgt.gateway.throttling.ThrottleDataHolder;
 import org.wso2.carbon.apimgt.gateway.throttling.util.ThrottleConstants;
@@ -28,6 +30,8 @@ import org.wso2.carbon.apimgt.impl.APIConstants;
 import org.wso2.carbon.apimgt.impl.utils.APIUtil;
 import org.wso2.carbon.apimgt.jms.listener.APICondition;
 import org.wso2.carbon.apimgt.jms.listener.internal.ServiceReferenceHolder;
+import org.wso2.carbon.context.PrivilegedCarbonContext;
+import org.wso2.carbon.utils.multitenancy.MultitenantConstants;
 
 import java.util.Date;
 import java.util.Enumeration;
@@ -100,6 +104,12 @@ public class JMSMessageListener implements MessageListener {
                          * keyTemplateState - whether key template active or not
                          */
                         handleKeyTemplateMessage(map);
+                    }  else if (map.get(APIConstants.REVOKED_TOKEN_KEY) != null) {
+                        /*
+                         * This message contains revoked token data
+                         * revokedToken - Revoked Token which should be removed from the cache
+                         */
+                        handleRevokedTokenMessage((String) map.get(APIConstants.REVOKED_TOKEN_KEY));
                     }
 
                 } else {
@@ -254,5 +264,31 @@ public class JMSMessageListener implements MessageListener {
             ServiceReferenceHolder.getInstance().getThrottleDataHolder()
                     .removeKeyTemplate(keyTemplateValue);
         }
+    }
+
+    private void handleRevokedTokenMessage(String revokedToken) {
+
+        if (StringUtils.isEmpty(revokedToken)) {
+            return;
+        }
+        //Find the actual tenant domain on which the access token was cached. It is stored as a reference in
+        //the super tenant cache.
+        String cachedTenantDomain;
+        try {
+            PrivilegedCarbonContext.startTenantFlow();
+            PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(
+                    MultitenantConstants.SUPER_TENANT_DOMAIN_NAME, true);
+            cachedTenantDomain = Utils.getCachedTenantDomain(revokedToken);
+            if (cachedTenantDomain == null) { //the token is not in cache
+                return;
+            }
+            Utils.removeCacheEntryFromGatewayCache(revokedToken);
+            Utils.putInvalidTokenEntryIntoInvalidTokenCache(revokedToken, cachedTenantDomain);
+        } finally {
+            PrivilegedCarbonContext.endTenantFlow();
+        }
+        //Remove token from the token's own tenant's cache.
+        Utils.removeTokenFromTenantTokenCache(revokedToken, cachedTenantDomain);
+        Utils.putInvalidTokenIntoTenantInvalidTokenCache(revokedToken, cachedTenantDomain);
     }
 }
