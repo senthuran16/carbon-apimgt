@@ -66,6 +66,7 @@ public class DataProcessAndPublishingAgent implements Runnable {
     Map<String, Object> customPropertyMap;
     Map<String, String> headersMap;
     private AuthenticationContext authenticationContext;
+    VerbInfoDTO verbInfoDTO;
 
     public DataProcessAndPublishingAgent() {
 
@@ -94,6 +95,7 @@ public class DataProcessAndPublishingAgent implements Runnable {
         this.apiTenant = null;
         this.appId = null;
         this.apiName = null;
+        this.verbInfoDTO = null;
         this.customPropertyMap = Collections.emptyMap();
     }
 
@@ -128,7 +130,7 @@ public class DataProcessAndPublishingAgent implements Runnable {
         this.appId = appId;
         String apiName = (String) messageContext.getProperty(RESTConstants.SYNAPSE_REST_API);
         this.apiName = APIUtil.getAPINamefromRESTAPI(apiName);
-
+        this.verbInfoDTO = (VerbInfoDTO) messageContext.getProperty(APIConstants.VERB_INFO_DTO);
 
         if (getThrottleProperties().isEnableHeaderConditions()) {
             org.apache.axis2.context.MessageContext axis2MessageContext = ((Axis2MessageContext) messageContext)
@@ -225,7 +227,6 @@ public class DataProcessAndPublishingAgent implements Runnable {
 
         //this parameter will be used to capture message size and pass it to calculation logic
         long messageSizeInBytes = 0;
-        VerbInfoDTO verbInfoDTO = (VerbInfoDTO) messageContext.getProperty(APIConstants.VERB_INFO_DTO);
         if (authenticationContext.isContentAwareTierPresent() ||
                 (APIConstants.AUTH_NO_AUTHENTICATION.equals(verbInfoDTO.getAuthType()) && verbInfoDTO.isContentAware())) {
             //this request can match with with bandwidth policy. So we need to get message size.
