@@ -40,6 +40,7 @@ public class ThrottlingHandlerWrapper extends ThrottleHandler {
         this.timer = timer;
         this.throttleDataHolder = throttleDataHolder;
         this.throttleConditionEvaluator = throttleConditionEvaluator;
+        ThrottleHandler.initThrottleDataPublisher();
     }
 
     public ThrottlingHandlerWrapper(Timer timer, ThrottleDataHolder throttleDataHolder, ThrottleConditionEvaluator throttleConditionEvaluator, AccessInformation accessInformation) {
@@ -47,6 +48,7 @@ public class ThrottlingHandlerWrapper extends ThrottleHandler {
         this.throttleDataHolder = throttleDataHolder;
         this.throttleConditionEvaluator = throttleConditionEvaluator;
         this.accessInformation = accessInformation;
+        ThrottleHandler.initThrottleDataPublisher();
     }
 
     @Override
