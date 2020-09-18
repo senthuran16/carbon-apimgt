@@ -36,10 +36,12 @@ import org.wso2.carbon.apimgt.impl.APIConstants;
 import org.wso2.carbon.apimgt.impl.APIManagerConfiguration;
 import org.wso2.carbon.apimgt.impl.APIManagerConfigurationService;
 import org.wso2.carbon.apimgt.impl.dao.ApiMgtDAO;
+import org.wso2.carbon.apimgt.impl.dto.ThrottleProperties;
 import org.wso2.carbon.apimgt.keymgt.handlers.DefaultKeyValidationHandler;
 import org.wso2.carbon.apimgt.keymgt.issuers.AbstractScopesIssuer;
 import org.wso2.carbon.apimgt.keymgt.listeners.KeyManagerUserOperationListener;
 import org.wso2.carbon.apimgt.keymgt.util.APIKeyMgtDataHolder;
+import org.wso2.carbon.event.output.adapter.core.OutputEventAdapterService;
 import org.wso2.carbon.identity.thrift.authentication.ThriftAuthenticatorService;
 import org.wso2.carbon.registry.core.service.RegistryService;
 import org.wso2.carbon.user.core.service.RealmService;
@@ -97,6 +99,14 @@ public class APIKeyMgtServiceComponentTest {
                 .thenReturn("9876");
         PowerMockito.when(apiManagerConfiguration.getFirstProperty(APIConstants.API_KEY_VALIDATOR_CONNECTION_TIMEOUT))
                 .thenReturn("1");
+        ThrottleProperties throttleProperties = Mockito.mock(ThrottleProperties.class);
+        ThrottleProperties.TrafficManager trafficManager = Mockito.mock(ThrottleProperties.TrafficManager.class);
+        PowerMockito.when(throttleProperties.getTrafficManager()).thenReturn(trafficManager);
+        PowerMockito.when(apiManagerConfiguration.getThrottleProperties())
+                .thenReturn(throttleProperties);
+        OutputEventAdapterService outputEventAdapterService = Mockito.mock(OutputEventAdapterService.class);
+        PowerMockito.when(serviceReferenceHolder.getOutputEventAdapterService())
+                .thenReturn(outputEventAdapterService);
         PowerMockito.when(APIKeyMgtDataHolder.getAmConfigService()).thenReturn(apiManagerConfigurationService);
         PowerMockito.when(APIKeyMgtDataHolder.getThriftServerEnabled()).thenReturn(true);
         PowerMockito.when(TSSLTransportFactory
