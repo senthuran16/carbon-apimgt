@@ -56,7 +56,7 @@ public class APIMOAuthEventInterceptor extends AbstractOAuthEventInterceptor {
                                               RefreshTokenValidationDataDO refreshTokenDO, Map<String, Object> params) {
 
         if (accessTokenDO != null) { // if accessTokenDO is not null, it implies the revocation was a success
-            Object[] objects = new Object[]{accessTokenDO.getTokenId()};
+            Object[] objects = new Object[]{accessTokenDO.getAccessToken()};
             Event tokenRevocationMessage = new Event(APIConstants.TOKEN_REVOCATION_STREAM_ID, System.currentTimeMillis(),
                     null, null, objects);
             ServiceReferenceHolder.getInstance().getOutputEventAdapterService()
@@ -80,7 +80,7 @@ public class APIMOAuthEventInterceptor extends AbstractOAuthEventInterceptor {
             Map<String, Object> params) {
 
         if (accessTokenDO != null) { // if accessTokenDO is not null, it implies the revocation was a success
-            Object[] objects = new Object[]{accessTokenDO.getTokenId()};
+            Object[] objects = new Object[]{accessTokenDO.getAccessToken()};
             Event tokenRevocationMessage = new Event(APIConstants.TOKEN_REVOCATION_STREAM_ID, System.currentTimeMillis(),
                     null, null, objects);
             ServiceReferenceHolder.getInstance().getOutputEventAdapterService()
