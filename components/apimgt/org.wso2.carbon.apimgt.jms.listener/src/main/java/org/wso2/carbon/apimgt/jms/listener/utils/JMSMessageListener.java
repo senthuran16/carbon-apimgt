@@ -43,6 +43,7 @@ import javax.jms.JMSException;
 import javax.jms.MapMessage;
 import javax.jms.Message;
 import javax.jms.MessageListener;
+import javax.jms.Topic;
 
 public class JMSMessageListener implements MessageListener {
 
@@ -78,40 +79,44 @@ public class JMSMessageListener implements MessageListener {
                         map.put(key, mapMessage.getObject(key));
                     }
 
-                    if (map.get(APIConstants.THROTTLE_KEY) != null) {
-                        /**
-                         * This message contains throttle data in map which contains Keys
-                         * throttleKey - Key of particular throttling level
-                         * isThrottled - Whether message has throttled or not
-                         * expiryTimeStamp - When the throttling time window will expires
+                    String topicName = ((Topic) message.getJMSDestination()).getTopicName();
+                    if (APIConstants.TopicNames.TOPIC_TOKEN_REVOCATION.toLowerCase().equals(topicName)) {
+                        if (map.get(APIConstants.REVOKED_TOKEN_KEY) != null) {
+                            /*
+                             * This message contains revoked token data
+                             * revokedToken - Revoked Token which should be removed from the cache
+                             */
+                            handleRevokedTokenMessage((String) map.get(APIConstants.REVOKED_TOKEN_KEY));
+                        }
+                    } else {
+                        if (map.get(APIConstants.THROTTLE_KEY) != null) {
+                            /**
+                             * This message contains throttle data in map which contains Keys
+                             * throttleKey - Key of particular throttling level
+                             * isThrottled - Whether message has throttled or not
+                             * expiryTimeStamp - When the throttling time window will expires
 
 
-                         */
+                             */
 
-                        handleThrottleUpdateMessage(map);
-                    } else if (map.get(APIConstants.BLOCKING_CONDITION_KEY) != null) {
-                        /**
-                         * This message contains blocking condition data
-                         * blockingCondition - Blocking condition type
-                         * conditionValue - blocking condition value
-                         * state - State whether blocking condition is enabled or not
-                         */
-                        handleBlockingMessage(map);
-                    } else if (map.get(APIConstants.POLICY_TEMPLATE_KEY) != null) {
-                        /**
-                         * This message contains key template data
-                         * keyTemplateValue - Value of key template
-                         * keyTemplateState - whether key template active or not
-                         */
-                        handleKeyTemplateMessage(map);
-                    }  else if (map.get(APIConstants.REVOKED_TOKEN_KEY) != null) {
-                        /*
-                         * This message contains revoked token data
-                         * revokedToken - Revoked Token which should be removed from the cache
-                         */
-                        handleRevokedTokenMessage((String) map.get(APIConstants.REVOKED_TOKEN_KEY));
+                            handleThrottleUpdateMessage(map);
+                        } else if (map.get(APIConstants.BLOCKING_CONDITION_KEY) != null) {
+                            /**
+                             * This message contains blocking condition data
+                             * blockingCondition - Blocking condition type
+                             * conditionValue - blocking condition value
+                             * state - State whether blocking condition is enabled or not
+                             */
+                            handleBlockingMessage(map);
+                        } else if (map.get(APIConstants.POLICY_TEMPLATE_KEY) != null) {
+                            /**
+                             * This message contains key template data
+                             * keyTemplateValue - Value of key template
+                             * keyTemplateState - whether key template active or not
+                             */
+                            handleKeyTemplateMessage(map);
+                        }
                     }
-
                 } else {
                     log.warn("Event dropped due to unsupported message type " + message.getClass());
                 }

@@ -368,18 +368,11 @@ public class Utils {
     public static void removeTokenFromTenantTokenCache(String accessToken, String cachedTenantDomain) {
         //If the token is cached in the tenant cache
         if (cachedTenantDomain != null && !MultitenantConstants.SUPER_TENANT_DOMAIN_NAME.equals(cachedTenantDomain)) {
-
-            if (log.isDebugEnabled()) {
-                log.debug("Removing cache entry " + accessToken + " from " + cachedTenantDomain + " domain");
-            }
             try {
                 PrivilegedCarbonContext.startTenantFlow();
                 PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(cachedTenantDomain, true);
                 //Remove the tenant cache entry.
                 removeCacheEntryFromGatewayCache(accessToken);
-                if (log.isDebugEnabled()) {
-                    log.debug("Removed cache entry " + accessToken + " from " + cachedTenantDomain + " domain");
-                }
             } finally {
                 PrivilegedCarbonContext.endTenantFlow();
             }
@@ -395,19 +388,10 @@ public class Utils {
     public static void putInvalidTokenIntoTenantInvalidTokenCache(String accessToken, String cachedTenantDomain) {
         //If the token was cached in the tenant cache
         if (cachedTenantDomain != null && !MultitenantConstants.SUPER_TENANT_DOMAIN_NAME.equals(cachedTenantDomain)) {
-
-            if (log.isDebugEnabled()) {
-                log.debug("Putting the cache entry " + accessToken + " of " + cachedTenantDomain + " domain " +
-                        "to the invalid token cache...");
-            }
             try {
                 PrivilegedCarbonContext.startTenantFlow();
                 PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(cachedTenantDomain, true);
                 putInvalidTokenEntryIntoInvalidTokenCache(accessToken, cachedTenantDomain);
-                if (log.isDebugEnabled()) {
-                    log.debug(" Token " + accessToken + " of " + cachedTenantDomain + " domain was put to the " +
-                            "invalid token cache.");
-                }
             } finally {
                 PrivilegedCarbonContext.endTenantFlow();
             }

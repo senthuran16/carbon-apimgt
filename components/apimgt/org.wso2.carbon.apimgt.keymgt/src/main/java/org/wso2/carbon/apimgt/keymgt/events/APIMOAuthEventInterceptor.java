@@ -39,7 +39,6 @@ import java.util.Map;
 public class APIMOAuthEventInterceptor extends AbstractOAuthEventInterceptor {
 
     private static final Log log = LogFactory.getLog(APIMOAuthEventInterceptor.class);
-    private static final String REVOKED_ACCESS_TOKEN = "RevokedAccessToken";
 
     /**
      * Overridden method to handle the post processing of token revocation
@@ -56,20 +55,8 @@ public class APIMOAuthEventInterceptor extends AbstractOAuthEventInterceptor {
                                               OAuthRevocationResponseDTO revokeResponseDTO, AccessTokenDO accessTokenDO,
                                               RefreshTokenValidationDataDO refreshTokenDO, Map<String, Object> params) {
 
-        // If the response header contains RevokedAccessToken header, it implies the token revocation was a success.
-        ResponseHeader[] responseHeaders = revokeResponseDTO.getResponseHeaders();
-        boolean isRevokedAccessTokenHeaderExists = false;
-        if (responseHeaders != null) {
-            for (ResponseHeader responseHeader : responseHeaders) {
-                if (responseHeader.getKey().equals(REVOKED_ACCESS_TOKEN) && responseHeader.getValue() != null) {
-                    isRevokedAccessTokenHeaderExists = true; // indicates a successful revocation
-                    break;
-                }
-            }
-        }
-
-        if (isRevokedAccessTokenHeaderExists) {
-            Object[] objects = new Object[]{revokeRequestDTO.getToken()};
+        if (accessTokenDO != null) { // if accessTokenDO is not null, it implies the revocation was a success
+            Object[] objects = new Object[]{accessTokenDO.getTokenId()};
             Event tokenRevocationMessage = new Event(APIConstants.TOKEN_REVOCATION_STREAM_ID, System.currentTimeMillis(),
                     null, null, objects);
             ServiceReferenceHolder.getInstance().getOutputEventAdapterService()
