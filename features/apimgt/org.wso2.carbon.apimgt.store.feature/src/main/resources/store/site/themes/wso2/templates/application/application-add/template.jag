@@ -120,7 +120,6 @@
   </div>
 
     <% if(applicationAttributes!=null) { %>
-        <%=applicationAttributes%>
         <input type="hidden" name="numberOfAttributes"  id="numberOfAttributes" value="<%= encode.forHtml(applicationAttributes.length) %>"/>
         <%
         // Iterate through the keys, read from configuration file
