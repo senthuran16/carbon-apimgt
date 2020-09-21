@@ -341,6 +341,12 @@ public class APIManagerConfiguration {
                         else if(attribute.getLocalName().equals("Description")){
                             jsonObject.put(APIConstants.ApplicationAttributes.DESCRIPTION,attribute.getText());
                         }
+                        else if(attribute.getLocalName().equals("Tooltip")){
+                            jsonObject.put(APIConstants.ApplicationAttributes.TOOLTIP,attribute.getText());
+                        }
+                        else if(attribute.getLocalName().equals("Type")){
+                            jsonObject.put(APIConstants.ApplicationAttributes.TYPE,attribute.getText());
+                        }
                     }
                     String isRequired = omElement.getAttributeValue(new QName("required"));
                     if (isRequired != null) {

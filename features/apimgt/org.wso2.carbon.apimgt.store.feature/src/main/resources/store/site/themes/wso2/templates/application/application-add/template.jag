@@ -120,6 +120,7 @@
   </div>
 
     <% if(applicationAttributes!=null) { %>
+        <%=applicationAttributes%>
         <input type="hidden" name="numberOfAttributes"  id="numberOfAttributes" value="<%= encode.forHtml(applicationAttributes.length) %>"/>
         <%
         // Iterate through the keys, read from configuration file
@@ -128,35 +129,40 @@
             <div class="form-group">
             <% if (applicationAttributes[i].Attribute) { %>
                 <label class="col-md-3 col-lg-3 control-label" for="attribute_<%= i%>">
-                <%=encode.forHtml(i18n.localize(applicationAttributes[i].Attribute,applicationAttributes[i].Attribute))%>
+                  <%=encode.forHtml(i18n.localize(applicationAttributes[i].Attribute,applicationAttributes[i].Attribute))%>
 
-                <% if ( Boolean(applicationAttributes[i].required ) || applicationAttributes[i].Required ) { %>
-                <span class="requiredAstrix">*</span>
+                  <% if ( Boolean(applicationAttributes[i].required ) || applicationAttributes[i].Required ) { %>
+                  <span class="requiredAstrix">*</span>
+                  <% } %>
                 </label>
-                <div class="col-md-8 col-lg-6">
-                <input type="hidden" id="attributeKey_<%= i.toString()%>" value="<%= encode.forHtml(applicationAttributes[i].Attribute) %>"/>
-                <span class="d-inline-block" tabindex="0" data-toggle="tooltip" title="<% if (applicationAttributes[i].Description) { %>
-                    <%= applicationAttributes[i].Description%> <%} %>">
-                <input type="text" class="form-control required" name="attribute_<%= i.toString()%>" id="attribute_<%= i.toString()%>"/>
-                </span>
+                <div class="col-md-9 col-lg-9">
+                  <input type="hidden" id="attributeKey_<%= i.toString()%>" value="<%= encode.forHtml(applicationAttributes[i].Attribute) %>"/>
+                    <!-- Render the tooltip -->
+                  <% if(applicationAttributes[i].Tooltip) { %>
+                  <span class="d-inline-block" tabindex="0" data-toggle="tooltip" title="<%= applicationAttributes[i].Tooltip%>">
+                  <% } %>
+                    <% if(!applicationAttributes[i].Type || (applicationAttributes[i].Type && applicationAttributes[i].Type === "text")) { %>
+                    <input type="text" class="form-control <% if ( Boolean(applicationAttributes[i].required ) || applicationAttributes[i].Required ) { %>required<% } %>" name="attribute_<%= i.toString()%>" id="attribute_<%= i.toString()%>"/>
+                    <% } else if(applicationAttributes[i].Type && applicationAttributes[i].Type === "textarea") { %>
+                    <textarea 
+                      rows="3" 
+                      class="form-control <% if ( Boolean(applicationAttributes[i].required ) || applicationAttributes[i].Required ) { %>required<% } %>" 
+                      name="attribute_<%= i.toString()%>" 
+                      id="attribute_<%= i.toString()%>"
+                    ></textarea>
+                    <% } %>
+                  <% if(applicationAttributes[i].Tooltip) { %>
+                  </span>
+                  <% } %>
+                    <!-- Render the description -->
+                  <% if(applicationAttributes[i].Description) { %>
+                  <div class="help-block"><%=applicationAttributes[i].Description%></div>
+                  <% } %>
                 </div>
-
-                <% } else { %>
-
-                </label>
-                <div class="col-md-8 col-lg-6">
-                <input type="hidden" id="attributeKey_<%= i.toString()%>" value="<%= encode.forHtml(applicationAttributes[i].Attribute) %>"/>
-                <span class="d-inline-block" tabindex="0" data-toggle="tooltip" title="<% if (applicationAttributes[i].Description) { %>
-                    <%= applicationAttributes[i].Description%> <%} %>">
-                <input type="text" class="form-control" id="attribute_<%= i.toString()%>"/>
-                </span>
-                </div>
-
-                <% }
-        }%>
+            <% } %>
         </div>
-        <% }
-    }%>
+        <% } 
+      } %>
 
     <div class="form-group">
     <label for="tokenType" class="col-md-3 col-lg-3 control-label"><%= i18n.localize("Token Type")%></label>
