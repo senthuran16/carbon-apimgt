@@ -1360,6 +1360,11 @@ public final class APIConstants {
         public static final String ENABLED = "Enabled";
     }
 
+    public static class TokenRevocationNotifierConstants {
+        public static final String TOKEN_REVOCATION_NOTIFIER = "TokenRevocationNotifier";
+        public static final String ENABLED = "Enabled";
+    }
+
     /**
      * Parameter for adding custom attributes against application in API Store
      */

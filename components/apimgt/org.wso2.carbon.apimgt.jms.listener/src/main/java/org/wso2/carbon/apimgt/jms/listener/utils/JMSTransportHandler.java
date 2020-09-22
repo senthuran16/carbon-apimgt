@@ -23,6 +23,7 @@ import org.apache.axis2.transport.base.threads.NativeWorkerPool;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.apimgt.impl.APIConstants;
+import org.wso2.carbon.apimgt.impl.dto.TokenRevocationNotifier;
 import org.wso2.carbon.apimgt.jms.listener.internal.ServiceReferenceHolder;
 import org.wso2.carbon.apimgt.impl.dto.ThrottleProperties;
 
@@ -35,6 +36,7 @@ public class JMSTransportHandler {
     private JMSConnectionFactory jmsConnectionFactory;
     private List<JMSListener> jmsListeners = new ArrayList<JMSListener>();
     private boolean stopIssued = false;
+    private TokenRevocationNotifier tokenRevocationNotifier;
     private static final Object lock = new Object();
 
     public JMSTransportHandler() {
@@ -42,6 +44,8 @@ public class JMSTransportHandler {
             jmsConnectionProperties =
                     ServiceReferenceHolder.getInstance().getAPIMConfiguration().getThrottleProperties()
                             .getJmsConnectionProperties();
+            tokenRevocationNotifier = ServiceReferenceHolder.getInstance().getAPIMConfiguration()
+                    .getTokenRevocationNotifier();
         }
     }
 
@@ -51,7 +55,9 @@ public class JMSTransportHandler {
      */
     public void subscribeForJmsEvents() {
         createJMSListener(APIConstants.TopicNames.TOPIC_THROTTLE_DATA);
-        createJMSListener(APIConstants.TopicNames.TOPIC_TOKEN_REVOCATION);
+        if (tokenRevocationNotifier.isEnabled()) {
+            createJMSListener(APIConstants.TopicNames.TOPIC_TOKEN_REVOCATION);
+        }
     }
 
     private void createJMSListener(String topicName) {

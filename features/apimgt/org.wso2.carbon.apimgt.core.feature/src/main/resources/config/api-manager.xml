@@ -634,6 +634,10 @@
         <EnableJWTClaimConditions>false</EnableJWTClaimConditions>
         <EnableQueryParamConditions>false</EnableQueryParamConditions>
     </ThrottlingConfigurations>
+    <!--Clear the cached tokens in all the gateways using JMS upon a revocation-->
+    <TokenRevocationNotifier>
+        <Enabled>false</Enabled>
+    </TokenRevocationNotifier>
     
     <WorkflowConfigurations>
         <Enabled>false</Enabled>

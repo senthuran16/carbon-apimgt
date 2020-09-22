@@ -119,22 +119,13 @@ public class APIKeyMgtServiceComponent {
                     listener, null);
             log.debug("Key Manager User Operation Listener is enabled.");
 
-            //object creation for implemented OAuthEventInterceptor interface in IS
-            APIMOAuthEventInterceptor interceptor = new APIMOAuthEventInterceptor();
-            //registering the interceptor class to the bundle
-            serviceRegistration = ctxt.getBundleContext()
-                    .registerService(OAuthEventInterceptor.class.getName(), interceptor, null);
-            //Creating an event adapter to receive token revocation messages
-            configureEventPublisherProperties();
-            log.debug("Key Manager OAuth Event Interceptor is enabled.");
-
             // loading white listed scopes
             List<String> whitelist = null;
 
             APIManagerConfigurationService configurationService = org.wso2.carbon.apimgt.impl.internal.ServiceReferenceHolder
                                                             .getInstance().getAPIManagerConfigurationService();
 
-            if(configurationService != null) {
+            if (configurationService != null) {
                 // Read scope whitelist from Configuration.
                 whitelist = configurationService.getAPIManagerConfiguration().getProperty(APIConstants.WHITELISTED_SCOPES);
 
@@ -144,7 +135,22 @@ public class APIKeyMgtServiceComponent {
                     whitelist.add(APIConstants.OPEN_ID_SCOPE_NAME);
                     whitelist.add(APIConstants.DEVICE_SCOPE_PATTERN);
                 }
-            }else {
+
+                APIManagerConfiguration apiManagerConfiguration = configurationService.getAPIManagerConfiguration();
+                if (apiManagerConfiguration != null &&
+                        apiManagerConfiguration.getTokenRevocationNotifier().isEnabled()) {
+                    //object creation for implemented OAuthEventInterceptor interface in IS
+                    APIMOAuthEventInterceptor interceptor = new APIMOAuthEventInterceptor();
+                    //registering the interceptor class to the bundle
+                    serviceRegistration = ctxt.getBundleContext()
+                            .registerService(OAuthEventInterceptor.class.getName(), interceptor, null);
+                    //Creating an event adapter to receive token revocation messages
+                    configureEventPublisherProperties();
+                    log.debug("Key Manager OAuth Event Interceptor is enabled.");
+                } else {
+                    log.debug("Key Manager OAuth Event Interceptor is not enabled.");
+                }
+            } else {
                 log.debug("API Manager Configuration couldn't be read successfully. Scopes might not work correctly.");
             }
 
@@ -406,11 +412,13 @@ public class APIKeyMgtServiceComponent {
         APIManagerConfiguration configuration = ServiceReferenceHolder.getInstance().getAPIManagerConfigurationService()
                 .getAPIManagerConfiguration();
         ThrottleProperties.TrafficManager trafficManager = configuration.getThrottleProperties().getTrafficManager();
-        adapterParameters.put(APIConstants.RECEIVER_URL, trafficManager.getReceiverUrlGroup());
-        adapterParameters.put(APIConstants.AUTHENTICATOR_URL, trafficManager.getAuthUrlGroup());
-        adapterParameters.put(APIConstants.USERNAME, trafficManager.getUsername());
-        adapterParameters.put(APIConstants.PASSWORD, trafficManager.getPassword());
-        adapterParameters.put(APIConstants.PROTOCOL, trafficManager.getType());
+        if (trafficManager != null) {
+            adapterParameters.put(APIConstants.RECEIVER_URL, trafficManager.getReceiverUrlGroup());
+            adapterParameters.put(APIConstants.AUTHENTICATOR_URL, trafficManager.getAuthUrlGroup());
+            adapterParameters.put(APIConstants.USERNAME, trafficManager.getUsername());
+            adapterParameters.put(APIConstants.PASSWORD, trafficManager.getPassword());
+            adapterParameters.put(APIConstants.PROTOCOL, trafficManager.getType());
+        }
         adapterParameters.put(APIConstants.PUBLISHING_MODE, APIConstants.NON_BLOCKING);
         adapterParameters.put(APIConstants.PUBLISHING_TIME_OUT, "0");
         adapterConfiguration.setStaticProperties(adapterParameters);
