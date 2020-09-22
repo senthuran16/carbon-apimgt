@@ -32,6 +32,7 @@ import org.wso2.carbon.apimgt.api.model.APIPublisher;
 import org.wso2.carbon.apimgt.api.model.APIStore;
 import org.wso2.carbon.apimgt.impl.dto.Environment;
 import org.wso2.carbon.apimgt.impl.dto.ThrottleProperties;
+import org.wso2.carbon.apimgt.impl.dto.TokenRevocationNotifier;
 import org.wso2.carbon.apimgt.impl.dto.WorkflowProperties;
 import org.wso2.carbon.apimgt.impl.utils.APIUtil;
 import org.wso2.securevault.SecretResolver;
@@ -85,6 +86,7 @@ public class APIManagerConfiguration {
 
     private boolean initialized;
     private ThrottleProperties throttleProperties = new ThrottleProperties();
+    private TokenRevocationNotifier tokenRevocationNotifier = new TokenRevocationNotifier();
     private WorkflowProperties workflowProperties = new WorkflowProperties();
     private Map<String, Environment> apiGatewayEnvironments = new LinkedHashMap<String, Environment>();
     private Set<APIStore> externalAPIStores = new HashSet<APIStore>();
@@ -348,6 +350,14 @@ public class APIManagerConfiguration {
                     }
                     applicationAttributes.add(jsonObject);
                 }
+            } else if (APIConstants.TokenRevocationNotifierConstants.TOKEN_REVOCATION_NOTIFIER.equals(localName)) {
+                // Check token revocation notifier enabled or not
+                OMElement enabledTokenRevocationNotifier = element
+                        .getFirstChildWithName(new QName(APIConstants.TokenRevocationNotifierConstants.ENABLED));
+                if (enabledTokenRevocationNotifier != null) {
+                    tokenRevocationNotifier.setEnabled(JavaUtils.isTrueExplicitly(enabledTokenRevocationNotifier
+                            .getText()));
+                }
             }
             readChildElements(element, nameStack);
             nameStack.pop();
@@ -420,7 +430,7 @@ public class APIManagerConfiguration {
             list.add(value);
         }
     }
-    
+
     public Map<String, Environment> getApiGatewayEnvironments() {
         return apiGatewayEnvironments;
     }
@@ -1049,5 +1059,8 @@ public class APIManagerConfiguration {
     public WorkflowProperties getWorkflowProperties() {
         return workflowProperties;
     }
-    
+
+    public TokenRevocationNotifier getTokenRevocationNotifier() {
+        return tokenRevocationNotifier;
+    }
 }
