@@ -19,8 +19,7 @@
         value='<%=i18n.localize("Name contains one or more illegal characters")%> ( [ ~ ! & @ # ; % ^ & * + = { } | <>
         \"  , ] ).'/>
         <div class="row-fluid">
-            <form class="apim-form form-horizontal" method="POST" id="tier_form" enctype="multipart/form-data"
-                action="/admin/site/blocks/conditions/edit/ajax/conditions-edit.jag">
+            <form class="apim-form form-horizontal" id="tier_form" onsubmit="addCondition()">
                     <div class="form-group" id="selected-type">
                         <label class="col-sm-3 control-label">
                         <%=i18n.localize("Select Condition Type")%><span class="requiredAstrix">*</span></label>
