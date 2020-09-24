@@ -281,7 +281,7 @@ GrantTypes.prototype.getMap = function(selected){
                 action:"cleanUpApplicationRegistrationByApplicationId",
                 applicationName:applicationName,
                 keyType:keyType,
-                appId:applicationId,
+                appId:this.app.id,
             }, function (result) {
                 if (!result.error) {
                     location.reload();
