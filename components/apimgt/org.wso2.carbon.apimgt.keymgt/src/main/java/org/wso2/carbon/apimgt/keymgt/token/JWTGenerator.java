@@ -19,6 +19,7 @@ package org.wso2.carbon.apimgt.keymgt.token;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -95,7 +96,7 @@ public class JWTGenerator extends AbstractJWTGenerator {
             appAttributes = application.getApplicationAttributes();
             uuid = application.getUUID();
         }
-
+        String usernameWithoutTenantDomain = MultitenantUtils.getTenantAwareUsername(endUserName);
         Map<String, String> claims = new LinkedHashMap<String, String>(20);
         OAuthAppDO oAuthAppDO = null;
         try {
@@ -116,14 +117,14 @@ public class JWTGenerator extends AbstractJWTGenerator {
         }
         if (oAuthAppDO != null && oAuthAppDO.getAudiences() != null) {
             String[] audience = oAuthAppDO.getAudiences();
-            List<String> audienceList = Arrays.asList(audience);
-            claims.put("aud", audienceList.toString());
+            String parsedClaims = "[\"" + StringUtils.join(audience , "\",\"") + "\"]";
+            claims.put("aud", parsedClaims);
         }
 
         claims.put("iss", API_GATEWAY_ID);
         claims.put("exp", String.valueOf(expireIn));
-        claims.put("iat", currentTimeDate.toString());
-        claims.put("sub", subscriber);
+        claims.put("iat", String.valueOf(currentTime));
+        claims.put("sub", usernameWithoutTenantDomain);
         claims.put(dialect + "/subscriber", subscriber);
         claims.put(dialect + "/applicationid", applicationId);
         claims.put(dialect + "/applicationname", applicationName);

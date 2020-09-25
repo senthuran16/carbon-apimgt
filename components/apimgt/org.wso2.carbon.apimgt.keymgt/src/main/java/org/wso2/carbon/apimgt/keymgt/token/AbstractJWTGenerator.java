@@ -49,6 +49,7 @@ import org.wso2.carbon.utils.multitenancy.MultitenantUtils;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
@@ -69,6 +70,8 @@ public abstract class AbstractJWTGenerator implements TokenGenerator {
 
     public static final String API_GATEWAY_ID = "wso2.org/products/am";
 
+    public static final String FORMAT_JSON_ARRAY_PROPERTY = "formatJsonArray";
+
     private static final String SHA256_WITH_RSA = "SHA256withRSA";
 
     private static final String BASE64 = "base64";
@@ -87,9 +90,9 @@ public abstract class AbstractJWTGenerator implements TokenGenerator {
 
     private String x5tEncoding = BASE64;
 
-    private static ConcurrentHashMap<Integer, Key> privateKeys = new ConcurrentHashMap<Integer, Key>();
-    private static ConcurrentHashMap<Integer, Certificate> publicCerts = new ConcurrentHashMap<Integer, Certificate>();
-    private ApiMgtDAO dao = ApiMgtDAO.getInstance();
+    private static final ConcurrentHashMap<Integer, Key> privateKeys = new ConcurrentHashMap<Integer, Key>();
+    private static final ConcurrentHashMap<Integer, Certificate> publicCerts = new ConcurrentHashMap<Integer, Certificate>();
+    private final ApiMgtDAO dao = ApiMgtDAO.getInstance();
 
     private String userAttributeSeparator = APIConstants.MULTI_ATTRIBUTE_SEPARATOR_DEFAULT;
 
@@ -240,6 +243,7 @@ public abstract class AbstractJWTGenerator implements TokenGenerator {
             }
 
             JWTClaimsSet.Builder jwtClaimsSetBuilder = new JWTClaimsSet.Builder();
+            ObjectMapper mapper = new ObjectMapper();
 
             if (standardClaims != null) {
                 Iterator<String> it = new TreeSet(standardClaims.keySet()).iterator();
@@ -248,7 +252,7 @@ public abstract class AbstractJWTGenerator implements TokenGenerator {
                     String claimVal = standardClaims.get(claimURI);
                     List<String> claimList = new ArrayList<String>();
                     if (claimVal != null && claimVal.contains("{")) {
-                        ObjectMapper mapper = new ObjectMapper();
+
                         try {
                             Map<String, String> map = mapper.readValue(claimVal, Map.class);
                             jwtClaimsSetBuilder.claim(claimURI, map);
@@ -257,6 +261,18 @@ public abstract class AbstractJWTGenerator implements TokenGenerator {
                             // occurred during the retrieving claims.
                             log.error("Error while reading claim values", e);
                         }
+                    } else if(Boolean.parseBoolean(System.getProperty(FORMAT_JSON_ARRAY_PROPERTY)) && claimVal != null
+                            && claimVal.contains("[\"") && claimVal.contains("\"]")){
+
+                        try {
+                            List<String> arrayList = mapper.readValue(claimVal, List.class);
+                            jwtClaimsSetBuilder.claim(claimURI, arrayList);
+                        } catch (IOException e) {
+                            // Exception isn't thrown in order to generate jwt without claim, even if an error is
+                            // occurred during the retrieving claims.
+                            log.error("Error while reading claim values", e);
+                        }
+
                     } else if (userAttributeSeparator != null && claimVal != null &&
                             claimVal.contains(userAttributeSeparator)) {
                         StringTokenizer st = new StringTokenizer(claimVal, userAttributeSeparator);
@@ -269,6 +285,8 @@ public abstract class AbstractJWTGenerator implements TokenGenerator {
                         jwtClaimsSetBuilder.claim(claimURI, claimList);
                     } else if ("exp".equals(claimURI)) {
                         jwtClaimsSetBuilder.expirationTime(new Date(Long.valueOf(standardClaims.get(claimURI))));
+                    } else if ("iat".equals(claimURI)) {
+                        jwtClaimsSetBuilder.issueTime(new Date(Long.valueOf(standardClaims.get(claimURI))));
                     } else {
                         jwtClaimsSetBuilder.claim(claimURI, claimVal);
                     }
@@ -437,7 +455,7 @@ public abstract class AbstractJWTGenerator implements TokenGenerator {
                 Base64 base64 = new Base64(true);
                 if (x5tEncoding.equals(BASE64URL)) {
                     base64UrlEncodedThumbPrint = java.util.Base64.getUrlEncoder()
-                            .encodeToString(publicCertThumbprint.getBytes("UTF-8"));
+                            .encodeToString(publicCertThumbprint.getBytes(StandardCharsets.UTF_8));
                 } else {
                     base64UrlEncodedThumbPrint = base64.encodeToString(publicCertThumbprint.getBytes(Charsets.UTF_8)).trim();
                 }
@@ -505,7 +523,7 @@ public abstract class AbstractJWTGenerator implements TokenGenerator {
      * @param bytes - The input byte array
      * @return hexadecimal representation
      */
-    private String hexify(byte bytes[]) {
+    private String hexify(byte[] bytes) {
 
         char[] hexDigits = {'0', '1', '2', '3', '4', '5', '6', '7',
                 '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
