@@ -117,7 +117,7 @@ public class JWTGenerator extends AbstractJWTGenerator {
         }
         if (oAuthAppDO != null && oAuthAppDO.getAudiences() != null) {
             String[] audience = oAuthAppDO.getAudiences();
-            String parsedClaims = "[\"" + StringUtils.join(audience , "\",\"") + "\"]";
+            String parsedClaims = "[\"" + StringUtils.join(audience, "\",\"") + "\"]";
             claims.put("aud", parsedClaims);
         }
 
@@ -224,8 +224,9 @@ public class JWTGenerator extends AbstractJWTGenerator {
             oidcUserClaimsCopy.put(entry.getKey().getRemoteClaim().getClaimUri(), entry.getValue());
         }
 
-        String convertClaimsFromOIDCtoConsumerDialect = ServiceReferenceHolder.getInstance().getAPIManagerConfigurationService().
-                        getAPIManagerConfiguration().getFirstProperty(APIConstants.CONVERT_CLAIMS_TO_CONSUMER_DIALECT);
+        String convertClaimsFromOIDCtoConsumerDialect = ServiceReferenceHolder.getInstance()
+                .getAPIManagerConfigurationService().getAPIManagerConfiguration()
+                .getFirstProperty(APIConstants.CONVERT_CLAIMS_TO_CONSUMER_DIALECT);
 
         if (convertClaimsFromOIDCtoConsumerDialect != null && !Boolean.parseBoolean(convertClaimsFromOIDCtoConsumerDialect)) {
             return oidcUserClaims;

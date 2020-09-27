@@ -70,7 +70,7 @@ public abstract class AbstractJWTGenerator implements TokenGenerator {
 
     public static final String API_GATEWAY_ID = "wso2.org/products/am";
 
-    public static final String FORMAT_JSON_ARRAY_PROPERTY = "formatJsonArray";
+    public static final String FORMAT_JSON_ARRAY_PROPERTY = "formatJWTJsonArray";
 
     private static final String SHA256_WITH_RSA = "SHA256withRSA";
 
@@ -261,7 +261,7 @@ public abstract class AbstractJWTGenerator implements TokenGenerator {
                             // occurred during the retrieving claims.
                             log.error("Error while reading claim values", e);
                         }
-                    } else if(Boolean.parseBoolean(System.getProperty(FORMAT_JSON_ARRAY_PROPERTY)) && claimVal != null
+                    } else if (Boolean.parseBoolean(System.getProperty(FORMAT_JSON_ARRAY_PROPERTY)) && claimVal != null
                             && claimVal.contains("[\"") && claimVal.contains("\"]")){
 
                         try {
