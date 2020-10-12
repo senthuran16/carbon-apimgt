@@ -193,7 +193,6 @@ var addResourcesToApi = function () {
 
         $('select',this).change(function(){
             createHiddenForm();
-
             validateResourceTable();
         });
     });
@@ -353,9 +352,6 @@ var validateResourceTable = function(){
     $('.resourceRow input.resourceTemplate').each(function(){
         var myVal = $(this).val();
         var foundMyVal = 0;
-
-        if(myVal.charAt(-1) != "/")
-            myVal = myVal.slice(0,-1)
 
         $('.resourceRow input.resourceTemplate').each(function(){
             if($(this).val()==myVal){

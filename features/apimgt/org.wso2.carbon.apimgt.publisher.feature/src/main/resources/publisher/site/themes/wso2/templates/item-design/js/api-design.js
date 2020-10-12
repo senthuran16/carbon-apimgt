@@ -754,7 +754,6 @@ APIDesigner.prototype.transform = function(api_doc){
                 var str1 = "['";
                 var str2 = "']";
                 pathkey = str1.concat(pathkey).concat(str2);
-                log.info(pathkey)
             }
             verb.path = pathkey;
         }
