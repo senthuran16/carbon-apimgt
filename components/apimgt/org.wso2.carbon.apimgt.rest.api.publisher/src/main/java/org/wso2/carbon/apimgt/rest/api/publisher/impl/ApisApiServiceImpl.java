@@ -20,7 +20,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
-import io.swagger.models.Operation;
 import io.swagger.models.Path;
 import io.swagger.models.Swagger;
 import io.swagger.parser.SwaggerParser;
@@ -104,7 +103,12 @@ import java.net.URLEncoder;
 import java.net.URISyntaxException;
 import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * This is the service implementation class for Publisher API related operations
@@ -940,7 +944,6 @@ public class ApisApiServiceImpl extends ApisApiService {
 
             apiProvider.updateAPI(apiToUpdate);
             String swaggerJson = updateSwaggerDefinition(body.getApiDefinition());
-
             if (!isWSAPI) {
                 apiProvider.saveSwagger20Definition(apiToUpdate.getId(), swaggerJson);
             }
@@ -1866,7 +1869,6 @@ public class ApisApiServiceImpl extends ApisApiService {
     public Response apisApiIdSwaggerPut(String apiId, String apiDefinition, String contentType, String ifMatch,
                                         String ifUnmodifiedSince) {
         try {
-
             apiDefinition = validateAndConvertYamlToJson(apiDefinition);
             apiDefinition = updateSwaggerDefinition(apiDefinition);
             APIDefinition apiDefinitionFromOpenAPISpec = new APIDefinitionFromOpenAPISpec();
