@@ -182,12 +182,9 @@ function APIDesigner(){
             jagg.message({content: i18n.t("URL pattern cannot contain white space"), type: "error"});
             return;
         }
-
         var path = $("#resource_url_pattern").val();
-        if(path.charAt(0) != "/")
-            path = "/"+path;
 
-        if(path.charAt(-1) != "/")
+        if(path.charAt(path.length-1) == "/")
             path = path.slice(0,-1)
 
     	var resource_exist = false;
@@ -719,9 +716,18 @@ APIDesigner.prototype.load_api_document = function(api_document){
 
 APIDesigner.prototype.load_swagger_editor_content = function (){
     if(this.api_doc != ""){
-       var swagYaml = jsyaml.safeDump(this.api_doc);
-       window.localStorage.setItem(SWAGGER_CONTENT, swagYaml);
-       window.localStorage.setItem(SWAGGER_CONTENT_CACHE, swagYaml);
+        var swagger = jQuery.extend(true, {}, this.api_doc);
+        var paths = swagger.paths;
+        for(var path in paths){
+            if(path.charAt(path.length-1) == "/") {
+                var newkey = path.slice(0,-1);
+                swagger.paths[newkey] = swagger.paths[path];
+                delete swagger.paths[path];
+            }
+        }
+        var swagYaml = jsyaml.safeDump(swagger);
+        window.localStorage.setItem(SWAGGER_CONTENT, swagYaml);
+        window.localStorage.setItem(SWAGGER_CONTENT_CACHE, swagYaml);
     }
 };
 
@@ -748,8 +754,17 @@ APIDesigner.prototype.transform = function(api_doc){
                 var str1 = "['";
                 var str2 = "']";
                 pathkey = str1.concat(pathkey).concat(str2);
+                log.info(pathkey)
             }
             verb.path = pathkey;
+        }
+    }
+    var paths = swagger.paths;
+    for(var path in paths){
+        if(path.charAt(path.length-1) == "/") {
+            var newkey = path.slice(0,-1);
+            swagger.paths[newkey] = swagger.paths[path];
+            delete swagger.paths[path];
         }
     }
     return swagger;
@@ -1169,8 +1184,6 @@ APIDesigner.prototype.query = function(path){
 
 APIDesigner.prototype.add_resource = function(resource, path){
 
-    if(path.charAt(0) != "/")
-        path = "/" + path;
     if (!this.api_doc.paths) {
         this.api_doc.paths = {};
     }
@@ -1180,6 +1193,7 @@ APIDesigner.prototype.add_resource = function(resource, path){
     else{
         this.api_doc.paths[path] = $.extend({}, this.api_doc.paths[path], resource);
     }
+
     this.load_swagger_editor_content();
     this.render_resources();
 };
