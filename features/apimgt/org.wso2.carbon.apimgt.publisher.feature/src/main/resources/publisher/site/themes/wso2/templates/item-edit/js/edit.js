@@ -352,7 +352,6 @@ var validateResourceTable = function(){
     $('.resourceRow input.resourceTemplate').each(function(){
         var myVal = $(this).val();
         var foundMyVal = 0;
-
         $('.resourceRow input.resourceTemplate').each(function(){
             if($(this).val()==myVal){
                 foundMyVal++;
