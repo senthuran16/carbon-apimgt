@@ -1141,7 +1141,7 @@ public class ApisApiServiceImpl extends ApisApiService {
             }
             Swagger swagger = new SwaggerParser().parse(apiDefinition);
             Map<String, Path> paths = swagger.getPaths();
-            ArrayList<String> modifiableResources = new ArrayList<String>();
+            List<String> modifiableResources = new ArrayList<>();
             for (String key : paths.keySet()) {
                 if (key.endsWith("/")) {
                     modifiableResources.add(key);
