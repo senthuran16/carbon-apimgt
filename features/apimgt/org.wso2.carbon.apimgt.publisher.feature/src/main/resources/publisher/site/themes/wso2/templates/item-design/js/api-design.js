@@ -729,15 +729,6 @@ APIDesigner.prototype.remove_trailing_slash = function (swagger){
 APIDesigner.prototype.load_swagger_editor_content = function (){
     if(this.api_doc != ""){
         var swagger = jQuery.extend(true, {}, this.api_doc);
-
-        // var paths = swagger.paths;
-        // for(var path in paths){
-        //     if(path.charAt(path.length-1) == "/") {
-        //         var newkey = path.slice(0,-1);
-        //         swagger.paths[newkey] = swagger.paths[path];
-        //         delete swagger.paths[path];
-        //     }
-        // }
         var swagYaml = jsyaml.safeDump(this.remove_trailing_slash(swagger));
         window.localStorage.setItem(SWAGGER_CONTENT, swagYaml);
         window.localStorage.setItem(SWAGGER_CONTENT_CACHE, swagYaml);
@@ -1187,6 +1178,8 @@ APIDesigner.prototype.query = function(path){
 
 APIDesigner.prototype.add_resource = function(resource, path){
 
+    if(path.charAt(0) != "/")
+        path = "/" + path;
     if (!this.api_doc.paths) {
         this.api_doc.paths = {};
     }
