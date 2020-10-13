@@ -737,15 +737,6 @@ APIDesigner.prototype.load_swagger_editor_content = function (){
     }
 };
 
-APIDesigner.prototype.get_swagger_editor_content = function (){
-    if(this.api_doc != ""){
-        var swagger = jQuery.extend(true, {}, this.api_doc);
-        var swagYaml = jsyaml.safeDump(this.remove_trailing_slash(swagger));
-        window.localStorage.setItem(SWAGGER_CONTENT, swagYaml);
-        window.localStorage.setItem(SWAGGER_CONTENT_CACHE, swagYaml);
-    }
-};
-
 APIDesigner.prototype.render_scopes = function(){
     if($('#scopes-template').length){
         context = {
