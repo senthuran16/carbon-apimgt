@@ -183,10 +183,10 @@ function APIDesigner(){
             return;
         }
         var path = $("#resource_url_pattern").val();
-        if(path.charAt(0) != "/")
+        if (path.charAt(0) != "/")
             path = "/"+path;
 
-        if(path.endsWith("/"))
+        if (path.endsWith("/"))
             path = path.slice(0,-1)
 
     	var resource_exist = false;
@@ -719,7 +719,7 @@ APIDesigner.prototype.load_api_document = function(api_document){
 APIDesigner.prototype.remove_trailing_slash = function(swagger) {
     var paths = swagger.paths;
     for (var path in paths) {
-        if(path.endsWith("/")) {
+        if (path.endsWith("/")) {
             var newkey = path.slice(0,-1);
             swagger.paths[newkey] = swagger.paths[path];
             delete swagger.paths[path];

@@ -1148,7 +1148,7 @@ public class ApisApiServiceImpl extends ApisApiService {
                 }
             }
             for (String modifiableResource : modifiableResources) {
-                String newResource = modifiableResource.substring(0, modifiableResource.length()-1);
+                String newResource = modifiableResource.substring(0, modifiableResource.length() - 1);
                 paths.put(newResource, paths.remove(modifiableResource));
             }
             swagger.setPaths(paths);
