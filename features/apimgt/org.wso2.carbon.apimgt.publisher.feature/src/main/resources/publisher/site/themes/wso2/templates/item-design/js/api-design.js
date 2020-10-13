@@ -183,7 +183,6 @@ function APIDesigner(){
             return;
         }
         var path = $("#resource_url_pattern").val();
-
         if(path.charAt(0) != "/")
             path = "/"+path;
 
@@ -738,6 +737,15 @@ APIDesigner.prototype.load_swagger_editor_content = function (){
     }
 };
 
+APIDesigner.prototype.get_swagger_editor_content = function (){
+    if(this.api_doc != ""){
+        var swagger = jQuery.extend(true, {}, this.api_doc);
+        var swagYaml = jsyaml.safeDump(this.remove_trailing_slash(swagger));
+        window.localStorage.setItem(SWAGGER_CONTENT, swagYaml);
+        window.localStorage.setItem(SWAGGER_CONTENT_CACHE, swagYaml);
+    }
+};
+
 APIDesigner.prototype.render_scopes = function(){
     if($('#scopes-template').length){
         context = {
@@ -749,7 +757,7 @@ APIDesigner.prototype.render_scopes = function(){
 };
 
 APIDesigner.prototype.transform = function(api_doc){
-    var swagger = jQuery.extend(true, {}, this.api_doc);
+    var swagger = jQuery.extend(true, {}, api_doc);
     for(var pathkey in swagger.paths){
         var path = swagger.paths[pathkey];
         var parameters = path.parameters;
@@ -893,9 +901,9 @@ APIDesigner.prototype.render_additionalProperties = function () {
 };
 
 APIDesigner.prototype.render_resources = function(){
-
+    var json = jsyaml.safeLoad(window.localStorage.getItem(SWAGGER_CONTENT));
     context = {
-        "doc" : this.transform(this.api_doc),
+        "doc" : this.transform(json),
         "verbs" :VERBS,
         "has_resources" : this.has_resources()
     }
@@ -1193,7 +1201,6 @@ APIDesigner.prototype.add_resource = function(resource, path){
     else{
         this.api_doc.paths[path] = $.extend({}, this.api_doc.paths[path], resource);
     }
-
     this.load_swagger_editor_content();
     this.render_resources();
 };
