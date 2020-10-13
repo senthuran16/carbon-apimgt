@@ -220,7 +220,7 @@ public class ApisApiServiceImpl extends ApisApiService {
                     RestApiUtil.handleBadRequest("Endpoint URLs should be valid web socket URLs", log);
                 }
             }
-            String swaggerJson = updateSwaggerDefinition(body.getApiDefinition());
+            String swaggerJson = validateSwaggerDefinition(body.getApiDefinition());
             String apiSecurity = body.getApiSecurity();
             if (!apiProvider.isClientCertificateBasedAuthenticationConfigured() && apiSecurity != null && apiSecurity
                     .contains(APIConstants.API_SECURITY_MUTUAL_SSL)) {
@@ -943,7 +943,7 @@ public class ApisApiServiceImpl extends ApisApiService {
             apiToUpdate = assignLabelsToDTO(body,apiToUpdate);
 
             apiProvider.updateAPI(apiToUpdate);
-            String swaggerJson = updateSwaggerDefinition(body.getApiDefinition());
+            String swaggerJson = validateSwaggerDefinition(body.getApiDefinition());
             if (!isWSAPI) {
                 apiProvider.saveSwagger20Definition(apiToUpdate.getId(), swaggerJson);
             }
@@ -1134,7 +1134,7 @@ public class ApisApiServiceImpl extends ApisApiService {
      * @param apiDefinition
      * @return apiDefinition with modified resources
      */
-    private String updateSwaggerDefinition(String apiDefinition) {
+    private String validateSwaggerDefinition(String apiDefinition) {
         try {
             if (apiDefinition == null) {
                 RestApiUtil.handleBadRequest("Parameter: \"apiDefinition\" cannot be null", log);
@@ -1149,7 +1149,7 @@ public class ApisApiServiceImpl extends ApisApiService {
             }
             for (String modifiableResource : modifiableResources) {
                 String newResource = modifiableResource.substring(0, modifiableResource.length()-1);
-                paths.put(newResource,paths.remove(modifiableResource));
+                paths.put(newResource, paths.remove(modifiableResource));
             }
             swagger.setPaths(paths);
             return Json.mapper().writeValueAsString(swagger);
@@ -1870,7 +1870,7 @@ public class ApisApiServiceImpl extends ApisApiService {
                                         String ifUnmodifiedSince) {
         try {
             apiDefinition = validateAndConvertYamlToJson(apiDefinition);
-            apiDefinition = updateSwaggerDefinition(apiDefinition);
+            apiDefinition = validateSwaggerDefinition(apiDefinition);
             APIDefinition apiDefinitionFromOpenAPISpec = new APIDefinitionFromOpenAPISpec();
             APIProvider apiProvider = RestApiUtil.getLoggedInUserProvider();
             String tenantDomain = RestApiUtil.getLoggedInUserTenantDomain();

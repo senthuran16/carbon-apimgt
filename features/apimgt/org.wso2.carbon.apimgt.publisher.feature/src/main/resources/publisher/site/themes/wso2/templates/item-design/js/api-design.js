@@ -186,7 +186,7 @@ function APIDesigner(){
         if(path.charAt(0) != "/")
             path = "/"+path;
 
-        if(path.charAt(path.length-1) == "/")
+        if(path.endsWith("/"))
             path = path.slice(0,-1)
 
     	var resource_exist = false;
@@ -716,10 +716,10 @@ APIDesigner.prototype.load_api_document = function(api_document){
     }
 };
 
-APIDesigner.prototype.remove_trailing_slash = function (swagger){
+APIDesigner.prototype.remove_trailing_slash = function(swagger) {
     var paths = swagger.paths;
-    for(var path in paths){
-        if(path.charAt(path.length-1) == "/") {
+    for (var path in paths) {
+        if(path.endsWith("/")) {
             var newkey = path.slice(0,-1);
             swagger.paths[newkey] = swagger.paths[path];
             delete swagger.paths[path];
