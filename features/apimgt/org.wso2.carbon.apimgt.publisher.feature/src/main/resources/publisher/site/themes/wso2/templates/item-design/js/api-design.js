@@ -184,6 +184,9 @@ function APIDesigner(){
         }
         var path = $("#resource_url_pattern").val();
 
+        if(path.charAt(0) != "/")
+            path = "/"+path;
+
         if(path.charAt(path.length-1) == "/")
             path = path.slice(0,-1)
 
@@ -890,6 +893,7 @@ APIDesigner.prototype.render_additionalProperties = function () {
 };
 
 APIDesigner.prototype.render_resources = function(){
+
     context = {
         "doc" : this.transform(this.api_doc),
         "verbs" :VERBS,
