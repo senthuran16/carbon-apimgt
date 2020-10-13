@@ -714,18 +714,31 @@ APIDesigner.prototype.load_api_document = function(api_document){
     }
 };
 
+APIDesigner.prototype.remove_trailing_slash = function (swagger){
+    var paths = swagger.paths;
+    for(var path in paths){
+        if(path.charAt(path.length-1) == "/") {
+            var newkey = path.slice(0,-1);
+            swagger.paths[newkey] = swagger.paths[path];
+            delete swagger.paths[path];
+        }
+    }
+    return swagger;
+};
+
 APIDesigner.prototype.load_swagger_editor_content = function (){
     if(this.api_doc != ""){
         var swagger = jQuery.extend(true, {}, this.api_doc);
-        var paths = swagger.paths;
-        for(var path in paths){
-            if(path.charAt(path.length-1) == "/") {
-                var newkey = path.slice(0,-1);
-                swagger.paths[newkey] = swagger.paths[path];
-                delete swagger.paths[path];
-            }
-        }
-        var swagYaml = jsyaml.safeDump(swagger);
+
+        // var paths = swagger.paths;
+        // for(var path in paths){
+        //     if(path.charAt(path.length-1) == "/") {
+        //         var newkey = path.slice(0,-1);
+        //         swagger.paths[newkey] = swagger.paths[path];
+        //         delete swagger.paths[path];
+        //     }
+        // }
+        var swagYaml = jsyaml.safeDump(this.remove_trailing_slash(swagger));
         window.localStorage.setItem(SWAGGER_CONTENT, swagYaml);
         window.localStorage.setItem(SWAGGER_CONTENT_CACHE, swagYaml);
     }
@@ -734,7 +747,7 @@ APIDesigner.prototype.load_swagger_editor_content = function (){
 APIDesigner.prototype.render_scopes = function(){
     if($('#scopes-template').length){
         context = {
-            "api_doc" : this.api_doc
+            "doc" : this.api_doc
         }
         var output = Handlebars.partials['scopes-template'](context);
         $('#scopes_view').html(output);
@@ -758,15 +771,7 @@ APIDesigner.prototype.transform = function(api_doc){
             verb.path = pathkey;
         }
     }
-    var paths = swagger.paths;
-    for(var path in paths){
-        if(path.charAt(path.length-1) == "/") {
-            var newkey = path.slice(0,-1);
-            swagger.paths[newkey] = swagger.paths[path];
-            delete swagger.paths[path];
-        }
-    }
-    return swagger;
+    return this.remove_trailing_slash(swagger)
 }
 
 APIDesigner.prototype.setApiLevelPolicy = function(isAPILevel){
@@ -1052,7 +1057,6 @@ APIDesigner.prototype.render_resource = function(container){
             success : this.update_elements,
             mode: 'popup'
         });
-
         $(".request_body_edit").click(this.edit_swagger);
 
         container.find('.request_body_desc').editable({
