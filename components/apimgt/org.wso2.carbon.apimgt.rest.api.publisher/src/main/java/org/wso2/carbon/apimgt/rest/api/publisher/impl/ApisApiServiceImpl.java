@@ -16,11 +16,15 @@
 
 package org.wso2.carbon.apimgt.rest.api.publisher.impl;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
+import io.swagger.models.Path;
+import io.swagger.models.Swagger;
 import io.swagger.parser.SwaggerParser;
 import io.swagger.parser.util.SwaggerDeserializationResult;
+import io.swagger.util.Json;
 import org.apache.axiom.om.OMAttribute;
 import org.apache.axiom.om.OMElement;
 import org.apache.axiom.om.util.AXIOMUtil;
@@ -209,18 +213,13 @@ public class ApisApiServiceImpl extends ApisApiService {
             String username = RestApiUtil.getLoggedInUsername();
             boolean isWSAPI = APIDetailedDTO.TypeEnum.WS == body.getType();
             boolean isSoapToRestConvertedApi = APIDetailedDTO.TypeEnum.SOAPTOREST == body.getType();
-
             // validate web socket api endpoint configurations
             if (isWSAPI) {
                 if (!RestApiPublisherUtils.isValidWSAPI(body)) {
                     RestApiUtil.handleBadRequest("Endpoint URLs should be valid web socket URLs", log);
                 }
-            } else {
-                if (body.getApiDefinition() == null) {
-                    RestApiUtil.handleBadRequest("Parameter: \"apiDefinition\" cannot be null", log);
-                }
             }
-
+            String swaggerJson = validateSwaggerDefinition(body.getApiDefinition());
             String apiSecurity = body.getApiSecurity();
             if (!apiProvider.isClientCertificateBasedAuthenticationConfigured() && apiSecurity != null && apiSecurity
                     .contains(APIConstants.API_SECURITY_MUTUAL_SSL)) {
@@ -357,7 +356,7 @@ public class ApisApiServiceImpl extends ApisApiService {
                     RestApiUtil.handleInternalServerError(errorMessage, log);
                 }
             } else if (!isWSAPI) {
-                apiProvider.saveSwagger20Definition(apiToAdd.getId(), body.getApiDefinition());
+                apiProvider.saveSwagger20Definition(apiToAdd.getId(), swaggerJson);
             }
             APIIdentifier createdApiId = apiToAdd.getId();
             //Retrieve the newly added API to send in the response payload
@@ -943,9 +942,9 @@ public class ApisApiServiceImpl extends ApisApiService {
             apiToUpdate = assignLabelsToDTO(body,apiToUpdate);
 
             apiProvider.updateAPI(apiToUpdate);
-
+            String swaggerJson = validateSwaggerDefinition(body.getApiDefinition());
             if (!isWSAPI) {
-                apiProvider.saveSwagger20Definition(apiToUpdate.getId(), body.getApiDefinition());
+                apiProvider.saveSwagger20Definition(apiToUpdate.getId(), swaggerJson);
             }
             API updatedApi = apiProvider.getAPI(apiIdentifier);
             updatedApiDTO = APIMappingUtil.fromAPItoDTO(updatedApi);
@@ -1123,6 +1122,38 @@ public class ApisApiServiceImpl extends ApisApiService {
             }
         } catch (APIManagementException e) {
             String errorMessage = "Error while retrieving the API : " + apiId;
+            RestApiUtil.handleInternalServerError(errorMessage, e, log);
+        }
+        return null;
+    }
+
+    /**
+     * This method is used to validate and remove trailing slashes in resources
+     *
+     * @param apiDefinition
+     * @return apiDefinition with modified resources
+     */
+    private String validateSwaggerDefinition(String apiDefinition) {
+        try {
+            if (apiDefinition == null) {
+                RestApiUtil.handleBadRequest("Parameter: \"apiDefinition\" cannot be null", log);
+            }
+            Swagger swagger = new SwaggerParser().parse(apiDefinition);
+            Map<String, Path> paths = swagger.getPaths();
+            List<String> modifiableResources = new ArrayList<>();
+            for (String key : paths.keySet()) {
+                if (key.endsWith("/")) {
+                    modifiableResources.add(key);
+                }
+            }
+            for (String modifiableResource : modifiableResources) {
+                String newResource = modifiableResource.substring(0, modifiableResource.length() - 1);
+                paths.put(newResource, paths.remove(modifiableResource));
+            }
+            swagger.setPaths(paths);
+            return Json.mapper().writeValueAsString(swagger);
+        } catch (JsonProcessingException e) {
+            String errorMessage = "Error while validating the swagger definition";
             RestApiUtil.handleInternalServerError(errorMessage, e, log);
         }
         return null;
@@ -1838,6 +1869,7 @@ public class ApisApiServiceImpl extends ApisApiService {
                                         String ifUnmodifiedSince) {
         try {
             apiDefinition = validateAndConvertYamlToJson(apiDefinition);
+            apiDefinition = validateSwaggerDefinition(apiDefinition);
             APIDefinition apiDefinitionFromOpenAPISpec = new APIDefinitionFromOpenAPISpec();
             APIProvider apiProvider = RestApiUtil.getLoggedInUserProvider();
             String tenantDomain = RestApiUtil.getLoggedInUserTenantDomain();
