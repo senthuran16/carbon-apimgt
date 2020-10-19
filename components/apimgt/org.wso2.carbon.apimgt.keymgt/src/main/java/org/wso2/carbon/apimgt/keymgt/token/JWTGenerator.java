@@ -109,11 +109,9 @@ public class JWTGenerator extends AbstractJWTGenerator {
             throw new APIManagementException("Error occurred while getting JWT Token client ID : "
                     + validationContext.getValidationInfoDTO().getConsumerKey(), e);
         } catch (InvalidOAuthClientException e) {
-            log.error("Error occurred while getting JWT Token client ID : "
+            log.warn("Error occurred while getting JWT Token client ID : "
                     + validationContext.getValidationInfoDTO().getConsumerKey() + " when getting oAuth App " +
-                    "information", e);
-            throw new APIManagementException("Error occurred while getting JWT Token client ID : "
-                    + validationContext.getValidationInfoDTO().getConsumerKey(), e);
+                    "information. This may result in not having the audience claim in the backend jwt token.", e);
         }
         if (oAuthAppDO != null && oAuthAppDO.getAudiences() != null) {
             String[] audience = oAuthAppDO.getAudiences();
