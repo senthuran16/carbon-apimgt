@@ -8367,13 +8367,14 @@ public class ApiMgtDAO {
                         if (scopeHashMap.containsKey(scopeKey)) {
                             // scope already exists append roles.
                             scope = scopeHashMap.get(scopeKey);
-                            scope.setRoles(scope.getRoles().concat("," + resultSet.getString(4)).trim());
+                            scope.setRoles(scope.getRoles()
+                                    .concat("," + StringUtils.trimToEmpty(resultSet.getString(4))));
                         } else {
                             scope = new Scope();
                             scope.setKey(scopeKey);
                             scope.setName(resultSet.getString(2));
                             scope.setDescription(resultSet.getString(3));
-                            scope.setRoles(resultSet.getString(4).trim());
+                            scope.setRoles(StringUtils.trimToEmpty(resultSet.getString(4)));
                         }
                         scopeHashMap.put(scopeKey, scope);
                     }
@@ -8726,7 +8727,7 @@ public class ApiMgtDAO {
                 if (scopes.containsKey(resultSet.getString(1))) {
                     // Role for the scope exists. Append the new role.
                     String roles = scopes.get(resultSet.getString(1));
-                    String thisRole = resultSet.getString(2);
+                    String thisRole = StringUtils.trimToEmpty(resultSet.getString(2));
                     if (StringUtils.isEmpty(roles)) {
                         roles = thisRole;
                     } else {
@@ -8734,7 +8735,7 @@ public class ApiMgtDAO {
                     }
                     scopes.put(resultSet.getString(1), roles);
                 } else {
-                    scopes.put(resultSet.getString(1), resultSet.getString(2));
+                    scopes.put(resultSet.getString(1), StringUtils.trimToEmpty(resultSet.getString(2)));
                 }
             }
             return scopes;

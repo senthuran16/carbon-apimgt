@@ -2385,21 +2385,19 @@ public class SQLConstants {
 
     public static final String GET_SCOPE_ROLES_OF_APPLICATION_SQL =
             "SELECT " +
-            "   IOS.NAME, " +
-            "   ISB.SCOPE_BINDING " +
-            " FROM " +
-            "   IDN_OAUTH2_SCOPE IOS, " +
-            "   AM_APPLICATION_KEY_MAPPING AKM, " +
-            "   AM_SUBSCRIPTION SUB, " +
-            "   AM_API_SCOPES SCOPE, " +
-            "   IDN_OAUTH2_SCOPE_BINDING ISB" +
-            " WHERE" +
-            "   AKM.CONSUMER_KEY = ? " +
-            "   AND AKM.APPLICATION_ID = SUB.APPLICATION_ID " +
-            "   AND SUB.API_ID = SCOPE.API_ID " +
-            "   AND IOS.SCOPE_ID = ISB.SCOPE_ID " +
-            "   AND SCOPE.SCOPE_ID = IOS.SCOPE_ID";
-
+            "   IOS.NAME,  ISB.SCOPE_BINDING " +
+            "FROM " +
+            "   AM_APPLICATION_KEY_MAPPING AKM " +
+            "INNER JOIN " +
+            "   AM_SUBSCRIPTION SUB ON AKM.APPLICATION_ID = SUB.APPLICATION_ID " +
+            "INNER JOIN " +
+            "   AM_API_SCOPES SCOPE ON SUB.API_ID = SCOPE.API_ID " +
+            "INNER JOIN " +
+            "   IDN_OAUTH2_SCOPE IOS ON SCOPE.SCOPE_ID = IOS.SCOPE_ID " +
+            "LEFT JOIN " +
+            "   IDN_OAUTH2_SCOPE_BINDING ISB ON IOS.SCOPE_ID = ISB.SCOPE_ID " +
+            "WHERE " +
+            "   AKM.CONSUMER_KEY = ? ";
     public static final String GET_SCOPES_FOR_API_LIST = "SELECT "
             + "B.API_ID,A.SCOPE_ID, A.NAME, A.DESCRIPTION "
             + "FROM IDN_OAUTH2_SCOPE AS A "
