@@ -55,6 +55,7 @@ import java.util.Set;
 import java.util.Date;
 import java.util.List;
 import java.util.Arrays;
+import java.util.UUID;
 
 import static org.apache.commons.collections.MapUtils.isNotEmpty;
 
@@ -123,6 +124,7 @@ public class JWTGenerator extends AbstractJWTGenerator {
         claims.put("exp", String.valueOf(expireIn));
         claims.put("iat", String.valueOf(currentTime));
         claims.put("sub", usernameWithoutTenantDomain);
+        claims.put("jti", UUID.randomUUID().toString());
         claims.put(dialect + "/subscriber", subscriber);
         claims.put(dialect + "/applicationid", applicationId);
         claims.put(dialect + "/applicationname", applicationName);
