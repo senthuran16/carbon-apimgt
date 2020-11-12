@@ -55,6 +55,7 @@ import java.util.Set;
 import java.util.Date;
 import java.util.List;
 import java.util.Arrays;
+import java.util.UUID;
 
 import static org.apache.commons.collections.MapUtils.isNotEmpty;
 
