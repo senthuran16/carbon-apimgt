@@ -329,7 +329,7 @@ public class TokenGenTest {
 
     @Test public void testJTI() throws Exception {
 
-        JWTGenerator jwtGen = new JWTGenerator();
+        AbstractJWTGenerator jwtGen = new JWTGenerator();
         APIKeyValidationInfoDTO dto=new APIKeyValidationInfoDTO();
         TokenValidationContext validationContext = new TokenValidationContext();
         validationContext.setValidationInfoDTO(dto);

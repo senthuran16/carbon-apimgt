@@ -290,7 +290,11 @@ public abstract class AbstractJWTGenerator implements TokenGenerator {
                     } else {
                         jwtClaimsSetBuilder.claim(claimURI, claimVal);
                     }
+
+
                 }
+                //Adding JTI standard claim to the backend JWT
+                jwtClaimsSetBuilder.jwtID(UUID.randomUUID().toString());
             }
             return jwtClaimsSetBuilder.build().toJSONObject().toJSONString();
         }

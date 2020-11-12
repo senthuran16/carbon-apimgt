@@ -124,7 +124,6 @@ public class JWTGenerator extends AbstractJWTGenerator {
         claims.put("exp", String.valueOf(expireIn));
         claims.put("iat", String.valueOf(currentTime));
         claims.put("sub", usernameWithoutTenantDomain);
-        claims.put("jti", UUID.randomUUID().toString());
         claims.put(dialect + "/subscriber", subscriber);
         claims.put(dialect + "/applicationid", applicationId);
         claims.put(dialect + "/applicationname", applicationName);
