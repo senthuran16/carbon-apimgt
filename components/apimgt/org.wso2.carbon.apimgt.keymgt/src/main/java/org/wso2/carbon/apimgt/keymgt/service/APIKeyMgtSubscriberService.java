@@ -437,10 +437,11 @@ public class APIKeyMgtSubscriberService extends AbstractAdmin {
                     }
                     serviceProviderUpdate.setSpProperties(serviceProviderProperties.toArray(new ServiceProviderProperty[0]));
 
-                    if (StringUtils.isEmpty(System.getProperty(APIConstants.APPLICATION.OVERRIDE_SP_NAME))) {
-                        serviceProviderUpdate.setApplicationName(applicationName);
-                    } else {
+                    String overrideSpName = System.getProperty(APIConstants.APPLICATION.OVERRIDE_SP_NAME);
+                    if (StringUtils.isNotEmpty(overrideSpName) && Boolean.valueOf(overrideSpName).equals(false)) {
                         serviceProviderUpdate.setApplicationName(serviceProvider.getApplicationName());
+                    } else {
+                        serviceProviderUpdate.setApplicationName(applicationName);
                     }
 
                     serviceProviderUpdate.setDescription("Service Provider for application " + applicationName);
