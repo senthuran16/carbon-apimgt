@@ -1537,4 +1537,8 @@ public final class APIConstants {
         public static final String TOPIC_THROTTLE_DATA = "throttleData";
         public static final String TOPIC_TOKEN_REVOCATION = "tokenRevocation";
     }
+
+    public static class APPLICATION {
+        public static final String OVERRIDE_SP_NAME = "override.sp.name";
+    }
 }
