@@ -20,8 +20,10 @@ package org.wso2.carbon.apimgt.keymgt.service;
 
 import org.apache.axis2.AxisFault;
 import org.apache.axis2.util.URL;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.derby.impl.sql.catalog.SYSCOLUMNSRowFactory;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
@@ -435,7 +437,13 @@ public class APIKeyMgtSubscriberService extends AbstractAdmin {
                         serviceProviderProperties.add(serviceProviderProperty);
                     }
                     serviceProviderUpdate.setSpProperties(serviceProviderProperties.toArray(new ServiceProviderProperty[0]));
-                    serviceProviderUpdate.setApplicationName(applicationName);
+
+                    if (StringUtils.isEmpty(System.getProperty(APIConstants.APPLICATION.OVERRIDE_SP_NAME))) {
+                        serviceProviderUpdate.setApplicationName(applicationName);
+                    } else {
+                        serviceProviderUpdate.setApplicationName(serviceProvider.getApplicationName());
+                    }
+
                     serviceProviderUpdate.setDescription("Service Provider for application " + applicationName);
                     appMgtService.updateApplication(serviceProviderUpdate, tenantDomain, userName);
                     log.debug("Service Provider Name Updated to : " + applicationName);
