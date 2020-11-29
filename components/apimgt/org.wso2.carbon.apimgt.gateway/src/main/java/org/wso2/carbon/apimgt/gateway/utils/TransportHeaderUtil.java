@@ -147,12 +147,12 @@ public class TransportHeaderUtil {
      * @param request Source Request retrieved from the message context
      * @return true or false
      */
-    public static boolean isRemovingResponseHeadersInResponseRequired(MessageContext synCtx, SourceRequest request) {
+    public static boolean isRemovingRequestHeadersInResponseRequired(MessageContext synCtx, SourceRequest request) {
         if (PassThroughConstants.HTTP_OPTIONS.equals(request.getMethod())) {
             return true;
         }
-        int http_sc = PassThroughTransportUtils.determineHttpStatusCode(
+        int httpSc = PassThroughTransportUtils.determineHttpStatusCode(
                 ((Axis2MessageContext) synCtx).getAxis2MessageContext());
-        return synCtx.getProperty(TransportHeaderUtil.RESPONSE_INFLOW_INVOKED) == null && http_sc >= 400;
+        return synCtx.getProperty(TransportHeaderUtil.RESPONSE_INFLOW_INVOKED) == null && httpSc >= 400;
     }
 }

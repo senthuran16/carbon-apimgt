@@ -103,7 +103,7 @@ public class TransportHeaderHandler extends AbstractSynapseHandler {
                     (NHttpConnection)((Axis2MessageContext)synCtx).getAxis2MessageContext().
                             getProperty(TransportHeaderUtil.PASSTHROUGH_SOURCE_CONNECTION);
             SourceRequest sourceRequest = SourceContext.getRequest(sourceHttpConnection);
-            if (TransportHeaderUtil.isRemovingResponseHeadersInResponseRequired(synCtx, sourceRequest)) {
+            if (TransportHeaderUtil.isRemovingRequestHeadersInResponseRequired(synCtx, sourceRequest)) {
                 TransportHeaderUtil.removeRequestHeadersFromResponseHeaders(
                         sourceRequest.getHeaders(), TransportHeaderUtil.getTransportHeaders(synCtx),
                         this.preserveRequestHeaders);
