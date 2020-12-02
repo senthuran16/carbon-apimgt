@@ -220,6 +220,10 @@
             <artifactId>aspectjrt</artifactId>
             <version>1.8.7</version>
         </dependency>
+        <dependency>
+            <groupId>com.google.re2j</groupId>
+            <artifactId>re2j</artifactId>
+        </dependency>
     </dependencies>
 
     <build>
