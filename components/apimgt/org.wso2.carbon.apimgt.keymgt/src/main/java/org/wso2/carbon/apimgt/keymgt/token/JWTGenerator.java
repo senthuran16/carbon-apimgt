@@ -63,6 +63,7 @@ import static org.apache.commons.collections.MapUtils.isNotEmpty;
 public class JWTGenerator extends AbstractJWTGenerator {
 
     private static final Log log = LogFactory.getLog(JWTGenerator.class);
+    private static final String DISABLE_AUD_CLAIM = "apim.disableAudClaim";
 
     @Override
     public Map<String, String> populateStandardClaims(TokenValidationContext validationContext)
@@ -114,10 +115,13 @@ public class JWTGenerator extends AbstractJWTGenerator {
                     + validationContext.getValidationInfoDTO().getConsumerKey() + " when getting oAuth App " +
                     "information. This may result in not having the audience claim in the backend jwt token.", e);
         }
+        boolean disableAudClaim = Boolean.parseBoolean(System.getProperty(DISABLE_AUD_CLAIM));
         if (oAuthAppDO != null && oAuthAppDO.getAudiences() != null) {
             String[] audience = oAuthAppDO.getAudiences();
-            String parsedClaims = "[\"" + StringUtils.join(audience, "\",\"") + "\"]";
-            claims.put("aud", parsedClaims);
+            if (!disableAudClaim && audience != null && audience.length > 0) {
+                String parsedClaims = "[\"" + StringUtils.join(audience, "\",\"") + "\"]";
+                claims.put("aud", parsedClaims);
+            }
         }
 
         claims.put("iss", API_GATEWAY_ID);
