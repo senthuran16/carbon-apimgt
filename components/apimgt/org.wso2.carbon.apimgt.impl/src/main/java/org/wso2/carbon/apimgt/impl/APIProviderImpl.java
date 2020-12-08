@@ -291,7 +291,7 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
      * @return set of API
      * @throws org.wso2.carbon.apimgt.api.APIManagementException if failed to get set of API
      */
-    public List<API> getAPIsByNameAndProvider(String providerId, String apiName) throws APIManagementException {
+    private List<API> getAPIsByNameAndProvider(String providerId, String apiName) throws APIManagementException {
 
         List<API> apiSortedList = new ArrayList<>();
 
@@ -317,14 +317,11 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
                     throw new GovernanceException("artifact id is null of " + apiPath);
                 }
             }
-
         } catch (RegistryException e) {
             handleException("Failed to get APIs for provider : " + providerId, e);
         }
         Collections.sort(apiSortedList, new APINameComparator());
-
         return apiSortedList;
-
     }
 
 
