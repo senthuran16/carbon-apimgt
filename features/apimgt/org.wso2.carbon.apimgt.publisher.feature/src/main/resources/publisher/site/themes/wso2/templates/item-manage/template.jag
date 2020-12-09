@@ -1400,9 +1400,9 @@
         <div class="form-group">
             <label class="control-label col-sm-3" for="scopes"><%=i18n.localize("Scopes")%>:</label>
             <div class="controls col-sm-9">
-                {{#if api_doc.x-wso2-security.apim.x-wso2-scopes }}
+                {{#if doc.x-wso2-security.apim.x-wso2-scopes }}
                  <ul class="scopes-list">
-                     {{#each api_doc.x-wso2-security.apim.x-wso2-scopes }}
+                     {{#each doc.x-wso2-security.apim.x-wso2-scopes }}
                      <li>
                          <div>
                          <a data-index='{{ @index }}' class='delete_scope pull-right' title="<%=i18n.localize("Remove Scope")%>">
