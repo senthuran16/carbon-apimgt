@@ -254,7 +254,7 @@ public class APISynchronizer implements OnPremiseGatewayInitListener {
                 apidto.setContext(context);
                 APIMappingUtil.apisUpdate(apidto, username);
             } catch (APISynchronizationException e) {
-                log.error("Failed to create API " + apidto.getId());
+                log.error("Failed to create API " + apidto.getId(), e);
             }
         }
     }

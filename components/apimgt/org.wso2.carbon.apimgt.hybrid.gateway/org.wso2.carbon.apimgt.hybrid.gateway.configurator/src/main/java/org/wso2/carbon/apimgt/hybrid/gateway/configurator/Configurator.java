@@ -19,23 +19,6 @@
 package org.wso2.carbon.apimgt.hybrid.gateway.configurator;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
-import org.wso2.carbon.apimgt.hybrid.gateway.common.config.ConfigManager;
-import org.wso2.carbon.apimgt.hybrid.gateway.common.dto.ConfigDTO;
-import org.wso2.carbon.apimgt.hybrid.gateway.common.exception.OnPremiseGatewayException;
-import org.wso2.carbon.apimgt.hybrid.gateway.common.util.HttpRequestUtil;
-import org.wso2.carbon.apimgt.hybrid.gateway.common.util.OnPremiseGatewayConstants;
-import org.wso2.carbon.apimgt.hybrid.gateway.common.util.TokenUtil;
-import org.wso2.carbon.apimgt.hybrid.gateway.configurator.dto.MicroGatewayInitializationDTO;
-import org.wso2.carbon.utils.CarbonUtils;
-
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
@@ -58,6 +41,28 @@ import java.util.List;
 import java.util.Map;
 import java.util.OptionalLong;
 import java.util.Properties;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.apache.http.HttpHost;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.client.CredentialsProvider;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.BasicCredentialsProvider;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.impl.client.HttpClients;
+import org.wso2.carbon.apimgt.hybrid.gateway.common.config.ConfigManager;
+import org.wso2.carbon.apimgt.hybrid.gateway.common.dto.ConfigDTO;
+import org.wso2.carbon.apimgt.hybrid.gateway.common.exception.OnPremiseGatewayException;
+import org.wso2.carbon.apimgt.hybrid.gateway.common.util.HttpRequestUtil;
+import org.wso2.carbon.apimgt.hybrid.gateway.common.util.OnPremiseGatewayConstants;
+import org.wso2.carbon.apimgt.hybrid.gateway.common.util.TokenUtil;
+import org.wso2.carbon.apimgt.hybrid.gateway.configurator.dto.MicroGatewayInitializationDTO;
+import org.wso2.carbon.utils.CarbonUtils;
 
 /**
  * Configurator class for Micro Gateway Configuration specific to WSO2 API Cloud
@@ -222,7 +227,39 @@ public class Configurator {
     private static String callInitializationAPI(String initApiUrl, String authHeaderValue, String payload) throws
             OnPremiseGatewayException, IOException {
         String token = "";
-        CloseableHttpClient httpClient = HttpClients.createDefault();
+
+        HttpClientBuilder clientBuilder = HttpClients.custom();
+
+        if (StringUtils.isNotBlank(System.getProperty(ConfigConstants.HTTP_PROXY_HOST)) &&
+                StringUtils.isNotBlank(System.getProperty(ConfigConstants.HTTP_PROXY_PORT)) &&
+                StringUtils.isNotBlank(System.getProperty(ConfigConstants.HTTP_PROXY_SCHEME))) {
+            String proxyHostname = System.getProperty(ConfigConstants.HTTP_PROXY_HOST);
+            String proxyPort = System.getProperty(ConfigConstants.HTTP_PROXY_PORT);
+            String proxyScheme = System.getProperty(ConfigConstants.HTTP_PROXY_SCHEME);
+
+            if (StringUtils.isNotBlank(System.getProperty(ConfigConstants.HTTP_PROXY_USERNAME)) &&
+                    StringUtils.isNotBlank(System.getProperty(ConfigConstants.HTTP_PROXY_PASSWORD))) {
+                String proxyUser = System.getProperty(ConfigConstants.HTTP_PROXY_USERNAME);
+                String proxyPassword = System.getProperty(ConfigConstants.HTTP_PROXY_PASSWORD);
+
+                CredentialsProvider credsProvider = new BasicCredentialsProvider();
+                credsProvider.setCredentials(
+                        new AuthScope(proxyHostname, Integer.parseInt(proxyPort)),
+                        new UsernamePasswordCredentials(proxyUser, proxyPassword));
+                clientBuilder.setDefaultCredentialsProvider(credsProvider);
+            }
+            if (log.isDebugEnabled()) {
+                log.debug(
+                        "Proxy configurations available with scheme:" + proxyScheme + ", hostname:"
+                                + proxyHostname + ", port:" + proxyPort
+                                + ". Hence sending micro gateway initialization calls via proxy.");
+            }
+
+            HttpHost proxyHost = new HttpHost(proxyHostname, Integer.parseInt(proxyPort), proxyScheme);
+            clientBuilder.setProxy(proxyHost);
+        }
+
+        CloseableHttpClient httpClient = clientBuilder.build();
         HttpPost httpPost = new HttpPost(initApiUrl);
         httpPost.addHeader(AUTHORIZATION_HEADER, authHeaderValue);
         httpPost.addHeader(OnPremiseGatewayConstants.CONTENT_TYPE_HEADER,

@@ -34,6 +34,12 @@ public class ConfigConstants {
     public static final String PORT = "port";
     public static final String LAST_WUM_UPDATE = "lastWumUpdate";
 
+    public static final String HTTP_PROXY_HOST = "http.proxyHost";
+    public static final String HTTP_PROXY_PORT = "http.proxyPort";
+    public static final String HTTP_PROXY_SCHEME = "http.proxyScheme";
+    public static final String HTTP_PROXY_USERNAME = "http.proxyUsername";
+    public static final String HTTP_PROXY_PASSWORD = "http.proxyPassword";
+
     public static final String CONFIGURE_LOCK_FILE_NAME = "configure.lck";
     public static final String CONFIG_TOOL_CONFIG_FILE_NAME = "gateway-config-tool.properties";
     public static final String GATEWAY_CARBON_FILE_NAME = "carbon.xml";
