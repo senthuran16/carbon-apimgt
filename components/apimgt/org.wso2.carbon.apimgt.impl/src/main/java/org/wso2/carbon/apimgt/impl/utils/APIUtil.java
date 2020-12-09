@@ -4114,6 +4114,10 @@ public final class APIUtil {
         return ApiMgtDAO.getInstance().getApplicationId(appName, userId);
     }
 
+    public static String getApplicationUUID(String appName, String userId) throws APIManagementException {
+        return ApiMgtDAO.getInstance().getApplicationUUID(appName, userId);
+    }
+
     public static int getApplicationId(String appName, String userId, String groupId) throws APIManagementException {
         Application application = ApiMgtDAO.getInstance().getApplicationByName(appName, userId, groupId);
         if (application != null) {
