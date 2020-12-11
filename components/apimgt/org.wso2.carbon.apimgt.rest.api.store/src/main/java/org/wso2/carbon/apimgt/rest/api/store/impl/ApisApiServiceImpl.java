@@ -35,6 +35,7 @@ import org.wso2.carbon.apimgt.rest.api.store.dto.APIListDTO;
 import org.wso2.carbon.apimgt.rest.api.store.dto.APIListPaginationDTO;
 import org.wso2.carbon.apimgt.rest.api.store.dto.DocumentDTO;
 import org.wso2.carbon.apimgt.rest.api.store.dto.DocumentListDTO;
+import org.wso2.carbon.apimgt.rest.api.store.utils.APIComparator;
 import org.wso2.carbon.apimgt.rest.api.store.utils.RestAPIStoreUtils;
 import org.wso2.carbon.apimgt.rest.api.store.utils.mappings.APIMappingUtil;
 import org.wso2.carbon.apimgt.rest.api.store.utils.mappings.DocumentationMappingUtil;
@@ -112,7 +113,15 @@ public class ApisApiServiceImpl extends ApisApiService {
 
             Map allMatchedApisMap = apiConsumer
                     .searchPaginatedAPIs(newSearchQuery, requestedTenantDomain, offset, limit, false);
-            Set<API> sortedSet = (Set<API>) allMatchedApisMap.get("apis"); // This is a SortedSet
+
+            Set<API> sortedSet;
+            if (newSearchQuery.startsWith(APIConstants.DOCUMENTATION_SEARCH_TYPE_PREFIX)) {
+                sortedSet = RestAPIStoreUtils.getAPIListfromDocMap((Map<Documentation, API>)
+                        allMatchedApisMap.get("apis")); // This is a SortedSet
+            } else {
+                sortedSet = (Set<API>) allMatchedApisMap.get("apis"); // This is a SortedSet
+            }
+
             ArrayList<API> allMatchedApis = new ArrayList<>(sortedSet);
 
             apiListDTO = APIMappingUtil.fromAPIListToDTO(allMatchedApis);

@@ -59,6 +59,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -633,5 +634,20 @@ public class RestAPIStoreUtils {
             }
         }
         return filteredScopes;
+    }
+
+    /**
+     * To get only the api list from document api map.
+     *
+     * @param apiDocMap  API documanet map
+     * @return API list.
+     */
+    public static TreeSet<API> getAPIListfromDocMap(Map<Documentation, API> apiDocMap) {
+
+        TreeSet<API> apiList = new TreeSet<API>(new APIComparator());
+        for(Documentation doc: apiDocMap.keySet()) {
+            apiList.add(apiDocMap.get(doc));
+        }
+        return apiList;
     }
 }
