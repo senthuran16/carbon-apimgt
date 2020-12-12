@@ -25,6 +25,6 @@ public class APIComparator implements Comparator<API> {
 
     @Override
     public int compare(API api1, API api2) {
-        return api1.getUUID().compareTo(api2.getUUID());
+        return api1.getId().getApiName().compareTo(api2.getId().getApiName());
     }
 }
