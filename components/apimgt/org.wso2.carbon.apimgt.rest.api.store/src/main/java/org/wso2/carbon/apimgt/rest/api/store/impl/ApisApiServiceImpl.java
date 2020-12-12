@@ -117,7 +117,7 @@ public class ApisApiServiceImpl extends ApisApiService {
             Set<API> sortedSet;
             if (newSearchQuery.startsWith(APIConstants.DOCUMENTATION_SEARCH_TYPE_PREFIX)) {
                 sortedSet = RestAPIStoreUtils.getAPIListfromDocMap((Map<Documentation, API>)
-                        allMatchedApisMap.get("apis"));
+                        allMatchedApisMap.get("apis"), offset,limit); // This is a SortedSet
             } else {
                 sortedSet = (Set<API>) allMatchedApisMap.get("apis"); // This is a SortedSet
             }

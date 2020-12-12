@@ -637,17 +637,46 @@ public class RestAPIStoreUtils {
     }
 
     /**
-     * To get only the api list from document api map.
+     * To get only the api list from document api map according to the offset and limit.
      *
      * @param apiDocMap  API documanet map
-     * @return API list.
+     * @param offset  offset
+     * @param limit  limit
+     * @return Sorted API list.
      */
-    public static TreeSet<API> getAPIListfromDocMap(Map<Documentation, API> apiDocMap) {
+    public static TreeSet<API> getAPIListfromDocMap(Map<Documentation, API> apiDocMap, int offset, int limit) {
 
         TreeSet<API> apiList = new TreeSet<API>(new APIComparator());
         for(Documentation doc: apiDocMap.keySet()) {
             apiList.add(apiDocMap.get(doc));
         }
-        return apiList;
+
+        // Create an Iterator over the TreeSet
+        Iterator<API> iterator = apiList.iterator();
+        TreeSet<API> sortedApiList = new TreeSet<API>(new APIComparator());
+
+        //handle offset and limit
+        if (apiList.size() >= (limit + offset)) {
+            for (int i = 0; i < limit + offset; i++) {
+                if(iterator.hasNext()) {
+                    if (i <= offset -1) {
+                        iterator.next();
+                    } else {
+                        sortedApiList.add(iterator.next());
+                    }
+                } else {
+                    break;
+                }
+            }
+        } else {
+            for (int i = 0; i < limit; i++) {
+                if  (iterator.hasNext()) {
+                    sortedApiList.add(iterator.next());
+                } else {
+                    break;
+                }
+            }
+        }
+        return sortedApiList;
     }
 }
