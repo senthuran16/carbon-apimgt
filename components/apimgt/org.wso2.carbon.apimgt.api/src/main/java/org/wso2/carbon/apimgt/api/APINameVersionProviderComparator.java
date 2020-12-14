@@ -16,15 +16,25 @@
  * under the License.
  */
 
-package org.wso2.carbon.apimgt.rest.api.store.utils;
+package org.wso2.carbon.apimgt.api;
 
 import org.wso2.carbon.apimgt.api.model.API;
+
 import java.util.Comparator;
 
-public class APIComparator implements Comparator<API> {
+public class APINameVersionProviderComparator implements Comparator<API> {
 
     @Override
     public int compare(API api1, API api2) {
-        return api1.getId().getApiName().compareTo(api2.getId().getApiName());
+
+        if (api1.getId().getApiName().equals(api2.getId().getApiName())) {
+            if (api1.getId().getVersion().equalsIgnoreCase(api2.getId().getVersion())) {
+                return api1.getId().getProviderName().compareToIgnoreCase(api2.getId().getProviderName());
+            } else {
+                return api1.getId().getVersion().compareToIgnoreCase(api2.getId().getVersion());
+            }
+        } else {
+            return api1.getId().getApiName().compareToIgnoreCase(api2.getId().getApiName());
+        }
     }
 }

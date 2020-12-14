@@ -24,6 +24,7 @@ import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.apimgt.api.APIConsumer;
 import org.wso2.carbon.apimgt.api.APIManagementException;
 import org.wso2.carbon.apimgt.api.APIMgtAuthorizationFailedException;
+import org.wso2.carbon.apimgt.api.APINameVersionProviderComparator;
 import org.wso2.carbon.apimgt.api.model.API;
 import org.wso2.carbon.apimgt.api.model.APIIdentifier;
 import org.wso2.carbon.apimgt.api.model.Application;
@@ -646,14 +647,14 @@ public class RestAPIStoreUtils {
      */
     public static TreeSet<API> getAPIListfromDocMap(Map<Documentation, API> apiDocMap, int offset, int limit) {
 
-        TreeSet<API> apiList = new TreeSet<API>(new APIComparator());
+        TreeSet<API> apiList = new TreeSet<API>(new APINameVersionProviderComparator());
         for(Documentation doc: apiDocMap.keySet()) {
             apiList.add(apiDocMap.get(doc));
         }
 
         // Create an Iterator over the TreeSet
         Iterator<API> iterator = apiList.iterator();
-        TreeSet<API> sortedApiList = new TreeSet<API>(new APIComparator());
+        TreeSet<API> sortedApiList = new TreeSet<API>(new APINameVersionProviderComparator());
 
         //handle offset and limit
         if (apiList.size() >= (limit + offset)) {
