@@ -19,7 +19,6 @@
 package org.wso2.carbon.apimgt.api;
 
 import org.wso2.carbon.apimgt.api.model.API;
-
 import java.util.Comparator;
 
 public class APINameVersionProviderComparator implements Comparator<API> {
