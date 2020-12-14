@@ -24,6 +24,7 @@ import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.apimgt.api.APIConsumer;
 import org.wso2.carbon.apimgt.api.APIManagementException;
 import org.wso2.carbon.apimgt.api.APIMgtAuthorizationFailedException;
+import org.wso2.carbon.apimgt.api.APINameVersionProviderComparator;
 import org.wso2.carbon.apimgt.api.model.API;
 import org.wso2.carbon.apimgt.api.model.APIIdentifier;
 import org.wso2.carbon.apimgt.api.model.Application;
@@ -59,6 +60,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -633,5 +635,49 @@ public class RestAPIStoreUtils {
             }
         }
         return filteredScopes;
+    }
+
+    /**
+     * To get only the api list from document api map according to the offset and limit.
+     *
+     * @param apiDocMap  API documanet map
+     * @param offset  offset
+     * @param limit  limit
+     * @return Sorted API list.
+     */
+    public static TreeSet<API> getAPIListfromDocMap(Map<Documentation, API> apiDocMap, int offset, int limit) {
+
+        TreeSet<API> apiList = new TreeSet<API>(new APINameVersionProviderComparator());
+        for (Documentation doc: apiDocMap.keySet()) {
+            apiList.add(apiDocMap.get(doc));
+        }
+
+        // Create an Iterator over the TreeSet
+        Iterator<API> iterator = apiList.iterator();
+        TreeSet<API> sortedApiList = new TreeSet<API>(new APINameVersionProviderComparator());
+
+        //handle offset and limit
+        if (apiList.size() >= (limit + offset)) {
+            for (int i = 0; i < limit + offset; i++) {
+                if (iterator.hasNext()) {
+                    if (i <= offset - 1) {
+                        iterator.next();
+                    } else {
+                        sortedApiList.add(iterator.next());
+                    }
+                } else {
+                    break;
+                }
+            }
+        } else {
+            for (int i = 0; i < limit; i++) {
+                if  (iterator.hasNext()) {
+                    sortedApiList.add(iterator.next());
+                } else {
+                    break;
+                }
+            }
+        }
+        return sortedApiList;
     }
 }

@@ -112,7 +112,15 @@ public class ApisApiServiceImpl extends ApisApiService {
 
             Map allMatchedApisMap = apiConsumer
                     .searchPaginatedAPIs(newSearchQuery, requestedTenantDomain, offset, limit, false);
-            Set<API> sortedSet = (Set<API>) allMatchedApisMap.get("apis"); // This is a SortedSet
+
+            Set<API> sortedSet;
+            if (newSearchQuery.startsWith(APIConstants.DOCUMENTATION_SEARCH_TYPE_PREFIX_WITH_EQUALS)) {
+                sortedSet = RestAPIStoreUtils.getAPIListfromDocMap((Map<Documentation, API>)
+                        allMatchedApisMap.get("apis"), offset, limit); // This is a SortedSet
+            } else {
+                sortedSet = (Set<API>) allMatchedApisMap.get("apis"); // This is a SortedSet
+            }
+
             ArrayList<API> allMatchedApis = new ArrayList<>(sortedSet);
 
             apiListDTO = APIMappingUtil.fromAPIListToDTO(allMatchedApis);
