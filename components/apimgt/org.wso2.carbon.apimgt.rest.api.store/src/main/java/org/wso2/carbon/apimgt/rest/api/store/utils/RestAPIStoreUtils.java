@@ -648,7 +648,7 @@ public class RestAPIStoreUtils {
     public static TreeSet<API> getAPIListfromDocMap(Map<Documentation, API> apiDocMap, int offset, int limit) {
 
         TreeSet<API> apiList = new TreeSet<API>(new APINameVersionProviderComparator());
-        for(Documentation doc: apiDocMap.keySet()) {
+        for (Documentation doc: apiDocMap.keySet()) {
             apiList.add(apiDocMap.get(doc));
         }
 
@@ -659,8 +659,8 @@ public class RestAPIStoreUtils {
         //handle offset and limit
         if (apiList.size() >= (limit + offset)) {
             for (int i = 0; i < limit + offset; i++) {
-                if(iterator.hasNext()) {
-                    if (i <= offset -1) {
+                if (iterator.hasNext()) {
+                    if (i <= offset - 1) {
                         iterator.next();
                     } else {
                         sortedApiList.add(iterator.next());
