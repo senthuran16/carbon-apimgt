@@ -2015,7 +2015,10 @@ public class APIUsageStatisticsRestClientImpl extends APIUsageStatisticsClient {
             if (apiVersion != null) {
                 query.append("' AND " + APIUsageStatisticsClientConstants.API_VERSION + "=='" + apiVersion);
             }
-            query.append("') within " + 0 + "L, " + new Date().getTime() + "L per 'months' select "
+            Calendar calendar = Calendar.getInstance();
+            calendar.add(Calendar.MONTH, -1);
+            Long fromDate = calendar.getTimeInMillis();
+            query.append("') within " + fromDate + "L, " + new Date().getTime() + "L per 'months' select "
                     + APIUsageStatisticsClientConstants.API_CONTEXT + ", " + APIUsageStatisticsClientConstants.USERNAME
                     + ", " + APIUsageStatisticsClientConstants.TOTAL_REQUEST_COUNT + ", "
                     + APIUsageStatisticsClientConstants.API_VERSION + ";");
