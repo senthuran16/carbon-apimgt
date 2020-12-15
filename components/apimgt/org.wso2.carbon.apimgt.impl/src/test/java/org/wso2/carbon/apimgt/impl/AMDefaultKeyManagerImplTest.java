@@ -23,6 +23,7 @@ import java.util.Map;
 
 import org.junit.Before;
 import org.junit.runner.RunWith;
+import org.mockito.Mockito;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.core.classloader.annotations.SuppressStaticInitializationFor;
@@ -37,18 +38,20 @@ import org.wso2.carbon.apimgt.api.model.OAuthApplicationInfo;
 import org.json.simple.JSONObject;
 import org.junit.Assert;
 import org.junit.Test;
+import org.wso2.carbon.apimgt.impl.utils.APIUtil;
 import org.wso2.carbon.identity.application.authentication.framework.model.AuthenticatedUser;
 import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
 import org.wso2.carbon.identity.oauth2.model.AccessTokenDO;
 import org.wso2.carbon.identity.oauth2.util.OAuth2Util;
 
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({OAuth2Util.class})
+@PrepareForTest({OAuth2Util.class, APIUtil.class})
 @SuppressStaticInitializationFor("org.wso2.carbon.identity.oauth2.util.OAuth2Util")
 public class AMDefaultKeyManagerImplTest {
     
     private String APP_OWNER = "lakmali";    
     private String APP_NAME = "app1";
+    private String APP_UUID = "XXXXX";
     
     //Same client_id client_secret are used in AMDefaultKeyManagerImplWrapper mock class
     private String CLIENT_SECRET = "GGGGGGG";
@@ -57,12 +60,13 @@ public class AMDefaultKeyManagerImplTest {
     @Before
     public void init() {
         PowerMockito.mockStatic(OAuth2Util.class);
+        PowerMockito.mockStatic(APIUtil.class);
     }
 
     @Test
     public void testCreateApplication() throws APIManagementException {
         OAuthAppRequest oauthRequest = new OAuthAppRequest();
-        
+
         OAuthApplicationInfo oauthApplication = new OAuthApplicationInfo();
         oauthApplication.setAppOwner(APP_OWNER);
         oauthApplication.setCallBackURL("http://locahost");
@@ -70,12 +74,13 @@ public class AMDefaultKeyManagerImplTest {
         oauthApplication.setJsonString(getJSONString());
         oauthRequest.setMappingId("123");
         oauthRequest.setOAuthApplicationInfo(oauthApplication);
-        
+        Mockito.when(APIUtil.getApplicationUUID(Mockito.anyString(), Mockito.anyString())).thenReturn(APP_UUID);
+
         AMDefaultKeyManagerImplWrapper keyManager = new AMDefaultKeyManagerImplWrapper();
-        
+
         OAuthApplicationInfo oauthApplicationResponse = keyManager.createApplication(oauthRequest);
         Assert.assertEquals(APP_OWNER, oauthApplicationResponse.getAppOwner());
-        Assert.assertEquals(APP_NAME, oauthApplicationResponse.getClientName());
+        Assert.assertEquals(APP_UUID, oauthApplicationResponse.getClientName());
     }
 
     @Test
@@ -90,12 +95,13 @@ public class AMDefaultKeyManagerImplTest {
         oauthApplication.addParameter(ApplicationConstants.APP_KEY_TYPE, "PRODUCTION");
         oauthRequest.setMappingId("123");
         oauthRequest.setOAuthApplicationInfo(oauthApplication);
+        Mockito.when(APIUtil.getApplicationUUID(Mockito.anyString(), Mockito.anyString())).thenReturn(APP_UUID);
         
         AMDefaultKeyManagerImplWrapper keyManager = new AMDefaultKeyManagerImplWrapper();
         
         OAuthApplicationInfo oauthApplicationResponse = keyManager.createApplication(oauthRequest);
         Assert.assertEquals(APP_OWNER, oauthApplicationResponse.getAppOwner());
-        Assert.assertEquals(APP_NAME + "_PRODUCTION", oauthApplicationResponse.getClientName());
+        Assert.assertEquals(APP_UUID + "_PRODUCTION", oauthApplicationResponse.getClientName());
     }
     
     @Test(expected = APIManagementException.class)
@@ -123,6 +129,7 @@ public class AMDefaultKeyManagerImplTest {
         oauthRequest.setOAuthApplicationInfo(oauthApplication);
         
         AMDefaultKeyManagerImplWrapper keyManager = new AMDefaultKeyManagerImplWrapper();
+        Mockito.when(APIUtil.getApplicationUUID(Mockito.anyString(), Mockito.anyString())).thenReturn(APP_UUID);
         keyManager.createApplication(oauthRequest);
         
         oauthApplication.addParameter(ApplicationConstants.OAUTH_CLIENT_USERNAME, APP_OWNER);
@@ -147,13 +154,14 @@ public class AMDefaultKeyManagerImplTest {
         oauthApplication.setJsonString(getJSONString());
         oauthRequest.setMappingId("123");
         oauthRequest.setOAuthApplicationInfo(oauthApplication);
+        Mockito.when(APIUtil.getApplicationUUID(Mockito.anyString(), Mockito.anyString())).thenReturn(APP_UUID);
         
         AMDefaultKeyManagerImplWrapper keyManager = new AMDefaultKeyManagerImplWrapper();
         keyManager.createApplication(oauthRequest);
         
         OAuthApplicationInfo oauthApplicationResponse = keyManager.retrieveApplication(CLIENT_ID);
         Assert.assertNotNull(oauthApplicationResponse);
-        Assert.assertEquals(APP_NAME, oauthApplicationResponse.getClientName());
+        Assert.assertEquals(APP_UUID, oauthApplicationResponse.getClientName());
     }
     
     @Test
@@ -203,6 +211,7 @@ public class AMDefaultKeyManagerImplTest {
         oauthRequest.setOAuthApplicationInfo(oauthApplication);
         
         AMDefaultKeyManagerImplWrapper keyManager = new AMDefaultKeyManagerImplWrapper();
+        Mockito.when(APIUtil.getApplicationUUID(Mockito.anyString(), Mockito.anyString())).thenReturn(APP_UUID);
         keyManager.createApplication(oauthRequest);
         
         oauthApplication.addParameter("tokenScope", "read_scope");
@@ -283,6 +292,27 @@ public class AMDefaultKeyManagerImplTest {
         parameters.put(ApplicationConstants.OAUTH_CLIENT_NAME, APP_NAME);
         
         return JSONObject.toJSONString(parameters);
+    }
+
+    @Test
+    public void testCreateApplicationAppNameWithSpecialChars() throws APIManagementException {
+        OAuthAppRequest oauthRequest = new OAuthAppRequest();
+        String applicationName = "ÅÄÖÅÄÖ";
+
+        OAuthApplicationInfo oauthApplication = new OAuthApplicationInfo();
+        oauthApplication.setAppOwner(APP_OWNER);
+        oauthApplication.setCallBackURL("http://locahost");
+        oauthApplication.setClientName(applicationName);
+        oauthApplication.setJsonString(getJSONString());
+        oauthRequest.setMappingId("123");
+        oauthRequest.setOAuthApplicationInfo(oauthApplication);
+        Mockito.when(APIUtil.getApplicationUUID(Mockito.anyString(), Mockito.anyString())).thenReturn(applicationName);
+
+        AMDefaultKeyManagerImplWrapper keyManager = new AMDefaultKeyManagerImplWrapper();
+
+        OAuthApplicationInfo oauthApplicationResponse = keyManager.createApplication(oauthRequest);
+        Assert.assertEquals(APP_OWNER, oauthApplicationResponse.getAppOwner());
+        Assert.assertEquals(applicationName, oauthApplicationResponse.getClientName());
     }
 
 }
