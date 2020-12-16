@@ -1447,22 +1447,21 @@ public class APIUsageStatisticsRestClientImpl extends APIUsageStatisticsClient {
                 granularity = APIUsageStatisticsClientConstants.DAYS_GRANULARITY;
             }
             String query;
-            if(providerName != APIUsageStatisticsClientConstants.ALL_PROVIDERS) {
-                query =
-                        "from " + tableName + " on(" + APIUsageStatisticsClientConstants.API_CREATOR_TENANT_DOMAIN + "=='"
-                                + tenantDomain + "' " +
-                                " AND "+ APIUsageStatisticsClientConstants.API_CREATOR + " == '" + providerName + ") within " + getTimestamp(fromDate) + "L, " + getTimestamp(toDate)
-                                + "L per '" + granularity + "' select " + APIUsageStatisticsClientConstants.API_NAME + ", "
-                                + APIUsageStatisticsClientConstants.API_VERSION + ", "
-                                + APIUsageStatisticsClientConstants.API_CREATOR + ", "
-                                + APIUsageStatisticsClientConstants.API_CONTEXT + ", sum("
-                                + APIUsageStatisticsClientConstants.TOTAL_FAULT_COUNT + ") as total_fault_count group by "
-                                + APIUsageStatisticsClientConstants.API_NAME + ", "
-                                + APIUsageStatisticsClientConstants.API_VERSION + ", "
-                                + APIUsageStatisticsClientConstants.API_CREATOR + ", "
-                                + APIUsageStatisticsClientConstants.API_CONTEXT + "  order by "
-                                + APIUsageStatisticsClientConstants.API_NAME + " ASC ;";
-            }else {
+            if (providerName != APIUsageStatisticsClientConstants.ALL_PROVIDERS) {
+                query = "from " + tableName + " on(" + APIUsageStatisticsClientConstants.API_CREATOR_TENANT_DOMAIN
+                        + "=='" + tenantDomain + "' " + " AND " + APIUsageStatisticsClientConstants.API_CREATOR
+                        + " == '" + providerName + ") within " + getTimestamp(fromDate) + "L, " + getTimestamp(toDate)
+                        + "L per '" + granularity + "' select " + APIUsageStatisticsClientConstants.API_NAME + ", "
+                        + APIUsageStatisticsClientConstants.API_VERSION + ", "
+                        + APIUsageStatisticsClientConstants.API_CREATOR + ", "
+                        + APIUsageStatisticsClientConstants.API_CONTEXT + ", sum("
+                        + APIUsageStatisticsClientConstants.TOTAL_FAULT_COUNT + ") as total_fault_count group by "
+                        + APIUsageStatisticsClientConstants.API_NAME + ", "
+                        + APIUsageStatisticsClientConstants.API_VERSION + ", "
+                        + APIUsageStatisticsClientConstants.API_CREATOR + ", "
+                        + APIUsageStatisticsClientConstants.API_CONTEXT + "  order by "
+                        + APIUsageStatisticsClientConstants.API_NAME + " ASC ;";
+            } else {
                 query =
                         "from " + tableName + " on(" + APIUsageStatisticsClientConstants.API_CREATOR_TENANT_DOMAIN + "=='"
                                 + tenantDomain + "') within " + getTimestamp(fromDate) + "L, " + getTimestamp(toDate)
