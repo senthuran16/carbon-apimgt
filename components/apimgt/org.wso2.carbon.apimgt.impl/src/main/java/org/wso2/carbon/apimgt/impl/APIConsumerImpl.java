@@ -225,7 +225,7 @@ public class APIConsumerImpl extends AbstractAPIManager implements APIConsumer {
      */
     @Override
 	public Set<API> getAPIsWithTag(String tagName, String requestedTenantDomain) throws APIManagementException {
-    	
+
     	 /* We keep track of the lastUpdatedTime of the TagCache to determine its freshness.
          */
         long lastUpdatedTimeAtStart = lastUpdatedTimeForTagApi;
@@ -239,7 +239,7 @@ public class APIConsumerImpl extends AbstractAPIManager implements APIConsumer {
         		lastUpdatedTimeForTagApi = System.currentTimeMillis();
                 taggedAPIs = new ConcurrentHashMap<String, Set<API>>();
             }
-        	
+
         }
 
         boolean isTenantMode = requestedTenantDomain != null && !"null".equalsIgnoreCase(requestedTenantDomain);
@@ -279,7 +279,7 @@ public class APIConsumerImpl extends AbstractAPIManager implements APIConsumer {
 						taggedAPIs.get(tagName).add(api);
 					}
 				} else {
-					taggedAPIs.putIfAbsent(tagName, apisWithTag);					
+					taggedAPIs.putIfAbsent(tagName, apisWithTag);
 				}
 			}
 
@@ -648,7 +648,7 @@ public class APIConsumerImpl extends AbstractAPIManager implements APIConsumer {
         int totalLength=0;
         boolean isMore = false;
         String criteria = APIConstants.LCSTATE_SEARCH_TYPE_KEY;
-        
+
         try {
             Registry userRegistry;
             boolean isTenantMode=(tenantDomain != null);
@@ -697,8 +697,8 @@ public class APIConsumerImpl extends AbstractAPIManager implements APIConsumer {
             }
 
             PaginationContext.init(start, end, "ASC", APIConstants.API_OVERVIEW_NAME, maxPaginationLimit);
-            
-            
+
+
             criteria = criteria + APIUtil.getORBasedSearchCriteria(apiStatus);
             GenericArtifactManager artifactManager = APIUtil.getArtifactManager(userRegistry, APIConstants.API_KEY);
             if (artifactManager != null) {
@@ -795,7 +795,7 @@ public class APIConsumerImpl extends AbstractAPIManager implements APIConsumer {
         result.put("totalLength", totalLength);
         result.put("isMore", isMore);
         return result;
-        
+
     }
 
     /**
@@ -889,7 +889,7 @@ public class APIConsumerImpl extends AbstractAPIManager implements APIConsumer {
             PaginationContext.init(start, end, "ASC", APIConstants.API_OVERVIEW_NAME, maxPaginationLimit);
             GenericArtifactManager artifactManager = APIUtil.getArtifactManager(userRegistry, APIConstants.API_KEY);
             if (artifactManager != null) {
-                
+
                 GenericArtifact[] genericArtifacts = artifactManager.findGenericArtifacts(listMap);
                 totalLength=PaginationContext.getInstance().getLength();
                 if (genericArtifacts == null || genericArtifacts.length == 0) {
@@ -1503,7 +1503,7 @@ public class APIConsumerImpl extends AbstractAPIManager implements APIConsumer {
         } catch (UserStoreException e) {
             handleException("Failed to get all the tags", e);
         }
- 
+
         return tagSet;
     }
 
@@ -2725,6 +2725,13 @@ public class APIConsumerImpl extends AbstractAPIManager implements APIConsumer {
                                                             "cannot contain leading or trailing white spaces");
         }
 
+        String regex = "[~!#$;%^&*+={}|<>,'/\" \\\\]";
+        Pattern pattern = Pattern.compile(regex);
+        Matcher matcher = pattern.matcher(application.getName());
+        if (matcher.find()) {
+            handleApplicationNameContainsInvalidCharactersException("Application name contains invalid characters");
+        }
+
         if (APIUtil.isApplicationExist(userId, application.getName(), application.getGroupId())) {
             handleResourceAlreadyExistsException(
                     "A duplicate application already exists by the name - " + application.getName());
@@ -2831,6 +2838,13 @@ public class APIConsumerImpl extends AbstractAPIManager implements APIConsumer {
         if (application.getName() != null && (application.getName().length() != application.getName().trim().length())) {
             handleApplicationNameContainSpacesException("Application name " +
                     "cannot contain leading or trailing white spaces");
+        }
+
+        String regex = "[~!#$;%^&*+={}|<>,'/\" \\\\]";
+        Pattern pattern = Pattern.compile(regex);
+        Matcher matcher = pattern.matcher(application.getName());
+        if (matcher.find()) {
+            handleApplicationNameContainsInvalidCharactersException("Application name contains invalid characters");
         }
 
         apiMgtDAO.updateApplication(application);
