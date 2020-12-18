@@ -1246,48 +1246,39 @@ public class APIUsageStatisticsRestClientImpl extends APIUsageStatisticsClient {
         }
         List<APIResponseFaultCount> faultyData = this
                 .getAPIResponseFaultCountData(APIUsageStatisticsClientConstants.API_FAULTY_INVOCATION_AGG, tenantDomain,
-                        fromDate, toDate);
-        List<API> providerAPIs = getAPIsByProvider(providerName);
+                        fromDate, toDate, providerName);
         List<APIResponseFaultCountDTO> faultyCount = new ArrayList<APIResponseFaultCountDTO>();
-        List<APIVersionUsageDTO> apiVersionUsageList;
-
+        List<APIVersionUsageDTO> apiVersionUsageList;;
         for (APIResponseFaultCount fault : faultyData) {
-            for (API providerAPI : providerAPIs) {
-                if (providerAPI.getId().getApiName().equals(fault.getApiName()) && providerAPI.getId().getVersion()
-                        .equals(fault.getApiVersion()) && providerAPI.getContext().equals(fault.getContext())) {
-
-                    APIResponseFaultCountDTO faultyDTO = new APIResponseFaultCountDTO();
-                    faultyDTO.setApiName(fault.getApiName());
-                    faultyDTO.setVersion(fault.getApiVersion());
-                    faultyDTO.setContext(fault.getContext());
-                    faultyDTO.setCount(fault.getFaultCount());
-                    apiVersionUsageList = getUsageByAPIVersions(tenantAwareProviderName, fault.getApiName(), fromDate,
-                            toDate);
-                    for (APIVersionUsageDTO apiVersionUsageDTO : apiVersionUsageList) {
-                        if (apiVersionUsageDTO.getVersion().equals(fault.getApiVersion())) {
-                            long requestCount = apiVersionUsageDTO.getCount();
-                            double faultPercentage =
-                                    ((double) fault.getFaultCount()) / (requestCount + fault.getFaultCount()) * 100;
-                            DecimalFormat twoDForm = new DecimalFormat("#.##");
-                            NumberFormat numberFormat = NumberFormat.getInstance(Locale.getDefault());
-                            try {
-                                faultPercentage = numberFormat.parse(twoDForm.format(faultPercentage)).doubleValue();
-                            } catch (ParseException e) {
-                                handleException("Parse exception while formatting time");
-                            }
-                            faultyDTO.setFaultPercentage(faultPercentage);
-                            faultyDTO.setTotalRequestCount(requestCount + fault.getFaultCount());
-                            break;
-                        }
+            APIResponseFaultCountDTO faultyDTO = new APIResponseFaultCountDTO();
+            faultyDTO.setApiName(fault.getApiName());
+            faultyDTO.setVersion(fault.getApiVersion());
+            faultyDTO.setContext(fault.getContext());
+            faultyDTO.setCount(fault.getFaultCount());
+            apiVersionUsageList = getUsageByAPIVersions(tenantAwareProviderName, fault.getApiName(), fromDate,
+                    toDate);
+            for (APIVersionUsageDTO apiVersionUsageDTO : apiVersionUsageList) {
+                if (apiVersionUsageDTO.getVersion().equals(fault.getApiVersion())) {
+                    long requestCount = apiVersionUsageDTO.getCount();
+                    double faultPercentage =
+                            ((double) fault.getFaultCount()) / (requestCount + fault.getFaultCount()) * 100;
+                    DecimalFormat twoDForm = new DecimalFormat("#.##");
+                    NumberFormat numberFormat = NumberFormat.getInstance(Locale.getDefault());
+                    try {
+                        faultPercentage = numberFormat.parse(twoDForm.format(faultPercentage)).doubleValue();
+                    } catch (ParseException e) {
+                        handleException("Parse exception while formatting time");
                     }
-                    //if no success request within that period, fault percentage is 100%
-                    if (apiVersionUsageList.isEmpty()) {
-                        faultyDTO.setFaultPercentage(100);
-                        faultyDTO.setTotalRequestCount(fault.getFaultCount());
-                    }
-                    faultyCount.add(faultyDTO);
+                    faultyDTO.setFaultPercentage(faultPercentage);
+                    faultyDTO.setTotalRequestCount(requestCount + fault.getFaultCount());
+                    break;
                 }
             }
+            if (apiVersionUsageList.isEmpty()) {
+                faultyDTO.setFaultPercentage(100);
+                faultyDTO.setTotalRequestCount(fault.getFaultCount());
+            }
+            faultyCount.add(faultyDTO);
         }
         return faultyCount;
     }
@@ -1440,7 +1431,7 @@ public class APIUsageStatisticsRestClientImpl extends APIUsageStatisticsClient {
      * @throws APIMgtUsageQueryServiceClientException throws if error occurred
      */
     private List<APIResponseFaultCount> getAPIResponseFaultCountData(String tableName, String tenantDomain,
-            String fromDate, String toDate) throws APIMgtUsageQueryServiceClientException {
+            String fromDate, String toDate, String providerName) throws APIMgtUsageQueryServiceClientException {
         List<APIResponseFaultCount> faultUsage = new ArrayList<APIResponseFaultCount>();
         try {
             String granularity = APIUsageStatisticsClientConstants.HOURS_GRANULARITY;//default granularity
@@ -1455,20 +1446,37 @@ public class APIUsageStatisticsRestClientImpl extends APIUsageStatisticsClient {
                     (durationBreakdown.get(APIUsageStatisticsClientConstants.DURATION_DAYS) > 0)) {
                 granularity = APIUsageStatisticsClientConstants.DAYS_GRANULARITY;
             }
+            String query;
+            if (providerName != APIUsageStatisticsClientConstants.ALL_PROVIDERS) {
+                query = "from " + tableName + " on(" + APIUsageStatisticsClientConstants.API_CREATOR_TENANT_DOMAIN
+                        + "=='" + tenantDomain + "' " + " AND " + APIUsageStatisticsClientConstants.API_CREATOR
+                        + " == '" + providerName + ") within " + getTimestamp(fromDate) + "L, " + getTimestamp(toDate)
+                        + "L per '" + granularity + "' select " + APIUsageStatisticsClientConstants.API_NAME + ", "
+                        + APIUsageStatisticsClientConstants.API_VERSION + ", "
+                        + APIUsageStatisticsClientConstants.API_CREATOR + ", "
+                        + APIUsageStatisticsClientConstants.API_CONTEXT + ", sum("
+                        + APIUsageStatisticsClientConstants.TOTAL_FAULT_COUNT + ") as total_fault_count group by "
+                        + APIUsageStatisticsClientConstants.API_NAME + ", "
+                        + APIUsageStatisticsClientConstants.API_VERSION + ", "
+                        + APIUsageStatisticsClientConstants.API_CREATOR + ", "
+                        + APIUsageStatisticsClientConstants.API_CONTEXT + "  order by "
+                        + APIUsageStatisticsClientConstants.API_NAME + " ASC ;";
+            } else {
+                query =
+                        "from " + tableName + " on(" + APIUsageStatisticsClientConstants.API_CREATOR_TENANT_DOMAIN + "=='"
+                                + tenantDomain + "') within " + getTimestamp(fromDate) + "L, " + getTimestamp(toDate)
+                                + "L per '" + granularity + "' select " + APIUsageStatisticsClientConstants.API_NAME + ", "
+                                + APIUsageStatisticsClientConstants.API_VERSION + ", "
+                                + APIUsageStatisticsClientConstants.API_CREATOR + ", "
+                                + APIUsageStatisticsClientConstants.API_CONTEXT + ", sum("
+                                + APIUsageStatisticsClientConstants.TOTAL_FAULT_COUNT + ") as total_fault_count group by "
+                                + APIUsageStatisticsClientConstants.API_NAME + ", "
+                                + APIUsageStatisticsClientConstants.API_VERSION + ", "
+                                + APIUsageStatisticsClientConstants.API_CREATOR + ", "
+                                + APIUsageStatisticsClientConstants.API_CONTEXT + "  order by "
+                                + APIUsageStatisticsClientConstants.API_NAME + " ASC ;";
 
-            String query =
-                    "from " + tableName + " on(" + APIUsageStatisticsClientConstants.API_CREATOR_TENANT_DOMAIN + "=='"
-                            + tenantDomain + "') within " + getTimestamp(fromDate) + "L, " + getTimestamp(toDate)
-                            + "L per '" + granularity + "' select " + APIUsageStatisticsClientConstants.API_NAME + ", "
-                            + APIUsageStatisticsClientConstants.API_VERSION + ", "
-                            + APIUsageStatisticsClientConstants.API_CREATOR + ", "
-                            + APIUsageStatisticsClientConstants.API_CONTEXT + ", sum("
-                            + APIUsageStatisticsClientConstants.TOTAL_FAULT_COUNT + ") as total_fault_count group by "
-                            + APIUsageStatisticsClientConstants.API_NAME + ", "
-                            + APIUsageStatisticsClientConstants.API_VERSION + ", "
-                            + APIUsageStatisticsClientConstants.API_CREATOR + ", "
-                            + APIUsageStatisticsClientConstants.API_CONTEXT + "  order by "
-                            + APIUsageStatisticsClientConstants.API_NAME + " ASC ;";
+            }
             JSONObject jsonObj = APIUtil
                     .executeQueryOnStreamProcessor(APIUsageStatisticsClientConstants.APIM_FAULT_SUMMARY_SIDDHI_APP,
                             query);
