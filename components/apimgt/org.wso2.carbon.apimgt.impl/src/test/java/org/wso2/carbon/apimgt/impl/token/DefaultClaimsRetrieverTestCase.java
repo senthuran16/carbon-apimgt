@@ -111,6 +111,8 @@ public class DefaultClaimsRetrieverTestCase {
         Mockito.when(cacheManager.getCache(APIConstants.CLAIMS_APIM_CACHE)).thenReturn(cache);
         PowerMockito.mockStatic(APIUtil.class);
         PowerMockito.when(APIUtil.getTenantId(USER_NAME)).thenReturn(TENANT_ID);
+        PowerMockito.when(APIUtil.getCache(APIConstants.API_MANAGER_CACHE_MANAGER, APIConstants.CLAIMS_APIM_CACHE))
+                .thenReturn(cache);
 
         Claim claim1 = new Claim();
         claim1.setClaimUri("http://wso2.org/claim1");
@@ -146,6 +148,8 @@ public class DefaultClaimsRetrieverTestCase {
         Mockito.when(cacheBuilder.build()).thenReturn(cache);
         PowerMockito.mockStatic(APIUtil.class);
         PowerMockito.when(APIUtil.getTenantId(USER_NAME)).thenReturn(TENANT_ID);
+        PowerMockito.when(APIUtil.getCache(APIConstants.API_MANAGER_CACHE_MANAGER, APIConstants.CLAIMS_APIM_CACHE))
+                .thenReturn(cache);
 
         SortedMap<String, String> claimValues = new TreeMap<String, String>();
         claimValues.put("claim1", "http://wso2.org/claim1");
