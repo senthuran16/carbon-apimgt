@@ -36,6 +36,7 @@ import org.wso2.carbon.apimgt.impl.APIManagerConfigurationService;
 import org.wso2.carbon.apimgt.impl.APIManagerConfigurationServiceImpl;
 import org.wso2.carbon.apimgt.impl.APIManagerFactory;
 import org.wso2.carbon.apimgt.impl.PasswordResolverFactory;
+import org.wso2.carbon.apimgt.impl.caching.CacheProvider;
 import org.wso2.carbon.apimgt.impl.certificatemgt.reloader.CertificateReLoaderUtil;
 import org.wso2.carbon.apimgt.impl.dao.ApiMgtDAO;
 import org.wso2.carbon.apimgt.impl.dto.ThrottleProperties;
@@ -308,6 +309,7 @@ public class APIManagerComponent {
             } else {
                 log.error("Error in loading trust store. Configurations are not set.");
             }
+            CacheProvider.createClaimsLocalCache();
         } catch (APIManagementException e) {
             log.error("Error while initializing the API manager component", e);
         } catch (APIManagerDatabaseException e) {

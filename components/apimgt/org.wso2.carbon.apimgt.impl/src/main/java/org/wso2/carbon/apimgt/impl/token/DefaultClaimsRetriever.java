@@ -18,8 +18,11 @@
 package org.wso2.carbon.apimgt.impl.token;
 
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.apimgt.api.APIManagementException;
 import org.wso2.carbon.apimgt.impl.APIConstants;
+import org.wso2.carbon.apimgt.impl.caching.CacheProvider;
 import org.wso2.carbon.apimgt.impl.internal.ServiceReferenceHolder;
 import org.wso2.carbon.apimgt.impl.utils.APIUtil;
 import org.wso2.carbon.apimgt.impl.utils.ClaimCacheKey;
@@ -47,9 +50,9 @@ import java.util.concurrent.TimeUnit;
 public class DefaultClaimsRetriever implements ClaimsRetriever {
     //TODO refactor caching implementation
 
+    private static final Log log = LogFactory.getLog(DefaultClaimsRetriever.class);
     private String dialectURI = DEFAULT_DIALECT_URI;
 
-    private  boolean isClaimsCacheInitialized = false;
     /**
      * Reads the DialectURI of the ClaimURIs to be retrieved from api-manager.xml ->
      * JWTConfiguration -> ConsumerDialectURI.
@@ -60,22 +63,6 @@ public class DefaultClaimsRetriever implements ClaimsRetriever {
                 getAPIManagerConfiguration().getFirstProperty(APIConstants.CONSUMER_DIALECT_URI);
         if (dialectURI == null) {
             dialectURI = DEFAULT_DIALECT_URI;
-        }
-    }
-
-    protected Cache getClaimsLocalCache() {
-        String apimClaimsCacheExpiry = ServiceReferenceHolder.getInstance().getAPIManagerConfigurationService().
-                getAPIManagerConfiguration().getFirstProperty(APIConstants.JWT_CLAIM_CACHE_EXPIRY);
-        if(!isClaimsCacheInitialized && apimClaimsCacheExpiry != null) {init();
-            isClaimsCacheInitialized = true;
-           return Caching.getCacheManager(APIConstants.API_MANAGER_CACHE_MANAGER).
-                    createCacheBuilder(APIConstants.CLAIMS_APIM_CACHE)
-                   .setExpiry(CacheConfiguration.ExpiryType.MODIFIED, new CacheConfiguration.Duration(TimeUnit.SECONDS,
-                           Long.parseLong(apimClaimsCacheExpiry)))
-                   .setExpiry(CacheConfiguration.ExpiryType.ACCESSED, new CacheConfiguration.Duration(TimeUnit.SECONDS,
-                           Long.parseLong(apimClaimsCacheExpiry))).setStoreByValue(false).build();
-        }else {
-           return Caching.getCacheManager(APIConstants.API_MANAGER_CACHE_MANAGER).getCache(APIConstants.CLAIMS_APIM_CACHE);
         }
     }
 
@@ -94,26 +81,44 @@ public class DefaultClaimsRetriever implements ClaimsRetriever {
                 //check in local cache
                 String key = endUserName + ':' + tenantId;
                 ClaimCacheKey cacheKey = new ClaimCacheKey(key);
+                Cache claimsCache = CacheProvider.getClaimsLocalCache();
                 Object result = null;
                 if (enabledJWTClaimCache) {
-                    result = getClaimsLocalCache().get(cacheKey);
+                    result = claimsCache.get(cacheKey);
                 }
                 if (result != null) {
+                    if (log.isDebugEnabled()) {
+                        log.debug("Returning claims from cache with cache key: " + cacheKey.getCacheKeyString());
+                    }
                     return ((UserClaims) result).getClaimValues();
                 } else {
-                    ClaimManager claimManager = ServiceReferenceHolder.getInstance().getRealmService().
-                            getTenantUserRealm(tenantId).getClaimManager();
-                    //Claim[] claims = claimManager.getAllClaims(dialectURI);
-                    ClaimMapping[] claims = claimManager.getAllClaimMappings(dialectURI);
-                    String[] claimURIs = claimMappingtoClaimURIString(claims);
-                    UserStoreManager userStoreManager = ServiceReferenceHolder.getInstance().getRealmService().
-                            getTenantUserRealm(tenantId).getUserStoreManager();
-
-                    claimValues = new TreeMap(userStoreManager.getUserClaimValues(tenantAwareUserName, claimURIs,null));
-                    UserClaims userClaims = new UserClaims(claimValues);
-                    //add to cache
                     if (enabledJWTClaimCache) {
-                        getClaimsLocalCache().put(cacheKey, userClaims);
+                        String syncKey = "getClaims(endUserName)_" + key;
+                        synchronized (syncKey.intern()) {
+                            //if JWTClaimCache is enabled, when there are concurrent requests, first request will
+                            // update the cache and others will get the Claim Values from the cache.
+                            result = claimsCache.get(cacheKey);
+                            if (result != null) {
+                                if (log.isDebugEnabled()) {
+                                    log.debug("Returning claims from cache with cache key: " + cacheKey.getCacheKeyString());
+                                }
+                                return ((UserClaims) result).getClaimValues();
+                            }
+                            claimValues = getClaimValuesFromUserStore(tenantId, endUserName);
+                            if (log.isDebugEnabled()) {
+                                log.debug("Returning claims from user store manager for user: " + endUserName);
+                            }
+                            UserClaims userClaims = new UserClaims(claimValues);
+                            claimsCache.put(cacheKey, userClaims);
+                            if (log.isDebugEnabled()) {
+                                log.debug("Updated claim cache with cache key: " + cacheKey.getCacheKeyString());
+                            }
+                        }
+                    } else {
+                        claimValues = getClaimValuesFromUserStore(tenantId, endUserName);
+                        if (log.isDebugEnabled()) {
+                            log.debug("Returning claims from user store manager for user: " + endUserName);
+                        }
                     }
                     return claimValues;
                 }
@@ -122,6 +127,24 @@ public class DefaultClaimsRetriever implements ClaimsRetriever {
             throw new APIManagementException("Error while retrieving user claim values from " + "user store", e);
         }
         return null;
+    }
+
+    /**
+     * Returns the claim values from the user store
+     */
+    private SortedMap<String, String> getClaimValuesFromUserStore(int tenantId, String endUserName)
+            throws UserStoreException {
+
+        String tenantAwareUserName = MultitenantUtils.getTenantAwareUsername(endUserName);
+        ClaimManager claimManager = ServiceReferenceHolder.getInstance().getRealmService().
+                getTenantUserRealm(tenantId).getClaimManager();
+        ClaimMapping[] claims = claimManager.getAllClaimMappings(dialectURI);
+        String[] claimURIs = claimMappingtoClaimURIString(claims);
+        UserStoreManager userStoreManager = ServiceReferenceHolder.getInstance().getRealmService().
+                getTenantUserRealm(tenantId).getUserStoreManager();
+        SortedMap<String, String> claimValues = new TreeMap(userStoreManager.getUserClaimValues(tenantAwareUserName,
+                claimURIs, null));
+        return claimValues;
     }
 
     /**

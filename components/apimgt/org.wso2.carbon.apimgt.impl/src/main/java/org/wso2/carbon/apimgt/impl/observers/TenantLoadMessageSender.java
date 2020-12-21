@@ -25,6 +25,7 @@ import org.apache.axis2.context.ConfigurationContext;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.apimgt.impl.APIConstants;
+import org.wso2.carbon.apimgt.impl.caching.CacheProvider;
 import org.wso2.carbon.apimgt.impl.internal.ServiceReferenceHolder;
 import org.wso2.carbon.apimgt.impl.message.clustering.TenantLoadMessage;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
@@ -43,6 +44,8 @@ public class TenantLoadMessageSender extends AbstractAxis2ConfigurationContextOb
             return;
         }
         notifyTenantLoad();
+        CacheProvider.removeAllCaches();
+        CacheProvider.createClaimsLocalCache();
     }
 
     @Override

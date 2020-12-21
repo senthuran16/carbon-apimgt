@@ -62,6 +62,29 @@ public class CacheProvider {
     }
 
     /**
+     * @return claims cache
+     */
+    public static Cache getClaimsLocalCache() {
+        return getCache(APIConstants.CLAIMS_APIM_CACHE);
+    }
+
+    /**
+     * Create and return the Claims Cache
+     */
+    public static Cache createClaimsLocalCache() {
+        String apimClaimsCacheExpiry =
+                getApiManagerConfiguration().getFirstProperty(APIConstants.JWT_CLAIM_CACHE_EXPIRY);
+        if (apimClaimsCacheExpiry != null) {
+            return getCache(APIConstants.API_MANAGER_CACHE_MANAGER, APIConstants.CLAIMS_APIM_CACHE,
+                    Long.parseLong(apimClaimsCacheExpiry), Long.parseLong(apimClaimsCacheExpiry));
+        } else {
+            long defaultCacheTimeout = getDefaultCacheTimeout();
+            return getCache(APIConstants.API_MANAGER_CACHE_MANAGER, APIConstants.JWT_CLAIM_CACHE_EXPIRY,
+                    defaultCacheTimeout, defaultCacheTimeout);
+        }
+    }
+
+    /**
      * @return APIManagerConfiguration
      */
     private static APIManagerConfiguration getApiManagerConfiguration() {
@@ -177,5 +200,7 @@ public class CacheProvider {
                 getGatewayTokenCache().getName());
         Caching.getCacheManager(APIConstants.API_MANAGER_CACHE_MANAGER).removeCache(CacheProvider.
                 getInvalidTokenCache().getName());
+        Caching.getCacheManager(APIConstants.API_MANAGER_CACHE_MANAGER).removeCache(CacheProvider.
+                getClaimsLocalCache().getName());
     }
 }
