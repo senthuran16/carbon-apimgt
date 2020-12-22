@@ -93,6 +93,10 @@ public class AMDefaultKeyManagerImpl extends AbstractKeyManager {
     @Override
     public OAuthApplicationInfo createApplication(OAuthAppRequest oauthAppRequest) throws APIManagementException {
 
+        String isSpecialCharSupportStr =
+                getConfigurationElementValue(APIConstants.OAUTH_APP_NAME_ALLOW_NON_ENGLISH_CHARACTERS);
+        boolean isSpecialCharSupport = Boolean.parseBoolean(isSpecialCharSupportStr);
+
         // OAuthApplications are created by calling to APIKeyMgtSubscriber Service
         OAuthApplicationInfo oAuthApplicationInfo = oauthAppRequest.getOAuthApplicationInfo();
 
@@ -103,10 +107,20 @@ public class AMDefaultKeyManagerImpl extends AbstractKeyManager {
         String keyType = (String) oAuthApplicationInfo.getParameter(ApplicationConstants.APP_KEY_TYPE);
         String callBackURL = (String) oAuthApplicationInfo.getParameter(ApplicationConstants.APP_CALLBACK_URL);
 
-        String oauthClientName = APIUtil.getApplicationUUID(applicationName, userId);
+        String oauthClientName;
+        if (isSpecialCharSupport) {
+            oauthClientName = APIUtil.getApplicationUUID(applicationName, userId);
+        } else {
+            oauthClientName = applicationName;
+        }
+
         if (keyType != null) {
             oauthClientName = oauthClientName + '_' + keyType;
-            applicationName = applicationName + ' ' + keyType;
+            if (isSpecialCharSupport) {
+                applicationName = applicationName + ' ' + keyType;
+            } else {
+                applicationName = applicationName + '_' + keyType;
+            }
         }
 
         if (log.isDebugEnabled()) {
@@ -175,6 +189,9 @@ public class AMDefaultKeyManagerImpl extends AbstractKeyManager {
     public OAuthApplicationInfo updateApplication(OAuthAppRequest appInfoDTO) throws APIManagementException {
         OAuthApplicationInfo oAuthApplicationInfo = appInfoDTO.getOAuthApplicationInfo();
 
+        String isSpecialCharSupportStr =
+                getConfigurationElementValue(APIConstants.OAUTH_APP_NAME_ALLOW_NON_ENGLISH_CHARACTERS);
+        boolean isSpecialCharSupport = Boolean.parseBoolean(isSpecialCharSupportStr);
         try {
 
             String userId = (String) oAuthApplicationInfo.getParameter(ApplicationConstants.OAUTH_CLIENT_USERNAME);
@@ -186,10 +203,20 @@ public class AMDefaultKeyManagerImpl extends AbstractKeyManager {
             String applicationName = oAuthApplicationInfo.getClientName();
             String keyType = (String) oAuthApplicationInfo.getParameter(ApplicationConstants.APP_KEY_TYPE);
 
-            String oauthClientName = APIUtil.getApplicationUUID(applicationName, userId);
+            String oauthClientName;
+            if (isSpecialCharSupport) {
+                oauthClientName = APIUtil.getApplicationUUID(applicationName, userId);
+            } else {
+                oauthClientName = applicationName;
+            }
+
             if (keyType != null) {
                 oauthClientName = oauthClientName + '_' + keyType;
-                applicationName = applicationName + ' ' + keyType;
+                if (isSpecialCharSupport) {
+                    applicationName = applicationName + ' ' + keyType;
+                } else {
+                    applicationName = applicationName + '_' + keyType;
+                }
             }
             log.debug("Updating OAuth Client with ID : " + oAuthApplicationInfo.getClientId());
 

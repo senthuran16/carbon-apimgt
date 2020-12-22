@@ -348,6 +348,9 @@
         cURL command under subscriptions section in API Store.
         -->
         <!--StoreTokenDisplayURL>https://${carbon.local.ip}:${https.nio.port}</StoreTokenDisplayURL-->
+
+        <!-- Enable this to support non english characters. Be default it is false.-->
+        <!-- <AllowNonEnglishCharacters>false</AllowNonEnglishCharacters>-->
     </APIStore>
 
     <APIPublisher>

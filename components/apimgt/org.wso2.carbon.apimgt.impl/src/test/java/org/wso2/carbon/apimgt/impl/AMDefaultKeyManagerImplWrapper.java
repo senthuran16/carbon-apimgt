@@ -53,6 +53,7 @@ public class AMDefaultKeyManagerImplWrapper extends AMDefaultKeyManagerImpl {
     //Mocked App credentials
     private String CLIENT_SECRET = "GGGGGGG";
     private String CLIENT_ID = "XXXXXXXXXX";
+    private String allowNonEnglishChar = "false";
     
     @Override
     protected org.wso2.carbon.apimgt.api.model.xsd.OAuthApplicationInfo createOAuthApplicationbyApplicationInfo(
@@ -119,10 +120,16 @@ public class AMDefaultKeyManagerImplWrapper extends AMDefaultKeyManagerImpl {
     protected String getConfigurationElementValue(String property) {
         if (APIConstants.APPLICATION_TOKEN_SCOPE.equals(property)) {
             return "am_application_scope";
+        } else if (APIConstants.OAUTH_APP_NAME_ALLOW_NON_ENGLISH_CHARACTERS.equals(property)) {
+            return allowNonEnglishChar;
         }
         return "";
     }
-    
+
+    public void setAllowNonEnglishChar(String allowNonEnglishChar) {
+        this.allowNonEnglishChar = allowNonEnglishChar;
+    }
+
     @Override
     protected String getConfigurationParamValue(String parameter) {
         if (APIConstants.TOKEN_URL.equals(parameter) || APIConstants.REVOKE_URL.equals(parameter)) {

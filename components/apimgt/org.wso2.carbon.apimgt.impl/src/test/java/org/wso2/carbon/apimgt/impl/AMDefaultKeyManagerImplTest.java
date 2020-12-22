@@ -74,13 +74,12 @@ public class AMDefaultKeyManagerImplTest {
         oauthApplication.setJsonString(getJSONString());
         oauthRequest.setMappingId("123");
         oauthRequest.setOAuthApplicationInfo(oauthApplication);
-        Mockito.when(APIUtil.getApplicationUUID(Mockito.anyString(), Mockito.anyString())).thenReturn(APP_UUID);
 
         AMDefaultKeyManagerImplWrapper keyManager = new AMDefaultKeyManagerImplWrapper();
 
         OAuthApplicationInfo oauthApplicationResponse = keyManager.createApplication(oauthRequest);
         Assert.assertEquals(APP_OWNER, oauthApplicationResponse.getAppOwner());
-        Assert.assertEquals(APP_UUID, oauthApplicationResponse.getClientName());
+        Assert.assertEquals(APP_NAME, oauthApplicationResponse.getClientName());
     }
 
     @Test
@@ -95,13 +94,12 @@ public class AMDefaultKeyManagerImplTest {
         oauthApplication.addParameter(ApplicationConstants.APP_KEY_TYPE, "PRODUCTION");
         oauthRequest.setMappingId("123");
         oauthRequest.setOAuthApplicationInfo(oauthApplication);
-        Mockito.when(APIUtil.getApplicationUUID(Mockito.anyString(), Mockito.anyString())).thenReturn(APP_UUID);
-        
+
         AMDefaultKeyManagerImplWrapper keyManager = new AMDefaultKeyManagerImplWrapper();
         
         OAuthApplicationInfo oauthApplicationResponse = keyManager.createApplication(oauthRequest);
         Assert.assertEquals(APP_OWNER, oauthApplicationResponse.getAppOwner());
-        Assert.assertEquals(APP_UUID + "_PRODUCTION", oauthApplicationResponse.getClientName());
+        Assert.assertEquals(APP_NAME + "_PRODUCTION", oauthApplicationResponse.getClientName());
     }
     
     @Test(expected = APIManagementException.class)
@@ -129,7 +127,6 @@ public class AMDefaultKeyManagerImplTest {
         oauthRequest.setOAuthApplicationInfo(oauthApplication);
         
         AMDefaultKeyManagerImplWrapper keyManager = new AMDefaultKeyManagerImplWrapper();
-        Mockito.when(APIUtil.getApplicationUUID(Mockito.anyString(), Mockito.anyString())).thenReturn(APP_UUID);
         keyManager.createApplication(oauthRequest);
         
         oauthApplication.addParameter(ApplicationConstants.OAUTH_CLIENT_USERNAME, APP_OWNER);
@@ -154,14 +151,13 @@ public class AMDefaultKeyManagerImplTest {
         oauthApplication.setJsonString(getJSONString());
         oauthRequest.setMappingId("123");
         oauthRequest.setOAuthApplicationInfo(oauthApplication);
-        Mockito.when(APIUtil.getApplicationUUID(Mockito.anyString(), Mockito.anyString())).thenReturn(APP_UUID);
-        
+
         AMDefaultKeyManagerImplWrapper keyManager = new AMDefaultKeyManagerImplWrapper();
         keyManager.createApplication(oauthRequest);
         
         OAuthApplicationInfo oauthApplicationResponse = keyManager.retrieveApplication(CLIENT_ID);
         Assert.assertNotNull(oauthApplicationResponse);
-        Assert.assertEquals(APP_UUID, oauthApplicationResponse.getClientName());
+        Assert.assertEquals(APP_NAME, oauthApplicationResponse.getClientName());
     }
     
     @Test
@@ -211,7 +207,6 @@ public class AMDefaultKeyManagerImplTest {
         oauthRequest.setOAuthApplicationInfo(oauthApplication);
         
         AMDefaultKeyManagerImplWrapper keyManager = new AMDefaultKeyManagerImplWrapper();
-        Mockito.when(APIUtil.getApplicationUUID(Mockito.anyString(), Mockito.anyString())).thenReturn(APP_UUID);
         keyManager.createApplication(oauthRequest);
         
         oauthApplication.addParameter("tokenScope", "read_scope");
@@ -309,10 +304,12 @@ public class AMDefaultKeyManagerImplTest {
         Mockito.when(APIUtil.getApplicationUUID(Mockito.anyString(), Mockito.anyString())).thenReturn(applicationName);
 
         AMDefaultKeyManagerImplWrapper keyManager = new AMDefaultKeyManagerImplWrapper();
+        keyManager.setAllowNonEnglishChar("true");
+        Mockito.when(APIUtil.getApplicationUUID(Mockito.anyString(), Mockito.anyString())).thenReturn(APP_UUID);
 
         OAuthApplicationInfo oauthApplicationResponse = keyManager.createApplication(oauthRequest);
         Assert.assertEquals(APP_OWNER, oauthApplicationResponse.getAppOwner());
-        Assert.assertEquals(applicationName, oauthApplicationResponse.getClientName());
+        Assert.assertEquals(APP_UUID, oauthApplicationResponse.getClientName());
     }
 
 }
