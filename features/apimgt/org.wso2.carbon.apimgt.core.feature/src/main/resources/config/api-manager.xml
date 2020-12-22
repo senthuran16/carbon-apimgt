@@ -349,7 +349,7 @@
         -->
         <!--StoreTokenDisplayURL>https://${carbon.local.ip}:${https.nio.port}</StoreTokenDisplayURL-->
 
-        <!-- Enable this to support non english characters. Be default it is false.-->
+        <!-- Enable this to support non english characters. By default it is false.-->
         <!-- <AllowNonEnglishCharacters>false</AllowNonEnglishCharacters>-->
     </APIStore>
 
