@@ -116,15 +116,11 @@ public class AMDefaultKeyManagerImpl extends AbstractKeyManager {
 
         if (keyType != null) {
             oauthClientName = oauthClientName + '_' + keyType;
-            if (isSpecialCharSupport) {
-                applicationName = applicationName + ' ' + keyType;
-            } else {
-                applicationName = applicationName + '_' + keyType;
-            }
         }
 
         if (log.isDebugEnabled()) {
-            log.debug("Trying to create OAuth application :" + applicationName);
+            log.debug("Trying to create OAuth application : " + oauthClientName + " for application: " + applicationName
+                    + " and key type: " + keyType);
         }
 
         String tokenScope = (String) oAuthApplicationInfo.getParameter("tokenScope");
@@ -144,11 +140,14 @@ public class AMDefaultKeyManagerImpl extends AbstractKeyManager {
             applicationToCreate.setTokenType(oAuthApplicationInfo.getTokenType());
             info = createOAuthApplicationbyApplicationInfo(applicationToCreate);
         } catch (Exception e) {
-            handleException("Can not create OAuth application  : " + applicationName, e);
-        } 
+            handleException(
+                    "Can not create OAuth application  : " + oauthClientName + " for application: " + applicationName
+                            + " and key type: " + keyType, e);
+        }
 
         if (info == null || info.getJsonString() == null) {
-            handleException("OAuth app does not contains required data  : " + applicationName,
+            handleException(
+                    "OAuth app does not contains required data for " + applicationName + " and key type: " + keyType,
                     new APIManagementException("OAuth app does not contains required data"));
         }
 
@@ -212,11 +211,6 @@ public class AMDefaultKeyManagerImpl extends AbstractKeyManager {
 
             if (keyType != null) {
                 oauthClientName = oauthClientName + '_' + keyType;
-                if (isSpecialCharSupport) {
-                    applicationName = applicationName + ' ' + keyType;
-                } else {
-                    applicationName = applicationName + '_' + keyType;
-                }
             }
             log.debug("Updating OAuth Client with ID : " + oAuthApplicationInfo.getClientId());
 
