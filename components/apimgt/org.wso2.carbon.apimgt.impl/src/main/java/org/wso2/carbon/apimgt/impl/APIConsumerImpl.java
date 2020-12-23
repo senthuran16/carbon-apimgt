@@ -2725,11 +2725,16 @@ public class APIConsumerImpl extends AbstractAPIManager implements APIConsumer {
                                                             "cannot contain leading or trailing white spaces");
         }
 
-        String regex = "[~!#$;%^&*+={}|<>,'/\" \\\\]";
-        Pattern pattern = Pattern.compile(regex);
-        Matcher matcher = pattern.matcher(application.getName());
-        if (matcher.find()) {
-            handleApplicationNameContainsInvalidCharactersException("Application name contains invalid characters");
+        String isSpecialCharSupportStr = getAPIManagerConfiguration().
+                getFirstProperty(APIConstants.OAUTH_APP_NAME_ALLOW_NON_ENGLISH_CHARACTERS);
+        boolean isSpecialCharSupport = Boolean.parseBoolean(isSpecialCharSupportStr);
+        if (!isSpecialCharSupport) {
+            String regex = "^[a-zA-Z0-9 ._-]*$";
+            Pattern pattern = Pattern.compile(regex);
+            Matcher matcher = pattern.matcher(application.getName());
+            if (!matcher.find()) {
+                handleApplicationNameContainsInvalidCharactersException("Application name contains invalid characters");
+            }
         }
 
         if (APIUtil.isApplicationExist(userId, application.getName(), application.getGroupId())) {
@@ -2840,11 +2845,16 @@ public class APIConsumerImpl extends AbstractAPIManager implements APIConsumer {
                     "cannot contain leading or trailing white spaces");
         }
 
-        String regex = "[~!#$;%^&*+={}|<>,'/\" \\\\]";
-        Pattern pattern = Pattern.compile(regex);
-        Matcher matcher = pattern.matcher(application.getName());
-        if (matcher.find()) {
-            handleApplicationNameContainsInvalidCharactersException("Application name contains invalid characters");
+        String isSpecialCharSupportStr = getAPIManagerConfiguration().
+                getFirstProperty(APIConstants.OAUTH_APP_NAME_ALLOW_NON_ENGLISH_CHARACTERS);
+        boolean isSpecialCharSupport = Boolean.parseBoolean(isSpecialCharSupportStr);
+        if (!isSpecialCharSupport) {
+            String regex = "^[a-zA-Z0-9 ._-]*$";
+            Pattern pattern = Pattern.compile(regex);
+            Matcher matcher = pattern.matcher(application.getName());
+            if (!matcher.find()) {
+                handleApplicationNameContainsInvalidCharactersException("Application name contains invalid characters");
+            }
         }
 
         apiMgtDAO.updateApplication(application);

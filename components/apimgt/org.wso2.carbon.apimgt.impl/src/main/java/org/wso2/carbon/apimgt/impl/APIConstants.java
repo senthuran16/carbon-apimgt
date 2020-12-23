@@ -613,6 +613,7 @@ public final class APIConstants {
     public static final String API_STORE_FORUM_ENABLED = API_STORE + "isStoreForumEnabled";
     public static final String MULTI_TENANT_USER_ADMIN_SERVICE = "MultiTenantUserAdminService";
     public static final String API_STORE_GROUP_EXTRACTOR_CLAIM_URI = API_STORE + "DefaultGroupExtractorClaimUri";
+    public static final String OAUTH_APP_NAME_ALLOW_NON_ENGLISH_CHARACTERS = API_STORE + "AllowNonEnglishCharacters";
     public static final String DEFAULT_GROUP_CLAIM = "http://wso2.org/claims/organization";
 
 

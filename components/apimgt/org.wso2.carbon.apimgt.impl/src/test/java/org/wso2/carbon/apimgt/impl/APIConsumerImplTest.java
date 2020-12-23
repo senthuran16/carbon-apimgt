@@ -853,21 +853,22 @@ public class APIConsumerImplTest {
         Mockito.when(apiMgtDAO.addApplication(application, "userID")).thenReturn(1);
         assertEquals(1, apiConsumer.addApplication(application, "userID"));
 
-        Application allowApplication = Mockito.mock(Application.class);
-        Mockito.when(allowApplication.getName()).thenReturn("ÅÄÖÅÄÖ");
-        PowerMockito.when(APIUtil.isApplicationExist("userID", "ÅÄÖÅÄÖ", "1")).
-                thenReturn(false);
-        Mockito.when(apiMgtDAO.addApplication(allowApplication, "userID")).thenReturn(1);
-        assertEquals(1, apiConsumer.addApplication(allowApplication, "userID"));
+        APIManagerConfiguration apiManagerConfiguration = Mockito.mock(APIManagerConfiguration.class);
+        Mockito.when(apiManagerConfiguration.getFirstProperty(APIConstants.OAUTH_APP_NAME_ALLOW_NON_ENGLISH_CHARACTERS))
+                .thenReturn("true");
 
+        APIConsumerImplWrapper apiConsumerImplWrapper = new APIConsumerImplWrapper(apiMgtDAO);
+        apiConsumerImplWrapper.setApiManagerConfiguration(apiManagerConfiguration);
+        apiConsumer = apiConsumerImplWrapper;
         Application disallowApplication = Mockito.mock(Application.class);
-        Mockito.when(disallowApplication.getName()).thenReturn("ÅÄÖÅÄÖ!@#");
-        PowerMockito.when(APIUtil.isApplicationExist("userID", "ÅÄÖÅÄÖ!@#", "1")).
+        String specialCharAppName = "ÅÄÖÅÄÖ!@#";
+        Mockito.when(disallowApplication.getName()).thenReturn(specialCharAppName);
+        PowerMockito.when(APIUtil.isApplicationExist("userID", specialCharAppName, "1")).
                 thenReturn(false);
         try {
             apiConsumer.addApplication(disallowApplication, "userID");
-            fail("Application with special character should not allowed.");
         } catch (ApplicationNameWithInvalidCharactersException e) {
+            fail("Application with special character should be allowed.");
         }
 
     }

@@ -39,6 +39,7 @@ import java.io.File;
 public class APIConsumerImplWrapper extends APIConsumerImpl {
 
     private final Log log = LogFactory.getLog(APIConsumerImplWrapper.class);
+    private APIManagerConfiguration apiManagerConfiguration;
 
     public APIConsumerImplWrapper() throws APIManagementException {
     }
@@ -59,6 +60,9 @@ public class APIConsumerImplWrapper extends APIConsumerImpl {
      * @return APIManagerConfiguration object
      */
     protected APIManagerConfiguration getAPIManagerConfiguration() {
+        if (apiManagerConfiguration != null) {
+            return apiManagerConfiguration;
+        }
         APIManagerConfiguration apiManagerConfiguration = new APIManagerConfiguration();
         ClassLoader classLoader = getClass().getClassLoader();
         File file = new File(classLoader.getResource("amConfig.xml").getFile());
@@ -106,5 +110,9 @@ public class APIConsumerImplWrapper extends APIConsumerImpl {
             api.setStatus(APIConstants.CREATED);
         }
         return  api;
+    }
+
+    public void setApiManagerConfiguration(APIManagerConfiguration apiManagerConfiguration) {
+        this.apiManagerConfiguration = apiManagerConfiguration;
     }
 }
