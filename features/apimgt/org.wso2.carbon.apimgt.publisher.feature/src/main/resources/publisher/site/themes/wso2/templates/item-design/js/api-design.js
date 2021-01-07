@@ -293,6 +293,27 @@ APIDesigner.prototype.check_if_resource_exist = function(path, method){
     return false;
 }
 
+APIDesigner.prototype.check_if_resource_path_exist = function(path){
+
+    for (var key in this.api_doc.paths) {
+
+        //remove tailing slash
+        if (path.lastIndexOf('/') == path.length -1) {
+            path = path.substring(0, path.length -1);
+        }
+
+        var keyWithoutTailingSlash = key;
+        if (key.lastIndexOf('/') == key.length -1) {
+            keyWithoutTailingSlash = key.substring(0, key.length -1);
+        }
+
+        if(keyWithoutTailingSlash.toLowerCase() == path.toLowerCase()){
+            return true;
+        }
+    }
+    return false;
+}
+
 APIDesigner.prototype.load_api_base_document = function (api_doc_version) {
     if (this.is_supported_openapi_version(api_doc_version)) {
         this.load_api_document(openapi3_api_doc);
@@ -720,10 +741,16 @@ APIDesigner.prototype.load_api_document = function(api_document){
 
 APIDesigner.prototype.remove_trailing_slash = function(swagger) {
     var paths = swagger.paths;
+    var designer = APIDesigner();
+
     for (var path in paths) {
-        if (path.endsWith("/")) {
+        if (path.length > 1 && path.endsWith("/")) {
             var newkey = path.slice(0, -1);
-            swagger.paths[newkey] = swagger.paths[path];
+            if (designer.check_if_resource_path_exist(newkey)) {
+                Object.assign(swagger.paths[newkey], swagger.paths[path]);
+            } else {
+                swagger.paths[newkey] = swagger.paths[path];
+            }
             delete swagger.paths[path];
         }
     }
