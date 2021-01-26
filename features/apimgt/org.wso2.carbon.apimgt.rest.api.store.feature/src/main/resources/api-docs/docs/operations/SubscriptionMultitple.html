@@ -22,11 +22,11 @@
                 <div id="request-subscriptionsMultiplePost"class="pre collapse in"><code class="json">POST https://localhost:9443/api/am/store/v0.14/subscriptions/multiple
 Authorization: Bearer ae4eae22-3f65-387b-a171-d37eaa366fa8
 
-{
+[{
     &quot;tier&quot;: &quot;Gold&quot;,
     &quot;apiIdentifier&quot;: &quot;c43a325c-260b-4302-81cb-768eafaa3aed&quot;,
     &quot;applicationId&quot;: &quot;c30f3a6e-ffa4-4ae7-afce-224d1f820524&quot;
-}</code></div>
+}]</code></div>
 
             <div class="pointer" data-toggle="collapse" data-target="#response-subscriptionsMultiplePost">
                 <h4 class="section-heading">
@@ -38,13 +38,13 @@ Authorization: Bearer ae4eae22-3f65-387b-a171-d37eaa366fa8
 Location: https://localhost:9443/api/am/store/v0.14/subscriptions/5b65808c-cdf2-43e1-a695-de63e3ad0ae9
 Content-Type: application/json
 
-{
+[{
    &quot;tier&quot;: &quot;Gold&quot;,
    &quot;subscriptionId&quot;: &quot;5b65808c-cdf2-43e1-a695-de63e3ad0ae9&quot;,
    &quot;apiIdentifier&quot;: &quot;admin-PhoneVerification-2.0.0&quot;,
    &quot;applicationId&quot;: &quot;c30f3a6e-ffa4-4ae7-afce-224d1f820524&quot;,
    &quot;status&quot;: &quot;UNBLOCKED&quot;
-}</code></div>
+}]</code></div>
 
             <h4 class="section-heading">Sample CURL</h4>
                 <div class="pre"><code class="bash">curl -k -H &quot;Authorization: Bearer ae4eae22-3f65-387b-a171-d37eaa366fa8&quot; -H &quot;Content-Type: application/json&quot; -X POST  -d @data.json &quot;https://localhost:9443/api/am/store/v0.14/subscriptions/multiple&quot;</code></div>
