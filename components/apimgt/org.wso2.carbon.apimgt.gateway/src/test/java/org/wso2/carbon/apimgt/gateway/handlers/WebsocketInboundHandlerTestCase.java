@@ -557,13 +557,12 @@ public class WebsocketInboundHandlerTestCase {
      *
      * */
     @Test
-    public void testDoThrottle2() throws APIManagementException {
+    public void testDoThrottleWithDisabledAdvancedThrottling() throws APIManagementException {
         String publisherClass = "publisherClass";
         PowerMockito.mockStatic(DataPublisherUtil.class);
         APIManagerAnalyticsConfiguration apiMngAnalyticsConfig = Mockito.mock(APIManagerAnalyticsConfiguration.class);
         PowerMockito.when(DataPublisherUtil.getApiManagerAnalyticsConfiguration()).thenReturn(apiMngAnalyticsConfig);
         Mockito.when(apiMngAnalyticsConfig.getPublisherClass()).thenReturn(publisherClass);
-        //todo
         ChannelHandlerContext channelHandlerContext = Mockito.mock(ChannelHandlerContext.class);
         WebSocketFrame webSocketFrame = Mockito.mock(WebSocketFrame.class);
         WebsocketInboundHandler websocketInboundHandler = new WebsocketInboundHandler() {
