@@ -226,73 +226,7 @@ public class APIGatewayManagerTest {
         Assert.assertEquals(failedEnvironmentsMap.size(), 0);
     }
 
-    @Test public void testRemovingWebSocketAPIFromGateway() throws AxisFault {
-        API api = new API(apiIdentifier);
-        api.setType("WS");
-        api.setContext(apiContext);
-        api.setInSequence(inSequenceName);
-        api.setOutSequence(outSequenceName);
-        api.setFaultSequence(faultSequenceName);
-        api.setSwaggerDefinition(swaggerDefinition);
-        api.setUUID(apiUUId);
-        Set<String> environments = new HashSet<String>();
-        environments.add(prodEnvironmentName);
-        environments.add(null);
-        api.setEnvironments(environments);
-        Mockito.when(apiGatewayAdminClient.getApi(tenantDomain, apiIdentifier)).thenReturn(apiData);
-        Map<String, String> failedEnvironmentsMap = gatewayManager.removeFromGateway(api, tenantDomain);
-        Assert.assertEquals(failedEnvironmentsMap.size(), 0);
-    }
 
-
-    @Test public void testCreatingNewWebSocketAPIWithProductionEndpoint() throws GovernanceException, AxisFault {
-        API api = new API(apiIdentifier);
-        api.setType("WS");
-        Mockito.when(genericArtifact.getAttribute(APIConstants.API_OVERVIEW_ENVIRONMENTS))
-                .thenReturn(prodEnvironmentName);
-        Mockito.when(genericArtifact.getAttribute(APIConstants.API_OVERVIEW_CONTEXT)).thenReturn(apiContext);
-        Mockito.when(genericArtifact.getAttribute(APIConstants.API_OVERVIEW_ENDPOINT_CONFIG))
-                .thenReturn(prodEndpointConfig);
-        gatewayManager.createNewWebsocketApiVersion(genericArtifact, api);
-    }
-
-    @Test public void testCreatingNewWebSocketAPIWithSandBoxEndpoint() throws GovernanceException, AxisFault {
-        API api = new API(apiIdentifier);
-        api.setType("WS");
-        Mockito.when(genericArtifact.getAttribute(APIConstants.API_OVERVIEW_ENVIRONMENTS))
-                .thenReturn(sandBoxEnvironmentName);
-        Mockito.when(genericArtifact.getAttribute(APIConstants.API_OVERVIEW_CONTEXT)).thenReturn(apiContext);
-        Mockito.when(genericArtifact.getAttribute(APIConstants.API_OVERVIEW_ENDPOINT_CONFIG))
-                .thenReturn(sandBoxEndpointConfig);
-        gatewayManager.createNewWebsocketApiVersion(genericArtifact, api);
-    }
-
-    @Test public void testExceptionsWhileCreatingWebSocketAPI() throws Exception {
-        API api = new API(apiIdentifier);
-        api.setType("WS");
-
-        //Test throwing AxisFault when it failed to deploy custom sequences of the WS API
-        Mockito.when(genericArtifact.getAttribute(APIConstants.API_OVERVIEW_ENVIRONMENTS))
-                .thenReturn(prodEnvironmentName);
-        Mockito.when(genericArtifact.getAttribute(APIConstants.API_OVERVIEW_CONTEXT)).thenReturn(apiContext);
-        Mockito.when(genericArtifact.getAttribute(APIConstants.API_OVERVIEW_ENDPOINT_CONFIG))
-                .thenReturn(prodEndpointConfig);
-        gatewayManager.createNewWebsocketApiVersion(genericArtifact, api);
-
-        //Test throwing APIManagerException while invalid endpoint configuration is provided
-        Mockito.when(genericArtifact.getAttribute(APIConstants.API_OVERVIEW_ENDPOINT_CONFIG)).thenReturn("<xml/>");
-        gatewayManager.createNewWebsocketApiVersion(genericArtifact, api);
-
-        //Test throwing AxisFault when Gateway client initialisation failed
-        PowerMockito.whenNew(APIGatewayAdminClient.class).withAnyArguments()
-                .thenThrow(new AxisFault("Error while establishing connection with gateway endpoint"));
-        gatewayManager.createNewWebsocketApiVersion(genericArtifact, api);
-
-        //Test throwing GovernanceException when GenericArtifact attribute retrieval failed
-        Mockito.doThrow(new GovernanceException("Error while deploying API in gateway")).when(genericArtifact)
-                .getAttribute(APIConstants.API_OVERVIEW_ENVIRONMENTS);
-        gatewayManager.createNewWebsocketApiVersion(genericArtifact, api);
-    }
 
     @Test public void testRemovingDefaultAPIFromGateway() throws AxisFault {
         API api = new API(apiIdentifier);
@@ -682,4 +616,267 @@ public class APIGatewayManagerTest {
         Assert.assertEquals(failedEnvironmentsMap.size(), 1);
         Assert.assertTrue(failedEnvironmentsMap.keySet().contains(prodEnvironmentName));
     }
+
+    /* Streaming API */
+
+    // WebSocket [BEGIN]
+
+    @Test public void testPublishingNewWebSocketAPIToGateway()
+            throws Exception {
+
+        API api = new API(apiIdentifier);
+        api.setType("WS");
+        api.setAsPublishedDefaultVersion(true);
+        api.setAsDefaultVersion(true);
+        APITemplateBuilder apiTemplateBuilder = new APITemplateBuilderImpl(api);
+        Set<String> environments = new HashSet<String>();
+        environments.add(prodEnvironmentName);
+        environments.add(null);
+        Mockito.when(apiGatewayAdminClient.getApi(tenantDomain, apiIdentifier)).thenReturn(null);
+
+        // Test when environments are not defined for API
+        Assert.assertEquals(gatewayManager.publishToGateway(api, apiTemplateBuilder, tenantDomain).size(), 0);
+
+        // Test adding LocalEntry
+        api.setEnvironments(environments);
+        api.setEndpointConfig(sandBoxEndpointConfig);
+        api.setUUID(apiUUId);
+
+        // Test when API's environment endpoint configuration is not available
+        Assert.assertEquals(gatewayManager.publishToGateway(api, apiTemplateBuilder, tenantDomain).size(), 0);
+
+        // Test deploying 'INLINE' type API to gateway
+        api.setImplementation("INLINE");
+        api.setEndpointConfig(prodEndpointConfig);
+        Assert.assertEquals(gatewayManager.publishToGateway(api, apiTemplateBuilder, tenantDomain).size(), 0);
+
+        // Test deploying 'ENDPOINT' type API to gateway
+        api.setImplementation("ENDPOINT");
+        Assert.assertEquals(gatewayManager.publishToGateway(api, apiTemplateBuilder, tenantDomain).size(), 0);
+
+        // Test deploying default version of the API and updating the existing default API
+        Mockito.when(apiGatewayAdminClient.getDefaultApi(tenantDomain, apiIdentifier)).thenReturn(defaultAPIdata);
+        Assert.assertEquals(gatewayManager.publishToGateway(api, apiTemplateBuilder, tenantDomain).size(), 0);
+
+        // Test deploying API, if secure vault is enabled
+        api.setEndpointSecured(true);
+        Mockito.when(config.getFirstProperty(APIConstants.API_SECUREVAULT_ENABLE)).thenReturn("true");
+        Assert.assertEquals(gatewayManager.publishToGateway(api, apiTemplateBuilder, tenantDomain).size(), 0);
+    }
+
+    @Test public void testPublishingExistingWebSocketAPIToGateway()
+            throws AxisFault, APIManagementException, XMLStreamException, RegistryException {
+
+        API api = new API(apiIdentifier);
+        api.setType("WS");
+        api.setAsPublishedDefaultVersion(true);
+        api.setAsDefaultVersion(true);
+        api.setUUID(apiUUId);
+        APITemplateBuilder apiTemplateBuilder = new APITemplateBuilderImpl(api);
+        Set<String> environments = new HashSet<String>();
+        environments.add(prodEnvironmentName);
+        environments.add(null);
+        api.setEnvironments(environments);
+        Mockito.when(apiGatewayAdminClient.getApi(tenantDomain, apiIdentifier)).thenReturn(apiData);
+        Mockito.when(apiGatewayAdminClient.getDefaultApi(tenantDomain, apiIdentifier)).thenReturn(defaultAPIdata);
+
+        // Test deleting existing API from production environment, if matching production endpoint configuration is
+        // not found in API's endpoint config
+        api.setEndpointConfig(sandBoxEndpointConfig);
+        Assert.assertEquals(gatewayManager.publishToGateway(api, apiTemplateBuilder, tenantDomain).size(), 0);
+
+        //Test updating 'INLINE' type WebSocket API to gateway
+        api.setImplementation("INLINE");
+        api.setEndpointConfig(prodEndpointConfig);
+        Assert.assertEquals(gatewayManager.publishToGateway(api, apiTemplateBuilder, tenantDomain).size(), 0);
+
+        //Test updating 'ENDPOINT' type WebSocket API to gateway
+        api.setImplementation("ENDPOINT");
+        Assert.assertEquals(gatewayManager.publishToGateway(api, apiTemplateBuilder, tenantDomain).size(), 0);
+
+        //Test updating default version of the API
+        Mockito.when(apiGatewayAdminClient.getDefaultApi(tenantDomain, apiIdentifier)).thenReturn(defaultAPIdata);
+        Assert.assertEquals(gatewayManager.publishToGateway(api, apiTemplateBuilder, tenantDomain).size(), 0);
+
+        //Test deploying API, if secure vault is enabled
+        api.setEndpointSecured(true);
+        Mockito.when(config.getFirstProperty(APIConstants.API_SECUREVAULT_ENABLE)).thenReturn("true");
+        Assert.assertEquals(gatewayManager.publishToGateway(api, apiTemplateBuilder, tenantDomain).size(), 0);
+    }
+
+    // WebSocket [END]
+
+    // Server Sent Events [BEGIN]
+
+    @Test public void testPublishingNewSSEAPIToGateway()
+            throws Exception {
+
+        API api = new API(apiIdentifier);
+        api.setType("SSE");
+        api.setAsPublishedDefaultVersion(true);
+        api.setAsDefaultVersion(true);
+        APITemplateBuilder apiTemplateBuilder = new APITemplateBuilderImpl(api);
+        Set<String> environments = new HashSet<String>();
+        environments.add(prodEnvironmentName);
+        environments.add(null);
+        Mockito.when(apiGatewayAdminClient.getApi(tenantDomain, apiIdentifier)).thenReturn(null);
+
+        //Test when environments are not defined for API
+        Assert.assertEquals(gatewayManager.publishToGateway(api, apiTemplateBuilder, tenantDomain).size(), 0);
+
+        //Test adding LocalEntry
+        api.setEnvironments(environments);
+        api.setEndpointConfig(sandBoxEndpointConfig);
+        api.setUUID(apiUUId);
+
+        //Test when API's environment endpoint configuration is not available
+        Assert.assertEquals(gatewayManager.publishToGateway(api, apiTemplateBuilder, tenantDomain).size(), 0);
+
+        //Test deploying 'INLINE' type API to gateway
+        api.setImplementation("INLINE");
+        api.setEndpointConfig(prodEndpointConfig);
+        Assert.assertEquals(gatewayManager.publishToGateway(api, apiTemplateBuilder, tenantDomain).size(), 0);
+
+        //Test deploying 'ENDPOINT' type API to gateway
+        api.setImplementation("ENDPOINT");
+        Assert.assertEquals(gatewayManager.publishToGateway(api, apiTemplateBuilder, tenantDomain).size(), 0);
+
+        //Test deploying default version of the API and updating the existing default API
+        Mockito.when(apiGatewayAdminClient.getDefaultApi(tenantDomain, apiIdentifier)).thenReturn(defaultAPIdata);
+        Assert.assertEquals(gatewayManager.publishToGateway(api, apiTemplateBuilder, tenantDomain).size(), 0);
+
+        //Test deploying API, if secure vault is enabled
+        api.setEndpointSecured(true);
+        Mockito.when(config.getFirstProperty(APIConstants.API_SECUREVAULT_ENABLE)).thenReturn("true");
+        Assert.assertEquals(gatewayManager.publishToGateway(api, apiTemplateBuilder, tenantDomain).size(), 0);
+    }
+
+    @Test public void testPublishingExistingSSEAPIToGateway()
+            throws AxisFault, APIManagementException, XMLStreamException, RegistryException {
+
+        API api = new API(apiIdentifier);
+        api.setType("SSE");
+        api.setAsPublishedDefaultVersion(true);
+        api.setAsDefaultVersion(true);
+        api.setUUID(apiUUId);
+        APITemplateBuilder apiTemplateBuilder = new APITemplateBuilderImpl(api);
+        Set<String> environments = new HashSet<String>();
+        environments.add(prodEnvironmentName);
+        environments.add(null);
+        api.setEnvironments(environments);
+        Mockito.when(apiGatewayAdminClient.getApi(tenantDomain, apiIdentifier)).thenReturn(apiData);
+        Mockito.when(apiGatewayAdminClient.getDefaultApi(tenantDomain, apiIdentifier)).thenReturn(defaultAPIdata);
+
+        //Test deleting existing API from production environment, if matching production endpoint configuration is
+        // not found in API's endpoint config
+        api.setEndpointConfig(sandBoxEndpointConfig);
+        Assert.assertEquals(gatewayManager.publishToGateway(api, apiTemplateBuilder, tenantDomain).size(), 0);
+
+        //Test updating 'INLINE' type WebSocket API to gateway
+        api.setImplementation("INLINE");
+        api.setEndpointConfig(prodEndpointConfig);
+        Assert.assertEquals(gatewayManager.publishToGateway(api, apiTemplateBuilder, tenantDomain).size(), 0);
+
+        //Test updating 'ENDPOINT' type WebSocket API to gateway
+        api.setImplementation("ENDPOINT");
+        Assert.assertEquals(gatewayManager.publishToGateway(api, apiTemplateBuilder, tenantDomain).size(), 0);
+
+        //Test updating default version of the API
+        Mockito.when(apiGatewayAdminClient.getDefaultApi(tenantDomain, apiIdentifier)).thenReturn(defaultAPIdata);
+        Assert.assertEquals(gatewayManager.publishToGateway(api, apiTemplateBuilder, tenantDomain).size(), 0);
+
+        //Test deploying API, if secure vault is enabled
+        api.setEndpointSecured(true);
+        Mockito.when(config.getFirstProperty(APIConstants.API_SECUREVAULT_ENABLE)).thenReturn("true");
+        Assert.assertEquals(gatewayManager.publishToGateway(api, apiTemplateBuilder, tenantDomain).size(), 0);
+    }
+
+    // Server Sent Events [END]
+
+    // WebSub [BEGIN]
+
+    @Test public void testPublishingNewWebSubAPIToGateway()
+            throws Exception {
+
+        API api = new API(apiIdentifier);
+        api.setType("WEBSUB");
+        api.setAsPublishedDefaultVersion(true);
+        api.setAsDefaultVersion(true);
+        APITemplateBuilder apiTemplateBuilder = new APITemplateBuilderImpl(api);
+        Set<String> environments = new HashSet<String>();
+        environments.add(prodEnvironmentName);
+        environments.add(null);
+        Mockito.when(apiGatewayAdminClient.getApi(tenantDomain, apiIdentifier)).thenReturn(null);
+
+        //Test when environments are not defined for API
+        Assert.assertEquals(gatewayManager.publishToGateway(api, apiTemplateBuilder, tenantDomain).size(), 0);
+
+        //Test adding LocalEntry
+        api.setEnvironments(environments);
+        api.setEndpointConfig(sandBoxEndpointConfig);
+        api.setUUID(apiUUId);
+
+        //Test when API's environment endpoint configuration is not available
+        Assert.assertEquals(gatewayManager.publishToGateway(api, apiTemplateBuilder, tenantDomain).size(), 0);
+
+        //Test deploying 'INLINE' type API to gateway
+        api.setImplementation("INLINE");
+        api.setEndpointConfig(prodEndpointConfig);
+        Assert.assertEquals(gatewayManager.publishToGateway(api, apiTemplateBuilder, tenantDomain).size(), 0);
+
+        //Test deploying 'ENDPOINT' type API to gateway
+        api.setImplementation("ENDPOINT");
+        Assert.assertEquals(gatewayManager.publishToGateway(api, apiTemplateBuilder, tenantDomain).size(), 0);
+
+        //Test deploying default version of the API and updating the existing default API
+        Mockito.when(apiGatewayAdminClient.getDefaultApi(tenantDomain, apiIdentifier)).thenReturn(defaultAPIdata);
+        Assert.assertEquals(gatewayManager.publishToGateway(api, apiTemplateBuilder, tenantDomain).size(), 0);
+
+        //Test deploying API, if secure vault is enabled
+        api.setEndpointSecured(true);
+        Mockito.when(config.getFirstProperty(APIConstants.API_SECUREVAULT_ENABLE)).thenReturn("true");
+        Assert.assertEquals(gatewayManager.publishToGateway(api, apiTemplateBuilder, tenantDomain).size(), 0);
+    }
+
+    @Test public void testPublishingExistingWebSubAPIToGateway()
+            throws AxisFault, APIManagementException, XMLStreamException, RegistryException {
+
+        API api = new API(apiIdentifier);
+        api.setType("WEBSUB");
+        api.setAsPublishedDefaultVersion(true);
+        api.setAsDefaultVersion(true);
+        api.setUUID(apiUUId);
+        APITemplateBuilder apiTemplateBuilder = new APITemplateBuilderImpl(api);
+        Set<String> environments = new HashSet<String>();
+        environments.add(prodEnvironmentName);
+        environments.add(null);
+        api.setEnvironments(environments);
+        Mockito.when(apiGatewayAdminClient.getApi(tenantDomain, apiIdentifier)).thenReturn(apiData);
+        Mockito.when(apiGatewayAdminClient.getDefaultApi(tenantDomain, apiIdentifier)).thenReturn(defaultAPIdata);
+
+        //Test deleting existing API from production environment, if matching production endpoint configuration is
+        // not found in API's endpoint config
+        api.setEndpointConfig(sandBoxEndpointConfig);
+        Assert.assertEquals(gatewayManager.publishToGateway(api, apiTemplateBuilder, tenantDomain).size(), 0);
+
+        //Test updating 'INLINE' type WebSocket API to gateway
+        api.setImplementation("INLINE");
+        api.setEndpointConfig(prodEndpointConfig);
+        Assert.assertEquals(gatewayManager.publishToGateway(api, apiTemplateBuilder, tenantDomain).size(), 0);
+
+        //Test updating 'ENDPOINT' type WebSocket API to gateway
+        api.setImplementation("ENDPOINT");
+        Assert.assertEquals(gatewayManager.publishToGateway(api, apiTemplateBuilder, tenantDomain).size(), 0);
+
+        //Test updating default version of the API
+        Mockito.when(apiGatewayAdminClient.getDefaultApi(tenantDomain, apiIdentifier)).thenReturn(defaultAPIdata);
+        Assert.assertEquals(gatewayManager.publishToGateway(api, apiTemplateBuilder, tenantDomain).size(), 0);
+
+        //Test deploying API, if secure vault is enabled
+        api.setEndpointSecured(true);
+        Mockito.when(config.getFirstProperty(APIConstants.API_SECUREVAULT_ENABLE)).thenReturn("true");
+        Assert.assertEquals(gatewayManager.publishToGateway(api, apiTemplateBuilder, tenantDomain).size(), 0);
+    }
+
+    // WebSub [END]
 }

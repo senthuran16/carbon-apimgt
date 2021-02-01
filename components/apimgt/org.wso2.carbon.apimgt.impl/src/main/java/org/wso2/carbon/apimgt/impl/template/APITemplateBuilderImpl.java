@@ -40,6 +40,7 @@ import org.wso2.carbon.apimgt.impl.internal.ServiceReferenceHolder;
 import org.wso2.carbon.apimgt.impl.wsdl.util.SOAPToRESTConstants;
 import org.wso2.carbon.apimgt.impl.wsdl.util.SequenceUtils;
 import org.wso2.carbon.apimgt.impl.utils.APIUtil;
+import org.wso2.carbon.base.ServerConfiguration;
 import org.wso2.carbon.registry.api.RegistryException;
 import org.wso2.carbon.registry.core.RegistryConstants;
 import org.wso2.carbon.registry.core.service.RegistryService;
@@ -65,8 +66,10 @@ public class APITemplateBuilderImpl implements APITemplateBuilder {
     private static final Log log = LogFactory.getLog(APITemplateBuilderImpl.class);
 
     public static final String TEMPLATE_TYPE_VELOCITY = "velocity_template";
+    public static final String TEMPLATE_WEBSUB_API = "websub_api_template";
     public static final String TEMPLATE_TYPE_PROTOTYPE = "prototype_template";
     public static final String TEMPLATE_DEFAULT_API = "default_api_template";
+    public static final String TEMPLATE_DEFAULT_WS_API = "default_ws_api_template";
     private static final String TEMPLATE_TYPE_ENDPOINT = "endpoint_template";
     private static final String TEMPLATE_TYPE_API_PRODUCT = "api_product_template";
     private API api;
@@ -119,6 +122,16 @@ public class APITemplateBuilderImpl implements APITemplateBuilder {
 
             if (api != null) {
                 t = velocityengine.getTemplate(getTemplatePath());
+
+                if (APIConstants.APITransportType.WEBSUB.toString().equals(api.getType())) {
+                    context.put("keystoreLocation",
+                            ServerConfiguration.getInstance().getFirstProperty("Security.InternalKeyStore.Location"));
+
+                    context.put("signingAlgorithm", "sha1="); // TODO Get from UI DTO
+                    context.put("secret", "secretsample"); // TODO Get from UI DTO
+                    context.put("hmacSignatureGenerationAlgorithm", "HmacSHA1"); // TODO Get from UI DTO
+                    context.put("signatureHeader", "X-Hub-Signature"); // TODO Get from UI DTO
+                }
             } else {
                 t = velocityengine.getTemplate(getApiProductTemplatePath());
             }
@@ -221,6 +234,10 @@ public class APITemplateBuilderImpl implements APITemplateBuilder {
             context.put("apiContext", apiContext);
 
             Template t = velocityengine.getTemplate(this.getDefaultAPITemplatePath());
+
+            if (APIConstants.APITransportType.WS.toString().equals(this.api.getType())) {
+                context.put("defaultVersionUrlMapping", "default_resource_of_api_" + this.api.getId().getVersion());
+            }
 
             t.merge(context, writer);
         } catch (Exception e) {
@@ -356,6 +373,9 @@ public class APITemplateBuilderImpl implements APITemplateBuilder {
     }
 
     public String getTemplatePath() {
+        if (APIConstants.APITransportType.WEBSUB.toString().equals(this.api.getType())) {
+            return "repository" + File.separator + "resources" + File.separator + "api_templates" + File.separator + APITemplateBuilderImpl.TEMPLATE_WEBSUB_API + ".xml";
+        }
         return "repository" + File.separator + "resources" + File.separator + "api_templates" + File.separator + APITemplateBuilderImpl.TEMPLATE_TYPE_VELOCITY + ".xml";
     }
 
@@ -364,6 +384,9 @@ public class APITemplateBuilderImpl implements APITemplateBuilder {
     }
 
     public String getDefaultAPITemplatePath() {
+        if (APIConstants.APITransportType.WS.toString().equals(this.api.getType())) {
+            return "repository" + File.separator + "resources" + File.separator + "api_templates" + File.separator + APITemplateBuilderImpl.TEMPLATE_DEFAULT_WS_API + ".xml";
+        }
         return "repository" + File.separator + "resources" + File.separator + "api_templates" + File.separator + APITemplateBuilderImpl.TEMPLATE_DEFAULT_API + ".xml";
     }
 

@@ -24,12 +24,7 @@ import org.wso2.carbon.apimgt.api.model.API;
 import org.wso2.carbon.apimgt.api.model.APIProduct;
 import org.wso2.carbon.apimgt.api.model.APIProductResource;
 import org.wso2.carbon.apimgt.api.model.URITemplate;
-import org.wso2.carbon.apimgt.impl.APIConstants;
-import org.wso2.carbon.apimgt.impl.internal.ServiceReferenceHolder;
 import org.wso2.carbon.apimgt.impl.utils.APIUtil;
-import org.wso2.carbon.user.api.UserStoreException;
-import org.wso2.carbon.utils.multitenancy.MultitenantConstants;
-import org.wso2.carbon.utils.multitenancy.MultitenantUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -69,6 +64,7 @@ public class ResourceConfigContext extends ConfigContextDecorator {
         if (api != null) {
             context.put("resources", api.getUriTemplates());
             context.put("apiStatus", api.getStatus());
+            context.put("apiType", api.getType());
             context.put("faultSequence", faultSeqExt != null ? faultSeqExt : api.getFaultSequence());
         } else if (apiProduct != null) {
             //Here we aggregate duplicate resourceURIs of an API and populate httpVerbs set in the uri template
@@ -94,6 +90,7 @@ public class ResourceConfigContext extends ConfigContextDecorator {
             }
 
             context.put("apiStatus", apiProduct.getState());
+            context.put("apiType", apiProduct.getType());
             context.put("aggregates", aggregateResources);
         }
 

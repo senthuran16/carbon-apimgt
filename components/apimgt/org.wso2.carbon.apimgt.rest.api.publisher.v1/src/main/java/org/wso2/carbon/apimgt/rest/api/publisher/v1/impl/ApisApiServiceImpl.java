@@ -286,7 +286,9 @@ public class ApisApiServiceImpl implements ApisApiService {
             //adding the api
             apiProvider.addAPI(apiToAdd);
 
-            if (!isWSAPI) {
+            boolean isStreamingApi = APIDTO.TypeEnum.WS == body.getType() || APIDTO.TypeEnum.SSE == body.getType() ||
+                    APIDTO.TypeEnum.WEBSUB == body.getType();
+            if (!isStreamingApi) {
                 APIDefinition oasParser;
                 if (RestApiConstants.OAS_VERSION_2.equalsIgnoreCase(oasVersion)) {
                     oasParser = new OAS2Parser();
@@ -658,8 +660,6 @@ public class ApisApiServiceImpl implements ApisApiService {
             APIProvider apiProvider = RestApiUtil.getProvider(username);
             API originalAPI = apiProvider.getAPIbyUUID(apiId, tenantDomain);
             APIIdentifier apiIdentifier = originalAPI.getId();
-            boolean isWSAPI = originalAPI.getType() != null
-                    && APIConstants.APITransportType.WS.toString().equals(originalAPI.getType());
             boolean isGraphql = originalAPI.getType() != null
                     && APIConstants.APITransportType.GRAPHQL.toString().equals(originalAPI.getType());
 
@@ -867,7 +867,7 @@ public class ApisApiServiceImpl implements ApisApiService {
                 }
             }
             // Validate if resources are empty
-            if (!isWSAPI && (body.getOperations() == null || body.getOperations().isEmpty())) {
+            if (body.getOperations() == null || body.getOperations().isEmpty()) {
                 RestApiUtil.handleBadRequest(ExceptionCodes.NO_RESOURCES_FOUND, log);
             }
             API apiToUpdate = APIMappingUtil.fromDTOtoAPI(body, apiIdentifier.getProviderName());
@@ -890,7 +890,7 @@ public class ApisApiServiceImpl implements ApisApiService {
             //preserve monetization status in the update flow
             apiProvider.configureMonetizationInAPIArtifact(originalAPI);
 
-            if (!isWSAPI) {
+            if (!APIUtil.isStreamingApi(originalAPI)) {
                 String oldDefinition = apiProvider.getOpenAPIDefinition(apiIdentifier);
                 APIDefinition apiDefinition = OASParserUtil.getOASParser(oldDefinition);
                 SwaggerData swaggerData = new SwaggerData(apiToUpdate);
@@ -3063,7 +3063,7 @@ public class ApisApiServiceImpl implements ApisApiService {
             String tenantDomain = RestApiUtil.getLoggedInUserTenantDomain();
             //this will fail if user does not have access to the API or the API does not exist
             APIIdentifier apiIdentifier = APIMappingUtil.getAPIIdentifierFromUUID(apiId, tenantDomain);
-            String apiSwagger = apiProvider.getOpenAPIDefinition(apiIdentifier);
+            String apiSwagger = apiProvider.getOpenAPIDefinition(apiIdentifier); // TODO change to swagger or asyncAPI
             APIDefinition parser = OASParserUtil.getOASParser(apiSwagger);
             API api = apiProvider.getAPIbyUUID(apiId, tenantDomain);
             String updatedDefinition = parser.getOASDefinitionForPublisher(api, apiSwagger);

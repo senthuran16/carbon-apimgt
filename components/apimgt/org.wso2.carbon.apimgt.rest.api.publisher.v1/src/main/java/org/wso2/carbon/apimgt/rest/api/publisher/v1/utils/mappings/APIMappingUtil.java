@@ -997,7 +997,7 @@ public class APIMappingUtil {
         }
 
         //Get Swagger definition which has URL templates, scopes and resource details
-        if (!APIDTO.TypeEnum.WS.toString().equals(model.getType())) {
+        if (!APIUtil.isStreamingApi(model)) { // TODO else asyncAPI
             List<APIOperationsDTO> apiOperationsDTO;
             String apiSwaggerDefinition = apiProvider.getOpenAPIDefinition(model.getId());
             apiOperationsDTO = getOperationsFromAPI(model);
@@ -1926,6 +1926,12 @@ public class APIMappingUtil {
             supportedMethods = APIConstants.GRAPHQL_SUPPORTED_METHODS;
         } else if (apiType.equals(APIConstants.API_TYPE_SOAP)) {
             supportedMethods = APIConstants.SOAP_DEFAULT_METHODS;
+        } else if (apiType.equals(APIConstants.APITransportType.WS.toString())) {
+            supportedMethods = APIConstants.WS_DEFAULT_METHODS;
+        } else if (apiType.equals(APIConstants.APITransportType.SSE.toString())) {
+            supportedMethods = APIConstants.SSE_DEFAULT_METHODS;
+        } else if (apiType.equals(APIConstants.APITransportType.WEBSUB.toString())) {
+            supportedMethods = APIConstants.WEBSUB_DEFAULT_METHODS;
         } else {
             supportedMethods = APIConstants.HTTP_DEFAULT_METHODS;
         }

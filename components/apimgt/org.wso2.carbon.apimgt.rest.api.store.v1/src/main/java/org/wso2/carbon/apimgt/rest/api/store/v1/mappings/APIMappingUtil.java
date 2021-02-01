@@ -107,7 +107,7 @@ public class APIMappingUtil {
         //Get Swagger definition which has URL templates, scopes and resource details
         String apiSwaggerDefinition = null;
 
-        if (!APIConstants.APITransportType.WS.toString().equals(model.getType())) {
+        if (!APIUtil.isStreamingApi(model)) {
             apiSwaggerDefinition = apiConsumer.getOpenAPIDefinition(model.getId());
         }
         dto.setApiDefinition(apiSwaggerDefinition);
@@ -271,7 +271,7 @@ public class APIMappingUtil {
         //Get Swagger definition which has URL templates, scopes and resource details
         String apiSwaggerDefinition = null;
 
-        if (!APIConstants.APITransportType.WS.toString().equals(model.getType())) {
+        if (!APIUtil.isStreamingApi(model)) {
             apiSwaggerDefinition = apiConsumer.getOpenAPIDefinition(model.getId());
         }
         dto.setApiDefinition(apiSwaggerDefinition);

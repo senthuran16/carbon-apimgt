@@ -203,30 +203,25 @@ public class APIGatewayManager {
         try {
             APIGatewayAdminClient client;
             startTime = System.currentTimeMillis();
-            if (!APIConstants.APITransportType.WS.toString().equals(api.getType())) {
-                gatewayAPIDTO = createAPIGatewayDTOtoPublishAPI(environment, api, builder, tenantDomain);
-                if (gatewayAPIDTO == null) {
-                    return failedGatewaysMap;
-                } else {
-                    if (gatewayArtifactSynchronizerProperties.isPublishDirectlyToGatewayEnabled()) {
-                        if (!isGatewayDefinedAsALabel) {
-                            client = new APIGatewayAdminClient(environment);
-                            client.deployAPI(gatewayAPIDTO);
-                        }
-                    }
-
-                    if (saveArtifactsToStorage) {
-                        artifactSaver.saveArtifact(new Gson().toJson(gatewayAPIDTO), environment.getName(),
-                                APIConstants.GatewayArtifactSynchronizer.GATEWAY_INSTRUCTION_PUBLISH);
-                        publishedGateways.add(environment.getName());
-                        if (debugEnabled) {
-                            log.debug(gatewayAPIDTO.getName() + " details saved to the DB");
-                        }
+            gatewayAPIDTO = createAPIGatewayDTOtoPublishAPI(environment, api, builder, tenantDomain);
+            if (gatewayAPIDTO == null) {
+                return failedGatewaysMap;
+            } else {
+                if (gatewayArtifactSynchronizerProperties.isPublishDirectlyToGatewayEnabled()) {
+                    if (!isGatewayDefinedAsALabel) {
+                        client = new APIGatewayAdminClient(environment);
+                        client.deployAPI(gatewayAPIDTO);
                     }
                 }
-            } else {
-                client = new APIGatewayAdminClient(environment);
-                deployWebsocketAPI(api, client, isGatewayDefinedAsALabel, publishedGateways, environment);
+
+                if (saveArtifactsToStorage) {
+                    artifactSaver.saveArtifact(new Gson().toJson(gatewayAPIDTO), environment.getName(),
+                            APIConstants.GatewayArtifactSynchronizer.GATEWAY_INSTRUCTION_PUBLISH);
+                    publishedGateways.add(environment.getName());
+                    if (debugEnabled) {
+                        log.debug(gatewayAPIDTO.getName() + " details saved to the DB");
+                    }
+                }
             }
             endTime = System.currentTimeMillis();
             if (debugEnabled) {
@@ -792,23 +787,12 @@ public class APIGatewayManager {
 
         setClientCertificatesToBeRemoved(api, tenantDomain, gatewayAPIDTO);
         setEndpointsToBeRemoved(api, gatewayAPIDTO);
-        if (!APIConstants.APITransportType.WS.toString().equals(api.getType())) {
-            if (debugEnabled) {
-                log.debug("Removing API " + api.getId().getApiName() + " From environment " +
-                        environment.getName());
-            }
-            setCustomSequencesToBeRemoved(api, gatewayAPIDTO);
-            setCustomSequencesToBeRemoved(api, gatewayAPIDTO);
-        } else {
-            String fileName = api.getContext().replace('/', '-');
-            String[] fileNames = new String[2];
-            fileNames[0] = ENDPOINT_PRODUCTION + fileName;
-            fileNames[1] = ENDPOINT_SANDBOX + fileName;
-            gatewayAPIDTO.setSequencesToBeRemove(addStringToList(fileNames[0],
-                    gatewayAPIDTO.getSequencesToBeRemove()));
-            gatewayAPIDTO.setSequencesToBeRemove(addStringToList(fileNames[1],
-                    gatewayAPIDTO.getSequencesToBeRemove()));
+        if (debugEnabled) {
+            log.debug("Removing API " + api.getId().getApiName() + " From environment " +
+                    environment.getName());
         }
+        setCustomSequencesToBeRemoved(api, gatewayAPIDTO);
+        setCustomSequencesToBeRemoved(api, gatewayAPIDTO);
 
         String localEntryUUId = api.getUUID();
         if (localEntryUUId != null && !localEntryUUId.isEmpty()) {

@@ -7706,6 +7706,8 @@ definitions:
           - SOAPTOREST
           - SOAP
           - GRAPHQL
+          - SSE
+          - WEBSUB
         example: HTTP
         default: HTTP
       transport:

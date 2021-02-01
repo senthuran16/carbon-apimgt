@@ -1821,10 +1821,9 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
                 // wsdls for each update.
                 //check for wsdl endpoint
                 org.json.JSONObject response1 = new org.json.JSONObject(api.getEndpointConfig());
-                boolean isWSAPI = APIConstants.APITransportType.WS.toString().equals(api.getType());
                 String wsdlURL;
-                if (!isWSAPI && "wsdl".equalsIgnoreCase(response1.get("endpoint_type").toString()) && response1.has
-                        ("production_endpoints")) {
+                if (!APIUtil.isStreamingApi(api) && "wsdl".equalsIgnoreCase(response1.get("endpoint_type").toString())
+                        && response1.has("production_endpoints")) {
                     wsdlURL = response1.getJSONObject("production_endpoints").get("url").toString();
 
                     if (APIUtil.isValidWSDLURL(wsdlURL, true)) {
@@ -2393,21 +2392,6 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
                     + " published to gateway";
             log.debug(logMessage);
         }
-        //if the API is websocket and if default version is selected, update the other versions
-        if (APIConstants.APITransportType.WS.toString().equals(api.getType()) && api.isDefaultVersion()) {
-            Set<String> versions = getAPIVersions(api.getId().getProviderName(), api.getId().getName());
-            for (String version : versions) {
-                if (version.equals(api.getId().getVersion())) {
-                    continue;
-                }
-                API otherApi = getAPI(new APIIdentifier(api.getId().getProviderName(), api.getId().getName(), version));
-                APIEvent apiEvent = new APIEvent(UUID.randomUUID().toString(), System.currentTimeMillis(),
-                        APIConstants.EventType.API_UPDATE.name(), tenantId, tenantDomain, otherApi.getId().getApiName(),
-                        0, version, api.getType(), otherApi.getContext(), otherApi.getId().getProviderName(),
-                        otherApi.getStatus());
-                APIUtil.sendNotification(apiEvent, APIConstants.NotifierType.API.name());
-            }
-        }
         return failedEnvironment;
     }
 
@@ -2767,9 +2751,11 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
         APITemplateBuilderImpl vtb = new APITemplateBuilderImpl(api);
         Map<String, String> latencyStatsProperties = new HashMap<String, String>();
         latencyStatsProperties.put(APIConstants.API_UUID, api.getUUID());
-        vtb.addHandler(
-                "org.wso2.carbon.apimgt.gateway.handlers.common.APIMgtLatencyStatsHandler",
-                latencyStatsProperties);
+        if (!APIUtil.isStreamingApi(api)) {
+            vtb.addHandler(
+                    "org.wso2.carbon.apimgt.gateway.handlers.common.APIMgtLatencyStatsHandler",
+                    latencyStatsProperties);
+        }
         Map<String, String> corsProperties = new HashMap<String, String>();
         corsProperties.put(APIConstants.CORSHeaders.IMPLEMENTATION_TYPE_HANDLER_VALUE, api.getImplementation());
 
@@ -2786,48 +2772,55 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
             corsProperties.put(APIConstants.AUTHORIZATION_HEADER, authorizationHeader);
         }
 
-        if (api.getCorsConfiguration() != null && api.getCorsConfiguration().isCorsConfigurationEnabled()) {
-            CORSConfiguration corsConfiguration = api.getCorsConfiguration();
-            if (corsConfiguration.getAccessControlAllowHeaders() != null) {
-                StringBuilder allowHeaders = new StringBuilder();
-                for (String header : corsConfiguration.getAccessControlAllowHeaders()) {
-                    allowHeaders.append(header).append(',');
+        // WS APIs won't have org.wso2.carbon.apimgt.gateway.handlers.security.CORSRequestHandler
+        if (!APIConstants.APITransportType.WS.toString().equals(api.getType())) {
+            if (api.getCorsConfiguration() != null && api.getCorsConfiguration().isCorsConfigurationEnabled()) {
+                CORSConfiguration corsConfiguration = api.getCorsConfiguration();
+                if (corsConfiguration.getAccessControlAllowHeaders() != null) {
+                    StringBuilder allowHeaders = new StringBuilder();
+                    for (String header : corsConfiguration.getAccessControlAllowHeaders()) {
+                        allowHeaders.append(header).append(',');
+                    }
+                    if (allowHeaders.length() != 0) {
+                        allowHeaders.deleteCharAt(allowHeaders.length() - 1);
+                        corsProperties.put(APIConstants.CORSHeaders.ALLOW_HEADERS_HANDLER_VALUE,
+                                allowHeaders.toString());
+                    }
                 }
-                if (allowHeaders.length() != 0) {
-                    allowHeaders.deleteCharAt(allowHeaders.length() - 1);
-                    corsProperties.put(APIConstants.CORSHeaders.ALLOW_HEADERS_HANDLER_VALUE, allowHeaders.toString());
+                if (corsConfiguration.getAccessControlAllowOrigins() != null) {
+                    StringBuilder allowOrigins = new StringBuilder();
+                    for (String origin : corsConfiguration.getAccessControlAllowOrigins()) {
+                        allowOrigins.append(origin).append(',');
+                    }
+                    if (allowOrigins.length() != 0) {
+                        allowOrigins.deleteCharAt(allowOrigins.length() - 1);
+                        corsProperties.put(APIConstants.CORSHeaders.ALLOW_ORIGIN_HANDLER_VALUE,
+                                allowOrigins.toString());
+                    }
                 }
+                if (corsConfiguration.getAccessControlAllowMethods() != null) {
+                    StringBuilder allowedMethods = new StringBuilder();
+                    for (String methods : corsConfiguration.getAccessControlAllowMethods()) {
+                        allowedMethods.append(methods).append(',');
+                    }
+                    if (allowedMethods.length() != 0) {
+                        allowedMethods.deleteCharAt(allowedMethods.length() - 1);
+                        corsProperties.put(APIConstants.CORSHeaders.ALLOW_METHODS_HANDLER_VALUE,
+                                allowedMethods.toString());
+                    }
+                }
+                if (corsConfiguration.isAccessControlAllowCredentials()) {
+                    corsProperties.put(APIConstants.CORSHeaders.ALLOW_CREDENTIALS_HANDLER_VALUE,
+                            String.valueOf(corsConfiguration.isAccessControlAllowCredentials()));
+                }
+                vtb.addHandler("org.wso2.carbon.apimgt.gateway.handlers.security.CORSRequestHandler"
+                        , corsProperties);
+            } else if (APIUtil.isCORSEnabled()) {
+                vtb.addHandler("org.wso2.carbon.apimgt.gateway.handlers.security.CORSRequestHandler"
+                        , corsProperties);
             }
-            if (corsConfiguration.getAccessControlAllowOrigins() != null) {
-                StringBuilder allowOrigins = new StringBuilder();
-                for (String origin : corsConfiguration.getAccessControlAllowOrigins()) {
-                    allowOrigins.append(origin).append(',');
-                }
-                if (allowOrigins.length() != 0) {
-                    allowOrigins.deleteCharAt(allowOrigins.length() - 1);
-                    corsProperties.put(APIConstants.CORSHeaders.ALLOW_ORIGIN_HANDLER_VALUE, allowOrigins.toString());
-                }
-            }
-            if (corsConfiguration.getAccessControlAllowMethods() != null) {
-                StringBuilder allowedMethods = new StringBuilder();
-                for (String methods : corsConfiguration.getAccessControlAllowMethods()) {
-                    allowedMethods.append(methods).append(',');
-                }
-                if (allowedMethods.length() != 0) {
-                    allowedMethods.deleteCharAt(allowedMethods.length() - 1);
-                    corsProperties.put(APIConstants.CORSHeaders.ALLOW_METHODS_HANDLER_VALUE, allowedMethods.toString());
-                }
-            }
-            if (corsConfiguration.isAccessControlAllowCredentials()) {
-                corsProperties.put(APIConstants.CORSHeaders.ALLOW_CREDENTIALS_HANDLER_VALUE,
-                        String.valueOf(corsConfiguration.isAccessControlAllowCredentials()));
-            }
-            vtb.addHandler("org.wso2.carbon.apimgt.gateway.handlers.security.CORSRequestHandler"
-                    , corsProperties);
-        } else if (APIUtil.isCORSEnabled()) {
-            vtb.addHandler("org.wso2.carbon.apimgt.gateway.handlers.security.CORSRequestHandler"
-                    , corsProperties);
         }
+
         if(!APIConstants.PROTOTYPED.equals(api.getStatus())) {
 
             List<ClientCertificateDTO> clientCertificateDTOS = null;
@@ -2873,44 +2866,45 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
                 vtb.addHandler("org.wso2.carbon.apimgt.gateway.handlers.graphQL.GraphQLAPIHandler",
                         apiUUIDProperty);
             }
-            vtb.addHandler("org.wso2.carbon.apimgt.gateway.handlers.security.APIAuthenticationHandler",
-                    authProperties);
+            if (!APIConstants.APITransportType.WS.toString().equals(api.getType())) {
+                vtb.addHandler("org.wso2.carbon.apimgt.gateway.handlers.security.APIAuthenticationHandler",
+                        authProperties);
+            }
 
             if (APIConstants.GRAPHQL_API.equals(api.getType())) {
                 vtb.addHandler("org.wso2.carbon.apimgt.gateway.handlers.graphQL.GraphQLQueryAnalysisHandler", Collections.<String, String>emptyMap());
             }
 
-            Map<String, String> properties = new HashMap<String, String>();
+            if (!APIUtil.isStreamingApi(api)) {
+                Map<String, String> properties = new HashMap<String, String>();
 
-            if (api.getProductionMaxTps() != null) {
-                properties.put("productionMaxCount", api.getProductionMaxTps());
-            }
+                if (api.getProductionMaxTps() != null) {
+                    properties.put("productionMaxCount", api.getProductionMaxTps());
+                }
 
-            if (api.getSandboxMaxTps() != null) {
-                properties.put("sandboxMaxCount", api.getSandboxMaxTps());
-            }
+                if (api.getSandboxMaxTps() != null) {
+                    properties.put("sandboxMaxCount", api.getSandboxMaxTps());
+                }
 
-            vtb.addHandler("org.wso2.carbon.apimgt.gateway.handlers.throttling.ThrottleHandler"
-                    , properties);
+                vtb.addHandler("org.wso2.carbon.apimgt.gateway.handlers.throttling.ThrottleHandler"
+                        , properties);
+                vtb.addHandler("org.wso2.carbon.apimgt.gateway.handlers.analytics.APIMgtUsageHandler"
+                        , Collections.<String, String>emptyMap());
+                properties = new HashMap<String, String>();
+                properties.put("configKey", APIConstants.GA_CONF_KEY);
+                vtb.addHandler(
+                        "org.wso2.carbon.apimgt.gateway.handlers.analytics.APIMgtGoogleAnalyticsTrackingHandler"
+                        , properties);
 
-
-            vtb.addHandler("org.wso2.carbon.apimgt.gateway.handlers.analytics.APIMgtUsageHandler"
-                    , Collections.<String, String>emptyMap());
-
-            properties = new HashMap<String, String>();
-            properties.put("configKey", APIConstants.GA_CONF_KEY);
-            vtb.addHandler(
-                    "org.wso2.carbon.apimgt.gateway.handlers.analytics.APIMgtGoogleAnalyticsTrackingHandler"
-                    , properties);
-
-            String extensionHandlerPosition = getExtensionHandlerPosition();
-            if (extensionHandlerPosition != null && "top".equalsIgnoreCase(extensionHandlerPosition)) {
-                vtb.addHandlerPriority(
-                        "org.wso2.carbon.apimgt.gateway.handlers.ext.APIManagerExtensionHandler",
-                        Collections.<String, String>emptyMap(), 0);
-            } else {
-                vtb.addHandler("org.wso2.carbon.apimgt.gateway.handlers.ext.APIManagerExtensionHandler",
-                        Collections.<String, String>emptyMap());
+                String extensionHandlerPosition = getExtensionHandlerPosition();
+                if (extensionHandlerPosition != null && "top".equalsIgnoreCase(extensionHandlerPosition)) {
+                    vtb.addHandlerPriority(
+                            "org.wso2.carbon.apimgt.gateway.handlers.ext.APIManagerExtensionHandler",
+                            Collections.<String, String>emptyMap(), 0);
+                } else {
+                    vtb.addHandler("org.wso2.carbon.apimgt.gateway.handlers.ext.APIManagerExtensionHandler",
+                            Collections.<String, String>emptyMap());
+                }
             }
 
 
@@ -2924,8 +2918,10 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
         APITemplateBuilderImpl vtb = new APITemplateBuilderImpl(apiProduct);
         Map<String, String> latencyStatsProperties = new HashMap<String, String>();
         latencyStatsProperties.put(APIConstants.API_UUID, apiProduct.getUuid());
-        vtb.addHandler("org.wso2.carbon.apimgt.gateway.handlers.common.APIMgtLatencyStatsHandler",
-                latencyStatsProperties);
+        if (!APIUtil.isStreamingApi(apiProduct)) {
+            vtb.addHandler("org.wso2.carbon.apimgt.gateway.handlers.common.APIMgtLatencyStatsHandler",
+                    latencyStatsProperties);
+        }
 
         Map<String, String> corsProperties = new HashMap<>();
         corsProperties.put(APIConstants.CORSHeaders.IMPLEMENTATION_TYPE_HANDLER_VALUE,
@@ -3041,28 +3037,31 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
             properties.put("sandboxMaxCount", apiProduct.getSandboxMaxTps());
         }
 
-        vtb.addHandler("org.wso2.carbon.apimgt.gateway.handlers.throttling.ThrottleHandler"
-                , properties);
+        if (!APIUtil.isStreamingApi(apiProduct)) {
+            vtb.addHandler("org.wso2.carbon.apimgt.gateway.handlers.throttling.ThrottleHandler"
+                    , properties);
 
 
-        vtb.addHandler("org.wso2.carbon.apimgt.gateway.handlers.analytics.APIMgtUsageHandler"
-                , Collections.<String, String>emptyMap());
+            vtb.addHandler("org.wso2.carbon.apimgt.gateway.handlers.analytics.APIMgtUsageHandler"
+                    , Collections.<String, String>emptyMap());
 
-        properties = new HashMap<String, String>();
-        properties.put("configKey", APIConstants.GA_CONF_KEY);
-        vtb.addHandler(
-                "org.wso2.carbon.apimgt.gateway.handlers.analytics.APIMgtGoogleAnalyticsTrackingHandler"
-                , properties);
+            properties = new HashMap<String, String>();
+            properties.put("configKey", APIConstants.GA_CONF_KEY);
+            vtb.addHandler(
+                    "org.wso2.carbon.apimgt.gateway.handlers.analytics.APIMgtGoogleAnalyticsTrackingHandler"
+                    , properties);
 
-        String extensionHandlerPosition = getExtensionHandlerPosition();
-        if (extensionHandlerPosition != null && "top".equalsIgnoreCase(extensionHandlerPosition)) {
-            vtb.addHandlerPriority(
-                    "org.wso2.carbon.apimgt.gateway.handlers.ext.APIManagerExtensionHandler",
-                    Collections.<String, String>emptyMap(), 0);
-        } else {
-            vtb.addHandler("org.wso2.carbon.apimgt.gateway.handlers.ext.APIManagerExtensionHandler",
-                    Collections.<String, String>emptyMap());
+            String extensionHandlerPosition = getExtensionHandlerPosition();
+            if (extensionHandlerPosition != null && "top".equalsIgnoreCase(extensionHandlerPosition)) {
+                vtb.addHandlerPriority(
+                        "org.wso2.carbon.apimgt.gateway.handlers.ext.APIManagerExtensionHandler",
+                        Collections.<String, String>emptyMap(), 0);
+            } else {
+                vtb.addHandler("org.wso2.carbon.apimgt.gateway.handlers.ext.APIManagerExtensionHandler",
+                        Collections.<String, String>emptyMap());
+            }
         }
+
         return vtb;
     }
 
@@ -3229,10 +3228,6 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
             // This is a change that is coming with the context version strategy
             String contextTemplate = artifact.getAttribute(APIConstants.API_OVERVIEW_CONTEXT_TEMPLATE);
             artifact.setAttribute(APIConstants.API_OVERVIEW_CONTEXT, contextTemplate.replace("{version}", newVersion));
-
-            if ("true".equalsIgnoreCase(artifact.getAttribute(APIConstants.API_OVERVIEW_WEBSOCKET))) {
-                APIGatewayManager.getInstance().createNewWebsocketApiVersion(artifact, api);
-            }
             artifactManager.addGenericArtifact(artifact);
             String artifactPath = GovernanceUtils.getArtifactPath(registry, artifact.getId());
             //Attach the API lifecycle
