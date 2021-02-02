@@ -1151,11 +1151,18 @@ public class ApisApiServiceImpl extends ApisApiService {
                 Map.Entry<String, JSONObject> resource = iterator.next();
                 String key = resource.getKey();
                 JSONObject resourceDefinition = resource.getValue();
-                if (key.endsWith("/")) {
-                    clonePathMap.put(key.substring(0, key.length() - 1), resourceDefinition);
+                if (key.length() > 1 && key.endsWith("/")) {
+                    key = key.substring(0, key.length() - 1);
+                }
+
+                if (clonePathMap.containsKey(key)) {
+                    JSONObject updatedDefinition = clonePathMap.get(key);
+                    updatedDefinition.putAll(resourceDefinition);
+                    clonePathMap.put(key, updatedDefinition);
                 } else {
                     clonePathMap.put(key, resourceDefinition);
                 }
+
                 iterator.remove();
             }
             apiDefinitionJSON.put(APIConstants.SWAGGER_PATHS, clonePathMap);
