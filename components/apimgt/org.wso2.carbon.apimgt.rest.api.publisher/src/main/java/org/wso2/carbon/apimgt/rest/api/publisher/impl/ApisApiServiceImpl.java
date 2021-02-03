@@ -105,8 +105,11 @@ import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 /**
@@ -1138,21 +1141,33 @@ public class ApisApiServiceImpl extends ApisApiService {
             if (apiDefinition == null) {
                 RestApiUtil.handleBadRequest("Parameter: \"apiDefinition\" cannot be null", log);
             }
-            Swagger swagger = new SwaggerParser().parse(apiDefinition);
-            Map<String, Path> paths = swagger.getPaths();
-            List<String> modifiableResources = new ArrayList<>();
-            for (String key : paths.keySet()) {
-                if (key.endsWith("/")) {
-                    modifiableResources.add(key);
+            JSONParser parser = new JSONParser();
+            JSONObject apiDefinitionJSON = (JSONObject) parser.parse(apiDefinition);
+            Map<String, JSONObject> pathMap = (Map<String, JSONObject>) apiDefinitionJSON.get(APIConstants.SWAGGER_PATHS);
+            Map<String, JSONObject> clonePathMap = new HashMap<>();
+            apiDefinitionJSON.remove(APIConstants.SWAGGER_PATHS);
+            Iterator<Entry<String, JSONObject>> iterator = pathMap.entrySet().iterator();
+            while (iterator.hasNext()) {
+                Map.Entry<String, JSONObject> resource = iterator.next();
+                String key = resource.getKey();
+                JSONObject resourceDefinition = resource.getValue();
+                if (key.length() > 1 && key.endsWith("/")) {
+                    key = key.substring(0, key.length() - 1);
                 }
+
+                if (clonePathMap.containsKey(key)) {
+                    JSONObject updatedDefinition = clonePathMap.get(key);
+                    updatedDefinition.putAll(resourceDefinition);
+                    clonePathMap.put(key, updatedDefinition);
+                } else {
+                    clonePathMap.put(key, resourceDefinition);
+                }
+
+                iterator.remove();
             }
-            for (String modifiableResource : modifiableResources) {
-                String newResource = modifiableResource.substring(0, modifiableResource.length() - 1);
-                paths.put(newResource, paths.remove(modifiableResource));
-            }
-            swagger.setPaths(paths);
-            return Json.mapper().writeValueAsString(swagger);
-        } catch (JsonProcessingException e) {
+            apiDefinitionJSON.put(APIConstants.SWAGGER_PATHS, clonePathMap);
+            return Json.mapper().writeValueAsString(apiDefinitionJSON);
+        } catch (ParseException | JsonProcessingException e) {
             String errorMessage = "Error while validating the swagger definition";
             RestApiUtil.handleInternalServerError(errorMessage, e, log);
         }
