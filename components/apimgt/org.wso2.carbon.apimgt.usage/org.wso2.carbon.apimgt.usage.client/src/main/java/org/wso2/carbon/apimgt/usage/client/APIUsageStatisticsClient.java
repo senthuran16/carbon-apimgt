@@ -200,14 +200,10 @@ public abstract class APIUsageStatisticsClient {
      * account. That is all the versions of an API are treated as one.
      *
      * @param providerName Name of the API provider
-     * @param fromDate     starting date of the results
-     * @param toDate       ending date of the results
-     * @param limit        limit of the result
      * @return a list of APIVersionLastAccessTimeDTO objects, possibly empty
      * @throws APIMgtUsageQueryServiceClientException
      */
-    public abstract List<APIVersionLastAccessTimeDTO> getProviderAPIVersionUserLastAccess(String providerName,
-                                                                                          String fromDate, String toDate, int limit) throws APIMgtUsageQueryServiceClientException;
+    public abstract List<APIVersionLastAccessTimeDTO> getProviderAPIVersionUserLastAccess(String providerName) throws APIMgtUsageQueryServiceClientException;
 
     /**
      * Returns a list of APIVersionUsageDTO objects that contain information related to a

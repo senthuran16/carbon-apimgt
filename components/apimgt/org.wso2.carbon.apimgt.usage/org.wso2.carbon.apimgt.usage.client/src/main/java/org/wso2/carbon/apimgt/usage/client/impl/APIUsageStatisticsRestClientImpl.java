@@ -1097,8 +1097,8 @@ public class APIUsageStatisticsRestClientImpl extends APIUsageStatisticsClient {
      * @throws org.wso2.carbon.apimgt.usage.client.exception.APIMgtUsageQueryServiceClientException on error
      */
     @Override
-    public List<APIVersionLastAccessTimeDTO> getProviderAPIVersionUserLastAccess(String providerName, String fromDate,
-            String toDate, int limit) throws APIMgtUsageQueryServiceClientException {
+    public List<APIVersionLastAccessTimeDTO> getProviderAPIVersionUserLastAccess(String providerName)
+            throws APIMgtUsageQueryServiceClientException {
 
         Collection<APIAccessTime> accessTimes = getLastAccessData(
                 APIUsageStatisticsClientConstants.API_LAST_ACCESS_SUMMARY, providerName);
@@ -1124,7 +1124,7 @@ public class APIUsageStatisticsRestClientImpl extends APIUsageStatisticsClient {
                 }
             }
         }
-        return getLastAccessTimeTopEntries(accessTimeByAPI, limit);
+        return accessTimeByAPI;
     }
 
     /**
@@ -1394,30 +1394,6 @@ public class APIUsageStatisticsRestClientImpl extends APIUsageStatisticsClient {
     private List<APIResponseTimeDTO> getResponseTimeTopEntries(List<APIResponseTimeDTO> usageData, int limit) {
         //do nothing
         return null;
-    }
-
-    /**
-     * This method sort and limit the result size for API Last access time data
-     *
-     * @param usageData data to be sort and limit
-     * @param limit     value to be limited
-     * @return list of APIVersionLastAccessTimeDTO
-     */
-    private List<APIVersionLastAccessTimeDTO> getLastAccessTimeTopEntries(List<APIVersionLastAccessTimeDTO> usageData,
-            int limit) {
-        Collections.sort(usageData, new Comparator<APIVersionLastAccessTimeDTO>() {
-            public int compare(APIVersionLastAccessTimeDTO o1, APIVersionLastAccessTimeDTO o2) {
-                // Note that o2 appears before o1
-                // This is because we need to sort in the descending order
-                return o2.getLastAccessTime().compareToIgnoreCase(o1.getLastAccessTime());
-            }
-        });
-        if (usageData.size() > limit) {
-            while (usageData.size() > limit) {
-                usageData.remove(limit);
-            }
-        }
-        return usageData;
     }
 
     /**

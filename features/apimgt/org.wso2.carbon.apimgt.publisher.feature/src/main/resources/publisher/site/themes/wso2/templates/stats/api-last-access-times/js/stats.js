@@ -3,106 +3,108 @@ var apiFilter = "allAPIs";
 var statsEnabled = isDataPublishingEnabled();
 currentLocation = window.location.pathname;
 
-//setting default date
-var to;
-var from;
-
 jagg.post("/site/blocks/stats/api-last-access-times/ajax/stats.jag", { action: "getFirstAccessTime", currentLocation: currentLocation  },
+    function (json) {
+
+        if (!json.error) {
+            if (json.usage && json.usage.length > 0) {
+
+                $("#apiFilter").change(function (e) {
+                    apiFilter = this.value;
+                    drawProviderAPIVersionUserLastAccess(apiFilter);
+                });
+                $('body').on('click', '.btn-group button', function (e) {
+                    $(this).addClass('active');
+                    $(this).siblings().removeClass('active');
+                });
+                drawProviderAPIVersionUserLastAccess();
+            } else {
+                $('.stat-page').html("");
+                showEnableAnalyticsMsg();
+            }
+        } else {
+            if (json.message == "AuthenticateError") {
+                jagg.showLogin();
+            } else {
+                jagg.message({content: json.message, type: "error"});
+            }
+        }
+
+    }, "json");
+
+
+var drawProviderAPIVersionUserLastAccess = function() {
+    jagg.post("/site/blocks/stats/api-last-access-times/ajax/stats.jag", { action:"getProviderAPIVersionUserLastAccess", currentLocation:currentLocation, apiFilter: apiFilter},
         function (json) {
-
+            $('#spinner').hide();
             if (!json.error) {
-                if (json.usage && json.usage.length > 0) {
-                    from = new Date(json.usage[0].year, json.usage[0].month - 1, json.usage[0].day);
-                    to = new Date();
+                var length = json.usage.length;
 
-                        $("#apiFilter").change(function (e) {
-                        	apiFilter = this.value;
-                            var table = $('#lastAccessTable').DataTable();
-                            table.ajax.reload();
-                        });
-                        $('body').on('click', '.btn-group button', function (e) {
-                            $(this).addClass('active');
-                            $(this).siblings().removeClass('active');
-                        });
-                        drawProviderAPIVersionUserLastAccess();
-                } else {
-                    $('.stat-page').html("");
-                    showEnableAnalyticsMsg();
+                //getting timezone value
+                var date=new Date();
+                var offset = date.getTimezoneOffset();
+
+                function convertToHHMM(info) {
+                    var hrs = parseInt(Number(info));
+                    var min = Math.round((Number(info)-hrs) * 60);
+                    return (('' + hrs).length < 2 ? '0' : '') + hrs+':'+(('' + min).length < 2 ? '0' : '')+min;
+                }
+
+                var timezone;
+                if(offset>=(-840) && offset<=720){
+                    if(offset==0 || offset<0){
+                        timezone=" (GMT+"+convertToHHMM(Math.abs(offset)/60)+")";
+                    }
+                    else{
+                        timezone=" (GMT-"+ convertToHHMM(Math.abs(offset)/60)+")";
+                    }
+                }else{
+                    timezone=" ";
+                }
+
+                $('#noData').empty();
+                $('div#lastAccessTable_wrapper.dataTables_wrapper.no-footer').remove();
+
+                var $dataTable =$('<table class="display table table-striped table-bordered" width="100%" cellspacing="0" id="lastAccessTable"></table>');
+
+                $dataTable.append($('<thead class="tableHead"><tr>'+
+                    '<th>API</th>'+
+                    '<th>VERSION</th>'+
+                    '<th>SUBSCRIBER</th>'+
+                    '<th  style="text-align:right" width="30%">Access Time'+ timezone+'</th>'+
+                    '</tr></thead>'));
+
+                for (var i = 0; i < json.usage.length; i++) {
+                    $dataTable.append($('<tr><td>' + json.usage[i].apiName + '</td><td>' + json.usage[i].apiVersion + '</td><td>' + json.usage[i].user + '</td><td class="tdNumberCell">' + formatTimeIn12HourFormat(new Date(Number(json.usage[i].lastAccessTime))) + '</td></tr>'));
+                }
+                if (length == 0) {
+                    $('#lastAccessTable').hide();
+                    $('div#lastAccessTable_wrapper.dataTables_wrapper.no-footer').remove();
+                    $('#noData').html('');
+                    $('#noData').append($('<div class="center-wrapper"><div class="col-sm-4"/><div class="col-sm-4 message message-info"><h4><i class="icon fw fw-info" title="No Stats"></i>'+i18n.t("No Data Available")+'</h4></div></div>'));
+
+                }else{
+                    $('#tableContainer').append($dataTable);
+                    $('#tableContainer').show();
+                    $('#lastAccessTable').datatables_extended({
+                        "order": [[ 3, "desc" ]],
+                        "fnDrawCallback": function(){
+                            if(this.fnSettings().fnRecordsDisplay()<=$("#lastAccessTable_length option:selected" ).val()
+                                || $("#lastAccessTable_length option:selected" ).val()==-1)
+                                $('#lastAccessTable_paginate').hide();
+                            else
+                                $('#lastAccessTable_paginate').show();
+                        },
+                    });
                 }
             } else {
                 if (json.message == "AuthenticateError") {
                     jagg.showLogin();
                 } else {
-                    jagg.message({content: json.message, type: "error"});
+                    jagg.message({content:json.message,type:"error"});
                 }
             }
-
         }, "json");
-
-
-var drawProviderAPIVersionUserLastAccess = function() {
-    $('#spinner').hide();
-    var $dataTable =$('<table class="display table table-striped table-bordered" width="100%" cellspacing="0" id="lastAccessTable"></table>');
-
-    //getting timezone value
-    var date=new Date();
-    var offset = date.getTimezoneOffset();
-
-    function convertToHHMM(info) {
-       var hrs = parseInt(Number(info));
-       var min = Math.round((Number(info)-hrs) * 60);
-       return (('' + hrs).length < 2 ? '0' : '') + hrs+':'+(('' + min).length < 2 ? '0' : '')+min;
-    }
-
-    var timezone;
-    if(offset>=(-840) && offset<=720){
-         if(offset==0 || offset<0){
-            timezone=" (GMT+"+convertToHHMM(Math.abs(offset)/60)+")";
-         }
-         else{
-            timezone=" (GMT-"+ convertToHHMM(Math.abs(offset)/60)+")";
-         }
-    }else{
-       timezone=" ";
-    }
-
-    $dataTable.append($('<thead class="tableHead"><tr>'+
-                            '<th width="20%">API</th>'+
-                             '<th  width="15%">Version</th>'+
-                            '<th  width="15%">Subscriber</th>'+
-                            '<th  style="text-align:right" width="30%">Access Time'+ timezone+'</th>'+
-                        '</tr></thead>'));
-    $('#tableContainer').append($dataTable);
-
-    $('#lastAccessTable').DataTable( {
-    "processing": true,
-    "serverSide": true,
-    "searching": false,
-    "ajax": {
-        "url": "../../site/blocks/stats/api-last-access-times/ajax/stats.jag",
-        "data": function ( d ) {
-            d.action = "getProviderAPIVersionUserLastAccess";
-            d.currentLocation = currentLocation;
-            d.fromDate = from;
-            d.toDate = to;
-            d.apiFilter = apiFilter;
-        }
-    },
-    "columns": [
-        { "data": "apiName" },
-        { "data": "apiVersion" },
-        { "data": "user" },
-        { "data": "lastAccessTime" }
-    ],
-        "columnDefs": [{
-            "targets": 3,
-            "render": function (data, type, full, meta) {
-                var accessTimeInUTC = new Date(Number(data)); // conversion assumes server time is in current time zone
-                var accessTime = formatTimeIn12HourFormat(accessTimeInUTC);
-                return accessTime;
-            }
-        }]
-    } );
 
     /**
      * Format Time into MM/DD/YY hh:mm format
