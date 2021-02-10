@@ -20,7 +20,6 @@ package org.wso2.carbon.apimgt.usage.client;
 
 import com.google.gson.JsonSyntaxException;
 import org.apache.commons.collections.map.HashedMap;
-import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.apimgt.api.APIManagementException;
@@ -61,7 +60,6 @@ import org.wso2.carbon.apimgt.usage.client.pojo.APIFirstAccess;
 
 import java.io.IOException;
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -207,7 +205,7 @@ public abstract class APIUsageStatisticsClient {
      * @throws APIMgtUsageQueryServiceClientException
      */
     public abstract List<APIVersionLastAccessTimeDTO> getProviderAPIVersionUserLastAccess(String providerName,
-                                                                                          String fromDate, String toDate, int limit) throws APIMgtUsageQueryServiceClientException;
+                              String fromDate, String toDate, int limit) throws APIMgtUsageQueryServiceClientException;
 
     /**
      * Returns a list of APIVersionUsageDTO objects that contain information related to a

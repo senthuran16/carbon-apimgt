@@ -1098,7 +1098,7 @@ public class APIUsageStatisticsRestClientImpl extends APIUsageStatisticsClient {
      */
     @Override
     public List<APIVersionLastAccessTimeDTO> getProviderAPIVersionUserLastAccess(String providerName, String fromDate,
-            String toDate, int limit) throws APIMgtUsageQueryServiceClientException {
+                                             String toDate, int limit) throws APIMgtUsageQueryServiceClientException {
 
         Collection<APIAccessTime> accessTimes = getLastAccessData(
                 APIUsageStatisticsClientConstants.API_LAST_ACCESS_SUMMARY, providerName);
@@ -1124,7 +1124,7 @@ public class APIUsageStatisticsRestClientImpl extends APIUsageStatisticsClient {
                 }
             }
         }
-        return getLastAccessTimeTopEntries(accessTimeByAPI, limit);
+        return accessTimeByAPI;
     }
 
     /**
@@ -1404,7 +1404,7 @@ public class APIUsageStatisticsRestClientImpl extends APIUsageStatisticsClient {
      * @return list of APIVersionLastAccessTimeDTO
      */
     private List<APIVersionLastAccessTimeDTO> getLastAccessTimeTopEntries(List<APIVersionLastAccessTimeDTO> usageData,
-            int limit) {
+                                                                          int limit) {
         Collections.sort(usageData, new Comparator<APIVersionLastAccessTimeDTO>() {
             public int compare(APIVersionLastAccessTimeDTO o1, APIVersionLastAccessTimeDTO o2) {
                 // Note that o2 appears before o1
