@@ -73,6 +73,7 @@ public class APIKeyMgtSubscriberServiceTest {
     private final String USER_NAME = "admin";
     private final String USER_NAME_WITH_TENANT = "admin@foo.com";
     private final String SECONDARY_USER_NAME = "secondary/admin@foo.com";
+    private final String APPLICATION_DISPLAY_NAME = "foo";
     private final String APPLICATION_NAME = "foo_PRODUCTION";
     private final String APPLICATION_NAME_1 = "sample_app";
     private final String APPLICATION_OWNER = "admin@foo.com";
@@ -127,11 +128,15 @@ public class APIKeyMgtSubscriberServiceTest {
         when(OAuthServerConfiguration.getInstance()).thenReturn(mockOAuthServerConfiguration);
         when(mockOAuthServerConfiguration.isClientSecretHashEnabled()).thenReturn(false);
 
+        String jsonPayload = "{\"username\":\"" + USER_NAME + "\"" + ",\"validityPeriod\":\"3600\""
+                + ",\"tokenScope\":\"default\"" + ",\"key_type\":\"PRODUCTION\"" + "}";
+        Mockito.when(oauthApplicationInfo.getJsonString()).thenReturn(jsonPayload);
+
         //Invoke createOAuthApplicationByApplicationInfo method
         apiKeyMgtSubscriberService.createOAuthApplicationByApplicationInfo(oauthApplicationInfo);
 
         //Again run the same method with jsonPayload
-        String jsonPayload = "{\"username\":\"" + SECONDARY_USER_NAME + "\"" +
+        jsonPayload = "{\"username\":\"" + SECONDARY_USER_NAME + "\"" +
                 ",\"validityPeriod\":\"3600\"" +
                 ",\"tokenScope\":\"default\"" +
                 ",\"key_type\":\"PRODUCTION\"" +
@@ -246,6 +251,13 @@ public class APIKeyMgtSubscriberServiceTest {
         OAuthConsumerAppDTO oAuthConsumerAppDTO = new OAuthConsumerAppDTO();
         oAuthConsumerAppDTO.setOauthConsumerKey(CONSUMER_KEY);
         Mockito.when(oAuthAdminService.getOAuthApplicationData(CONSUMER_KEY)).thenReturn(oAuthConsumerAppDTO);
+
+        APIUtil apiUtils = Mockito.mock(APIUtil.class);
+        PowerMockito.mockStatic(ApiMgtDAO.class);
+        ApiMgtDAO apiDao = Mockito.mock(ApiMgtDAO.class);
+        Mockito.when(ApiMgtDAO.getInstance()).thenReturn(apiDao);
+        Mockito.when(apiUtils.getApplicationNameByConsumerKey(CONSUMER_KEY)).thenReturn(APPLICATION_DISPLAY_NAME);
+
         OAuthApplicationInfo dto = apiKeyMgtSubscriberService
                 .updateOAuthApplication(SECONDARY_USER_NAME, APPLICATION_NAME, CALLBACK_URL, CONSUMER_KEY, GRANT_TYPES);
         Assert.assertEquals("Consumer Key should be same", CONSUMER_KEY, dto.getClientId());
@@ -316,8 +328,7 @@ public class APIKeyMgtSubscriberServiceTest {
 
                 for (ServiceProviderProperty serviceProviderProperty : serviceProviderPropertiesResult) {
                     if (APIConstants.APP_DISPLAY_NAME.equals(serviceProviderProperty.getName())) {
-                        Assert.assertEquals(APPLICATION_NAME.substring(0, APPLICATION_NAME.lastIndexOf("_")),
-                                serviceProviderProperty.getValue());
+                        Assert.assertEquals(APPLICATION_DISPLAY_NAME, serviceProviderProperty.getValue());
                         return null;
                     }
                 }
@@ -338,6 +349,9 @@ public class APIKeyMgtSubscriberServiceTest {
                 .thenReturn(serviceProvider);
         Mockito.when(appMgtService.getServiceProviderNameByClientId(CONSUMER_KEY, "oauth2", TENANT_DOMAIN))
                 .thenReturn(APPLICATION_NAME);
+
+        PowerMockito.mockStatic(APIUtil.class);
+        Mockito.when(APIUtil.getApplicationNameByConsumerKey(CONSUMER_KEY)).thenReturn(APPLICATION_DISPLAY_NAME);
 
         OAuthApplicationInfo dto = apiKeyMgtSubscriberService
                 .updateOAuthApplication(SECONDARY_USER_NAME, APPLICATION_NAME, CALLBACK_URL, CONSUMER_KEY, GRANT_TYPES);
