@@ -3,21 +3,27 @@ var apiFilter = "allAPIs";
 var statsEnabled = isDataPublishingEnabled();
 currentLocation = window.location.pathname;
 
+//setting default date
+var to;
+var from;
+
 jagg.post("/site/blocks/stats/api-last-access-times/ajax/stats.jag", { action: "getFirstAccessTime", currentLocation: currentLocation  },
     function (json) {
-
+        $('#spinner').hide();
         if (!json.error) {
             if (json.usage && json.usage.length > 0) {
+                from = new Date(json.usage[0].year, json.usage[0].month - 1, json.usage[0].day);
+                to = new Date();
 
                 $("#apiFilter").change(function (e) {
                     apiFilter = this.value;
-                    drawProviderAPIVersionUserLastAccess(apiFilter);
+                    drawProviderAPIVersionUserLastAccess(from, to, apiFilter);
                 });
                 $('body').on('click', '.btn-group button', function (e) {
                     $(this).addClass('active');
                     $(this).siblings().removeClass('active');
                 });
-                drawProviderAPIVersionUserLastAccess();
+                drawProviderAPIVersionUserLastAccess(from, to, apiFilter);
             } else {
                 $('.stat-page').html("");
                 showEnableAnalyticsMsg();
@@ -68,9 +74,9 @@ var drawProviderAPIVersionUserLastAccess = function() {
                 var $dataTable =$('<table class="display table table-striped table-bordered" width="100%" cellspacing="0" id="lastAccessTable"></table>');
 
                 $dataTable.append($('<thead class="tableHead"><tr>'+
-                    '<th>API</th>'+
-                    '<th>VERSION</th>'+
-                    '<th>SUBSCRIBER</th>'+
+                    '<th width="20%">API</th>'+
+                    '<th width="15%">Version</th>'+
+                    '<th width="15%">Subscriber</th>'+
                     '<th  style="text-align:right" width="30%">Access Time'+ timezone+'</th>'+
                     '</tr></thead>'));
 
