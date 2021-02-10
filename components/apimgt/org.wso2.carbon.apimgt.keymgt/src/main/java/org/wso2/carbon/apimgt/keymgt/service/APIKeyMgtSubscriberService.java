@@ -136,7 +136,6 @@ public class APIKeyMgtSubscriberService extends AbstractAdmin {
                 userNameForSP = userNameForSP.replace(UserCoreConstants.DOMAIN_SEPARATOR, "_");
             }
 
-            // Append the username before Application name to make application name unique across two users.
             String displayName;
             if (applicationName.endsWith("_" + APIConstants.API_KEY_TYPE_PRODUCTION) || applicationName.endsWith("_"
                     + APIConstants.API_KEY_TYPE_SANDBOX)) {
@@ -144,6 +143,14 @@ public class APIKeyMgtSubscriberService extends AbstractAdmin {
             } else {
                 displayName = applicationName;
             }
+
+            String jsonString = oauthApplicationInfo.getJsonString();
+            JSONObject initialObject = new JSONObject(jsonString);
+            if (initialObject.has(APIConstants.APP_DISPLAY_NAME)) {
+                displayName = initialObject.getString(APIConstants.APP_DISPLAY_NAME);
+            }
+
+            // Append the username before Application name to make application name unique across two users.
             applicationName = APIUtil.replaceEmailDomain(userNameForSP) + "_" + applicationName;
 
             // Create the Service Provider
@@ -375,6 +382,9 @@ public class APIKeyMgtSubscriberService extends AbstractAdmin {
         // username is fetched from CarbonContext
         PrivilegedCarbonContext.getThreadLocalCarbonContext().setUsername(userName);
 
+        // Get the application name from db
+        String displayName = APIUtil.getApplicationNameByConsumerKey(consumerKey);
+
         try {
 
             // Replace domain separator by "_" if user is coming from a secondary userstore.
@@ -385,14 +395,6 @@ public class APIKeyMgtSubscriberService extends AbstractAdmin {
 
             if (applicationName != null && !applicationName.isEmpty()) {
                 // Append the username before Application name to make application name unique across two users.
-                String displayName;
-                if (applicationName.endsWith("_" + APIConstants.API_KEY_TYPE_PRODUCTION) || applicationName.endsWith("_"
-                        + APIConstants.API_KEY_TYPE_SANDBOX)) {
-                    displayName = applicationName.substring(0, applicationName.lastIndexOf("_"));
-                } else {
-                    displayName = applicationName;
-                }
-
                 applicationName = APIUtil.replaceEmailDomain(userNameForSP) + "_" + applicationName;
                 log.debug("Application Name has changed, hence updating Service Provider Name..");
 

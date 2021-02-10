@@ -4137,6 +4137,20 @@ public class ApiMgtDAO {
         return appName;
     }
 
+    /**
+     * Find the name of the application by consumer key
+     *
+     * @param consumerKey - consumer key of the application
+     * @return - application name
+     * @throws APIManagementException
+     */
+    public String getApplicationNameFromConsumerKey(String consumerKey) throws APIManagementException {
+        Map<String, String> idKeyMap = getApplicationIdAndTokenTypeByConsumerKey(consumerKey);
+        String appId = idKeyMap.get("application_id");
+        String appName = getApplicationNameFromId(Integer.parseInt(appId));
+        return appName;
+    }
+
     public int getAllApplicationCount(Subscriber subscriber, String groupingId, String search) throws APIManagementException {
 
         Connection connection = null;
