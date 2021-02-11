@@ -106,10 +106,19 @@ public class AMDefaultKeyManagerImpl extends AbstractKeyManager {
         String applicationName = oAuthApplicationInfo.getClientName();
         String keyType = (String) oAuthApplicationInfo.getParameter(ApplicationConstants.APP_KEY_TYPE);
         String callBackURL = (String) oAuthApplicationInfo.getParameter(ApplicationConstants.APP_CALLBACK_URL);
+        String initialJsonString = oAuthApplicationInfo.getJsonString();
 
         String oauthClientName;
+        String finalJsonString = oAuthApplicationInfo.getJsonString();
         if (isSpecialCharSupport) {
             oauthClientName = APIUtil.getApplicationUUID(applicationName, userId);
+            try {
+                JSONObject initialJsonObject = new JSONObject(initialJsonString);
+                initialJsonObject.put(APIConstants.APP_DISPLAY_NAME, applicationName);
+                finalJsonString = initialJsonObject.toString();
+            } catch (JSONException e) {
+                handleException("Can not retrieve jsonString information of oauthAppRequest", e);
+            }
         } else {
             oauthClientName = applicationName;
         }
@@ -136,7 +145,7 @@ public class AMDefaultKeyManagerImpl extends AbstractKeyManager {
             applicationToCreate.setCallBackURL(callBackURL);
             applicationToCreate.setClientName(oauthClientName);
             applicationToCreate.setAppOwner(userId);
-            applicationToCreate.setJsonString(oAuthApplicationInfo.getJsonString());
+            applicationToCreate.setJsonString(finalJsonString);
             applicationToCreate.setTokenType(oAuthApplicationInfo.getTokenType());
             info = createOAuthApplicationbyApplicationInfo(applicationToCreate);
         } catch (Exception e) {

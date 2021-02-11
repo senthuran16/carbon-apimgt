@@ -1660,6 +1660,15 @@ public class SQLConstants {
             "   AND APP.APPLICATION_ID = AKM.APPLICATION_ID " +
             "   AND APP.APPLICATION_ID = ? AND AKM.KEY_TYPE=?  ";
 
+    public static final String GET_APPLICATION_NAME_BY_CONSUMER_KEY =
+            " SELECT " +
+            "   APP.NAME " +
+            " FROM " +
+            "   AM_APPLICATION AS APP INNER JOIN AM_APPLICATION_KEY_MAPPING AS MAP" +
+            "   ON APP.APPLICATION_ID = MAP.APPLICATION_ID" +
+            " WHERE " +
+            "   CONSUMER_KEY = ?";
+
     public static final String GET_APPLICATION_ID_BY_CONSUMER_KEY_SQL =
             " SELECT " +
             "   MAP.APPLICATION_ID, " +

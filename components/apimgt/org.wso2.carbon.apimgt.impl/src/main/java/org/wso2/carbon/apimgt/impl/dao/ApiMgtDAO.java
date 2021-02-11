@@ -4137,6 +4137,39 @@ public class ApiMgtDAO {
         return appName;
     }
 
+    /**
+     * Find the name of the application by consumer key
+     *
+     * @param consumerKey - consumer key of the application
+     * @return - application name
+     * @throws APIManagementException
+     */
+    public String getApplicationNameFromConsumerKey(String consumerKey) throws APIManagementException {
+        Connection connection = null;
+        PreparedStatement prepStmt = null;
+        ResultSet rs = null;
+        String appName = null;
+
+        String query = SQLConstants.GET_APPLICATION_NAME_BY_CONSUMER_KEY;
+
+        try {
+            connection = APIMgtDBUtil.getConnection();
+            prepStmt = connection.prepareStatement(query);
+            prepStmt.setString(1, consumerKey);
+            rs = prepStmt.executeQuery();
+
+            while (rs.next()) {
+                appName = rs.getString("NAME");
+            }
+        } catch (SQLException e) {
+            handleException("Error when getting the application id for consumer key " + consumerKey, e);
+        } finally {
+            APIMgtDBUtil.closeAllConnections(prepStmt, connection, rs);
+        }
+
+        return appName;
+    }
+
     public int getAllApplicationCount(Subscriber subscriber, String groupingId, String search) throws APIManagementException {
 
         Connection connection = null;
