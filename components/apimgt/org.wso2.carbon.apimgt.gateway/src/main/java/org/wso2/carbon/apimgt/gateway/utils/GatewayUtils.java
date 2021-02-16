@@ -161,6 +161,27 @@ public class GatewayUtils {
         return null;
     }
 
+    public static String getJTIFromJWT(String payload) {
+        try {
+            // Decoding the JWT payload
+            byte[] jwtByteArray = Base64.decodeBase64(payload.getBytes("UTF-8"));
+            String claims = new String(jwtByteArray, "UTF-8");
+            JSONParser parser = new JSONParser();
+            Map claimsMap = (Map) parser.parse(claims);
+            Object jti = claimsMap.get("jti");
+            if (jti == null) {
+                return null;
+            } else {
+                return jti.toString();
+            }
+        } catch (UnsupportedEncodingException e) {
+            log.error("Error while decoding jwt header", e);
+        } catch (ParseException e) {
+            log.error("Error while parsing jwt header", e);
+        }
+        return null;
+    }
+
     /**
      * Get the config system registry for tenants
      *
