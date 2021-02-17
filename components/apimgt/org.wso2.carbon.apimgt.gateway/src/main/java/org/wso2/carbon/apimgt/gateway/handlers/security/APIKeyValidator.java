@@ -35,6 +35,7 @@ import org.wso2.carbon.apimgt.gateway.handlers.security.keys.APIKeyDataStore;
 import org.wso2.carbon.apimgt.gateway.handlers.security.keys.WSAPIKeyDataStore;
 import org.wso2.carbon.apimgt.gateway.handlers.security.thrift.ThriftAPIDataStore;
 import org.wso2.carbon.apimgt.gateway.internal.ServiceReferenceHolder;
+import org.wso2.carbon.apimgt.gateway.utils.GatewayUtils;
 import org.wso2.carbon.apimgt.impl.APIConstants;
 import org.wso2.carbon.apimgt.impl.APIManagerConfiguration;
 import org.wso2.carbon.apimgt.impl.dto.APIInfoDTO;
@@ -53,6 +54,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.regex.Pattern;
 import java.util.Set;
 
 /**
@@ -141,6 +143,7 @@ public class APIKeyValidator {
                                                         String matchingResource, String httpVerb, boolean defaultVersionInvoked) throws APISecurityException {
 
         String prefixedVersion = apiVersion;
+        String jti = null;
         //Check if client has invoked the default version API.
         if (defaultVersionInvoked) {
             //Prefix the version so that it looks like _default_1.0 (_default_<version>)).
@@ -148,18 +151,42 @@ public class APIKeyValidator {
             prefixedVersion = APIConstants.DEFAULT_VERSION_PREFIX + prefixedVersion;
         }
 
+        if (apiKey.split(Pattern.quote(".")).length == 3) {
+            jti = GatewayUtils.getJTIFromJWT(apiKey.split(Pattern.quote("."))[1]);
+        }
         String cacheKey = APIUtil.getAccessTokenCacheKey(apiKey, context, prefixedVersion, matchingResource,
                 httpVerb, authenticationScheme);
         //If Gateway key caching is enabled.
         if (gatewayKeyCacheEnabled) {
             //Get the access token from the first level cache.
             String cachedToken = (String) getGatewayTokenCache().get(apiKey);
+            String cachedJTI = null;
+            if (jti != null) {
+                cachedJTI = (String) getGatewayTokenCache().get(jti);
+            }
 
             //If the access token exists in the first level cache.
             if (cachedToken != null) {
                 APIKeyValidationInfoDTO info = (APIKeyValidationInfoDTO) getGatewayKeyCache().get(cacheKey);
 
                 if (info != null) {
+                    // Check if JWT is revoked using JTI
+                    if (jti != null && cachedJTI == null) {
+                        // Update the relevant caches
+                        getGatewayKeyCache().remove(cacheKey);
+                        getGatewayTokenCache().remove(apiKey);
+                        getInvalidTokenCache().put(apiKey, cachedToken);
+                        String revokedJTI = (String) getInvalidTokenCache().get(jti);
+                        if (revokedJTI != null) {
+                            // Token is revoked/invalid or expired
+                            APIKeyValidationInfoDTO apiKeyValidationInfoDTO = new APIKeyValidationInfoDTO();
+                            apiKeyValidationInfoDTO.setAuthorized(false);
+                            apiKeyValidationInfoDTO.setValidationStatus(APIConstants.KeyValidationStatus
+                                    .API_AUTH_INVALID_CREDENTIALS);
+                            return apiKeyValidationInfoDTO;
+                        }
+                    }
+
                     if (APIUtil.isAccessTokenExpired(info)) {
                         log.info("Invalid OAuth Token : Access Token " + apiKey + " expired.");
                         info.setAuthorized(false);
@@ -170,13 +197,23 @@ public class APIKeyValidator {
                         getGatewayTokenCache().remove(apiKey);
                         // Put into invalid token cache
                         getInvalidTokenCache().put(apiKey, cachedToken);
+
+                        if (jti != null) {
+                            // Support revocation with JTI
+                            getGatewayTokenCache().remove(jti);
+                            getInvalidTokenCache().put(jti, cachedToken);
+                        }
                     }
                     return info;
                 }
             } else {
                 // Check token available in invalidToken Cache
                 String revokedCachedToken = (String) getInvalidTokenCache().get(apiKey);
-                if (revokedCachedToken != null) {
+                String revokedTokenJTI = null;
+                if (jti != null) {
+                    revokedTokenJTI = (String) getInvalidTokenCache().get(jti);
+                }
+                if (revokedCachedToken != null || revokedTokenJTI != null) {
                     // Token is revoked/invalid or expired
                     APIKeyValidationInfoDTO apiKeyValidationInfoDTO = new APIKeyValidationInfoDTO();
                     apiKeyValidationInfoDTO.setAuthorized(false);
@@ -197,10 +234,16 @@ public class APIKeyValidator {
                 if (info.getValidationStatus() == APIConstants.KeyValidationStatus.API_AUTH_INVALID_CREDENTIALS) {
                     // if Token is not valid token (expired,invalid,revoked) put into invalid token cache
                     getInvalidTokenCache().put(apiKey, tenantDomain);
+                    if (jti != null) {
+                        getInvalidTokenCache().put(jti, tenantDomain);
+                    }
                 } else {
                     // Add into 1st level cache and Key cache
                     getGatewayTokenCache().put(apiKey, tenantDomain);
                     getGatewayKeyCache().put(cacheKey, info);
+                    if (jti != null) {
+                        getGatewayTokenCache().put(jti, tenantDomain);
+                    }
                 }
 
                 //If this is NOT a super-tenant API that is being invoked
@@ -215,9 +258,15 @@ public class APIKeyValidator {
                             // if Token is not valid token (expired,invalid,revoked) put into invalid token cache in
                             // tenant cache
                             getInvalidTokenCache().put(apiKey, tenantDomain);
+                            if (jti != null) {
+                                getInvalidTokenCache().put(jti, tenantDomain);
+                            }
                         } else {
                             // add into to tenant token cache
                             getGatewayTokenCache().put(apiKey, tenantDomain);
+                            if (jti != null) {
+                                getGatewayTokenCache().put(jti, tenantDomain);
+                            }
                         }
                     } finally {
                         endTenantFlow();
