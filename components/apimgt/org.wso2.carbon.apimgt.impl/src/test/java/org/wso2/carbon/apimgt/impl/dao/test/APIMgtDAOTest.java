@@ -413,7 +413,7 @@ public class APIMgtDAOTest {
         apiMgtDAO.addAPI(api, -1234);
         apiMgtDAO.makeKeysForwardCompatible("SUMEDHA", "API1", "V1.0.0", "V2.0.0", "/context1");
         apiSet = apiMgtDAO.getAPIByConsumerKey("SSDCHEJJ-AWUIS-232");
-        assertEquals(2, apiSet.size());
+        assertEquals(1, apiSet.size());
         for (APIIdentifier apiId : apiSet) {
             assertEquals("SUMEDHA", apiId.getProviderName());
             assertEquals("API1", apiId.getApiName());
@@ -421,7 +421,7 @@ public class APIMgtDAOTest {
         }
 
         apiSet = apiMgtDAO.getAPIByConsumerKey("p1q2r3s4");
-        assertEquals(2, apiSet.size());
+        assertEquals(1, apiSet.size());
         for (APIIdentifier apiId : apiSet) {
             assertEquals("SUMEDHA", apiId.getProviderName());
             assertEquals("API1", apiId.getApiName());

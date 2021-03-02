@@ -5441,12 +5441,10 @@ public class ApiMgtDAO {
 
         Connection connection = null;
         PreparedStatement prepStmt = null;
-        PreparedStatement addSubKeySt = null;
         PreparedStatement getAppSt = null;
         ResultSet rs = null;
 
         String getSubscriptionDataQuery = SQLConstants.GET_SUBSCRIPTION_DATA_SQL;
-        String addSubKeyMapping = SQLConstants.ADD_SUBSCRIPTION_KEY_MAPPING_SQL;
         String getApplicationDataQuery = SQLConstants.GET_APPLICATION_DATA_SQL;
 
         try {
@@ -5466,8 +5464,6 @@ public class ApiMgtDAO {
                 info.subscriptionId = rs.getInt("SUBSCRIPTION_ID");
                 info.tierId = rs.getString("TIER_ID");
                 info.applicationId = rs.getInt("APPLICATION_ID");
-                info.accessToken = rs.getString("ACCESS_TOKEN");  // no decryption needed.
-                info.tokenType = rs.getString("KEY_TYPE");
                 info.subscriptionStatus = rs.getString("SUB_STATUS");
                 subscriptionData.add(info);
             }
@@ -5479,28 +5475,27 @@ public class ApiMgtDAO {
                 try {
                     if (!subscriptionIdMap.containsKey(info.subscriptionId)) {
                         apiId.setTier(info.tierId);
-                        String subscriptionStatus = (APIConstants.SubscriptionStatus.BLOCKED
-                                .equalsIgnoreCase(info.subscriptionStatus)) ?
-                                APIConstants.SubscriptionStatus.BLOCKED : APIConstants.SubscriptionStatus.UNBLOCKED;
-                        int subscriptionId = addSubscription(apiId, context, info.applicationId, subscriptionStatus,
-                                provider);
-                        if (subscriptionId == -1) {
-                            String msg = "Unable to add a new subscription for the API: " + apiName +
-                                    ":v" + newVersion;
-                            log.error(msg);
-                            throw new APIManagementException(msg);
+                        String subscriptionStatus;
+                        if (APIConstants.SubscriptionStatus.BLOCKED.equalsIgnoreCase(info.subscriptionStatus)) {
+                            subscriptionStatus = APIConstants.SubscriptionStatus.BLOCKED;
+                        } else if (APIConstants.SubscriptionStatus.PROD_ONLY_BLOCKED
+                                .equalsIgnoreCase(info.subscriptionStatus)) {
+                            subscriptionStatus = APIConstants.SubscriptionStatus.PROD_ONLY_BLOCKED;
+                        } else {
+                            subscriptionStatus = APIConstants.SubscriptionStatus.UNBLOCKED;
                         }
-                        subscriptionIdMap.put(info.subscriptionId, subscriptionId);
+                        if (!isSubscriptionAvailable(apiId, info.applicationId)) {
+                            int subscriptionId =
+                                    addSubscription(apiId, context, info.applicationId, subscriptionStatus, provider);
+                            if (subscriptionId == -1) {
+                                String msg = "Unable to add a new subscription for the API: " + apiName +
+                                        ":v" + newVersion;
+                                log.error(msg);
+                                throw new APIManagementException(msg);
+                            }
+                            subscriptionIdMap.put(info.subscriptionId, subscriptionId);
+                        }
                     }
-                    int subscriptionId = subscriptionIdMap.get(info.subscriptionId);
-                    connection.setAutoCommit(false);
-
-                    addSubKeySt = connection.prepareStatement(addSubKeyMapping);
-                    addSubKeySt.setInt(1, subscriptionId);
-                    addSubKeySt.setString(2, info.accessToken);
-                    addSubKeySt.setString(3, info.tokenType);
-                    addSubKeySt.execute();
-                    connection.commit();
 
                     subscribedApplications.add(info.applicationId);
                     // catching the exception because when copy the api without the option "require re-subscription"
@@ -5520,8 +5515,10 @@ public class ApiMgtDAO {
                 if (!subscribedApplications.contains(applicationId)) {
                     apiId.setTier(rs.getString("TIER_ID"));
                     try {
-                        addSubscription(apiId, rs.getString("CONTEXT"), applicationId, APIConstants
-                                .SubscriptionStatus.UNBLOCKED, provider);
+                        if (!isSubscriptionAvailable(apiId, applicationId)) {
+                            addSubscription(apiId, rs.getString("CONTEXT"), applicationId, APIConstants
+                                    .SubscriptionStatus.UNBLOCKED, provider);
+                        }
                         // catching the exception because when copy the api without the option "require re-subscription"
                         // need to go forward rather throwing the exception
                     } catch (SubscriptionAlreadyExistingException e) {
@@ -5536,9 +5533,42 @@ public class ApiMgtDAO {
             handleException("Error when executing the SQL queries", e);
         } finally {
             APIMgtDBUtil.closeAllConnections(getAppSt, null, null);
-            APIMgtDBUtil.closeAllConnections(addSubKeySt, null, null);
             APIMgtDBUtil.closeAllConnections(prepStmt, connection, rs);
         }
+    }
+
+    private boolean isSubscriptionAvailable(APIIdentifier identifier, int applicationId) throws APIManagementException {
+        boolean isSubscriptionAvailable = false;
+        Connection conn = null;
+        ResultSet resultSet = null;
+        PreparedStatement ps = null;
+        int apiId;
+        try {
+            conn = APIMgtDBUtil.getConnection();
+            conn.setAutoCommit(false);
+            apiId = getAPIID(identifier, conn);
+
+            // Query to check if this subscription already exists
+            String checkDuplicateQuery = SQLConstants.CHECK_EXISTING_SUBSCRIPTION_SQL;
+            ps = conn.prepareStatement(checkDuplicateQuery);
+            ps.setInt(1, apiId);
+            ps.setInt(2, applicationId);
+
+            resultSet = ps.executeQuery();
+
+            // check the subscription already exists
+            if (resultSet.next()) {
+                isSubscriptionAvailable = true;
+            }
+            // finally commit transaction
+            conn.commit();
+
+        } catch (SQLException e) {
+            handleException("Error while checking if the subscription is available for the API ", e);
+        } finally {
+            APIMgtDBUtil.closeAllConnections(ps, conn, resultSet);
+        }
+        return isSubscriptionAvailable;
     }
 
     public void addAPI(API api, int tenantId) throws APIManagementException {
@@ -7838,8 +7868,6 @@ public class ApiMgtDAO {
         private int subscriptionId;
         private String tierId;
         private int applicationId;
-        private String accessToken;
-        private String tokenType;
         private String subscriptionStatus;
     }
 

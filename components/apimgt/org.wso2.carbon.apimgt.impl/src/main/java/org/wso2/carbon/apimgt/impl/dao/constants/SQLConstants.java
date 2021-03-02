@@ -1742,18 +1742,14 @@ public class SQLConstants {
             "   SUB.TIER_ID AS TIER_ID," +
             "   SUB.APPLICATION_ID AS APPLICATION_ID," +
             "   SUB.SUB_STATUS AS SUB_STATUS," +
-            "   API.CONTEXT AS CONTEXT," +
-            "   SKM.ACCESS_TOKEN AS ACCESS_TOKEN," +
-            "   SKM.KEY_TYPE AS KEY_TYPE" +
+            "   API.CONTEXT AS CONTEXT" +
             " FROM" +
             "   AM_SUBSCRIPTION SUB," +
-            "   AM_SUBSCRIPTION_KEY_MAPPING SKM, " +
             "   AM_API API " +
             " WHERE" +
             "   API.API_PROVIDER = ?" +
             "   AND API.API_NAME = ?" +
             "   AND API.API_VERSION = ?" +
-            "   AND SKM.SUBSCRIPTION_ID = SUB.SUBSCRIPTION_ID" +
             "   AND API.API_ID = SUB.API_ID";
 
     public static final String ADD_SUBSCRIPTION_KEY_MAPPING_SQL =
