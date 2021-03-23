@@ -747,7 +747,7 @@ APIDesigner.prototype.remove_trailing_slash = function(swagger) {
         if (path.length > 1 && path.endsWith("/")) {
             var newkey = path.slice(0, -1);
             if (designer.check_if_resource_path_exist(newkey)) {
-                Object.assign(swagger.paths[newkey], swagger.paths[path]);
+                Object.defineProperty(swagger.paths, newkey, Object.getOwnPropertyDescriptor(swagger.paths, path));
             } else {
                 swagger.paths[newkey] = swagger.paths[path];
             }
