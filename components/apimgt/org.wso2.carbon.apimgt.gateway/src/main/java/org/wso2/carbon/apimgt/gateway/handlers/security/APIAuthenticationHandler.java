@@ -251,18 +251,18 @@ public class APIAuthenticationHandler extends AbstractHandler implements Managed
             }
 
             String errorMessage = APISecurityConstants.getAuthenticationFailureMessage(e.getErrorCode());
-            String requestURI = (String) messageContext.getProperty(RESTConstants.REST_FULL_REQUEST_PATH);
+            String requestURI = "";
+            if (messageContext.getProperty(RESTConstants.REST_FULL_REQUEST_PATH) != null){
+                requestURI = (String) messageContext.getProperty(RESTConstants.REST_FULL_REQUEST_PATH);
 
+            }
             if (APISecurityConstants.API_AUTH_GENERAL_ERROR_MESSAGE.equals(errorMessage)) {
                 log.error("API authentication failure due to "
                         + APISecurityConstants.API_AUTH_GENERAL_ERROR_MESSAGE, e);
             } else {
-                if (requestURI != null) {
-                    // We do not need to log known authentication failures as errors since these are not product errors.
-                    log.warn("API authentication failure due to " + errorMessage + " " + requestURI);
-                } else {
-                    log.warn("API authentication failure due to " + errorMessage);
-                }
+                // We do not need to log known authentication failures as errors since these are not product errors.
+                log.warn("API authentication failure due to " + errorMessage + " " + requestURI);
+
                 if (log.isDebugEnabled()) {
                     log.debug("API authentication failed with error " + e.getErrorCode(), e);
                 }
