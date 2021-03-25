@@ -146,7 +146,7 @@ for(var i=0;i < outputs.tiers.length; i++){
             keyState: oauthapp.prodKeyState,
             grants: prodGrants,
             tokenType: application.tokenType,
-            gatewayurlendpoint: gatewayUrlEndpointProduction,
+            gatewayurlendpoint: urlEndpoint,
             id: application.id
         }
       %>
@@ -186,7 +186,7 @@ for(var i=0;i < outputs.tiers.length; i++){
             keyState: oauthapp.sandboxKeyState,
             grants:sandboxGrants,
             tokenType: application.tokenType,
-            gatewayurlendpoint: gatewayUrlEndpointSandbox,
+            gatewayurlendpoint: urlEndpoint,
             id: application.id
         }
       %>      
