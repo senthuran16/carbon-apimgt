@@ -211,6 +211,7 @@ public class ApisApiServiceImpl extends ApisApiService {
     public Response apisPost(APIDetailedDTO body, String contentType){
         URI createdApiUri;
         APIDetailedDTO createdApiDTO;
+        String swaggerJson = null;
         try {
             APIProvider apiProvider = RestApiUtil.getLoggedInUserProvider();
             String username = RestApiUtil.getLoggedInUsername();
@@ -221,8 +222,9 @@ public class ApisApiServiceImpl extends ApisApiService {
                 if (!RestApiPublisherUtils.isValidWSAPI(body)) {
                     RestApiUtil.handleBadRequest("Endpoint URLs should be valid web socket URLs", log);
                 }
+            } else {
+                swaggerJson = validateSwaggerDefinition(body.getApiDefinition());
             }
-            String swaggerJson = validateSwaggerDefinition(body.getApiDefinition());
             String apiSecurity = body.getApiSecurity();
             if (!apiProvider.isClientCertificateBasedAuthenticationConfigured() && apiSecurity != null && apiSecurity
                     .contains(APIConstants.API_SECURITY_MUTUAL_SSL)) {
@@ -945,8 +947,8 @@ public class ApisApiServiceImpl extends ApisApiService {
             apiToUpdate = assignLabelsToDTO(body,apiToUpdate);
 
             apiProvider.updateAPI(apiToUpdate);
-            String swaggerJson = validateSwaggerDefinition(body.getApiDefinition());
             if (!isWSAPI) {
+                String swaggerJson = validateSwaggerDefinition(body.getApiDefinition());
                 apiProvider.saveSwagger20Definition(apiToUpdate.getId(), swaggerJson);
             }
             API updatedApi = apiProvider.getAPI(apiIdentifier);
