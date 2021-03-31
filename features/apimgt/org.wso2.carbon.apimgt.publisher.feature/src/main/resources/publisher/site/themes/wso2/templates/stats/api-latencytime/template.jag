@@ -16,7 +16,6 @@
     %>
 
     <div class="col-md-12" style="margin-top :10px">
-        <div class="row">
             <div class="form-group col-sm-12">
                 <div class=" col-sm-1"></div>
                 <div class=" col-sm-3">
@@ -54,8 +53,6 @@
                    </div>
                </div>
             </div>
-        </div>
-        <div class="row">
             <div class="col-sm-1" id="clear-btn-wrapper" style="display:none; margin-top: 20px;">
                     <button id="clear-btn" type="button" class="btn btn-default"><%=i18n.localize("Clear")%></button>
             </div>  
@@ -76,10 +73,7 @@
                     </div>
                     <select id="mediationType" class="selectpicker" data-live-search="true" style="margin-left :10px;"></select>      
                 </div> 
-            </div>           
-            
-        </div>
-
+            </div>
         <div id="noData"></div>
         <br/>
         <div id="chartContainer"  class="col-sm-12" style="margin-bottom :5px;height: 100%"></div>
