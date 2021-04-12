@@ -34,6 +34,7 @@ import io.netty.handler.codec.http.websocketx.PingWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketFrame;
 import io.netty.util.CharsetUtil;
+import io.netty.util.ReferenceCountUtil;
 import org.apache.axiom.util.UIDGenerator;
 import org.apache.axis2.AxisFault;
 import org.apache.axis2.Constants;
@@ -163,7 +164,12 @@ public class WebsocketInboundHandler extends ChannelInboundHandlerAdapter {
                 if (StringUtils.isNotEmpty(token)) {
                     ((FullHttpRequest) msg).headers().set(APIMgtGatewayConstants.WS_JWT_TOKEN_HEADER, token);
                 }
-                ctx.fireChannelRead(msg);
+//                ctx.fireChannelRead(msg);
+                try {
+                    ctx.fireChannelRead(msg);
+                } finally {
+                    ReferenceCountUtil.release(msg);
+                }
                 if (APIUtil.isAnalyticsEnabled()) {
                     WebSocketUtils.setApiPropertyToChannel(ctx,
                             org.wso2.carbon.apimgt.gateway.handlers.analytics.Constants.USER_AGENT_PROPERTY, useragent);
@@ -206,7 +212,12 @@ public class WebsocketInboundHandler extends ChannelInboundHandlerAdapter {
             boolean isAllowed = doThrottle(ctx, (WebSocketFrame) msg);
 
             if (isAllowed) {
-                ctx.fireChannelRead(msg);
+//                ctx.fireChannelRead(msg);
+                try {
+                    ctx.fireChannelRead(msg);
+                } finally {
+                    ReferenceCountUtil.release(msg);
+                }
                 String clientIp = getRemoteIP(ctx);
                 // publish analytics events if analytics is enabled
                 if (APIUtil.isAnalyticsEnabled()) {

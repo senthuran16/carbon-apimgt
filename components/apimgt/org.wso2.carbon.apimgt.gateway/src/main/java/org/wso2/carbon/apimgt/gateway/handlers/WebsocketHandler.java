@@ -23,6 +23,7 @@ import io.netty.channel.CombinedChannelDuplexHandler;
 import io.netty.handler.codec.http.websocketx.CloseWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.PongWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketFrame;
+import io.netty.util.ReferenceCountUtil;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.apimgt.api.APIManagementException;
@@ -47,7 +48,12 @@ public class WebsocketHandler extends CombinedChannelDuplexHandler<WebsocketInbo
 
         if ((msg instanceof CloseWebSocketFrame) || (msg instanceof PongWebSocketFrame)) {
             //if the inbound frame is a closed frame, throttling, analytics will not be published.
-            outboundHandler().write(ctx, msg, promise);
+//            outboundHandler().write(ctx, msg, promise);
+            try {
+                outboundHandler().write(ctx, msg, promise);
+            } finally {
+                ReferenceCountUtil.release(msg);
+            }
 
         } else if (msg instanceof WebSocketFrame) {
             if (isAllowed(ctx, (WebSocketFrame) msg)) {
