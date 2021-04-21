@@ -34,6 +34,7 @@ import org.apache.synapse.Mediator;
 import org.apache.synapse.MessageContext;
 import org.apache.synapse.SynapseConstants;
 import org.apache.synapse.commons.throttle.core.AccessInformation;
+import org.apache.synapse.commons.throttle.core.CallerConfiguration;
 import org.apache.synapse.commons.throttle.core.RoleBasedAccessRateController;
 import org.apache.synapse.commons.throttle.core.Throttle;
 import org.apache.synapse.commons.throttle.core.ThrottleConfiguration;
@@ -814,7 +815,18 @@ public class ThrottleHandler extends AbstractHandler implements ManagedLifecycle
                                     PolicyEngine.getPolicy(spikeArrestSubscriptionLevelPolicy));
                         }
                     } else {
-                        if (throttle.getThrottleContext(subscriptionLevelThrottleKey) == null) {
+                        boolean isPolicyChanged = false;
+                        if (throttle.getThrottleContext(subscriptionLevelThrottleKey) != null) {
+                            CallerConfiguration callerConfiguration = throttle
+                                                            .getThrottleContext(subscriptionLevelThrottleKey)
+                                                            .getThrottleConfiguration()
+                                                            .getCallerConfiguration(subscriptionLevelThrottleKey);
+                            int storedMaximumRequestPerUnitTime = callerConfiguration.getMaximumRequestPerUnitTime();
+                            long storedUnitTime = callerConfiguration.getUnitTime();
+                            isPolicyChanged = (storedMaximumRequestPerUnitTime != maxRequestCount) || (
+                                                            spikeArrestWindowUnitTime != storedUnitTime);
+                        }
+                        if (throttle.getThrottleContext(subscriptionLevelThrottleKey) == null || isPolicyChanged) {
                             OMElement spikeArrestSubscriptionLevelPolicy = createSpikeArrestSubscriptionLevelPolicy(
                                     subscriptionLevelThrottleKey, maxRequestCount, spikeArrestWindowUnitTime);
                             if (spikeArrestSubscriptionLevelPolicy != null) {
