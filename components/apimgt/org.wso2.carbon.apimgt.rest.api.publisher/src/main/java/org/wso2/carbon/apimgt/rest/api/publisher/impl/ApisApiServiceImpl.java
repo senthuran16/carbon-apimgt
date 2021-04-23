@@ -20,6 +20,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import io.swagger.models.Path;
 import io.swagger.models.Swagger;
 import io.swagger.parser.SwaggerParser;
@@ -105,8 +108,8 @@ import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -1139,41 +1142,45 @@ public class ApisApiServiceImpl extends ApisApiService {
      * @return apiDefinition with modified resources
      */
     private String validateSwaggerDefinition(String apiDefinition) {
-        try {
-            if (apiDefinition == null) {
-                RestApiUtil.handleBadRequest("Parameter: \"apiDefinition\" cannot be null", log);
-            }
-            JSONParser parser = new JSONParser();
-            JSONObject apiDefinitionJSON = (JSONObject) parser.parse(apiDefinition);
-            Map<String, JSONObject> pathMap = (Map<String, JSONObject>) apiDefinitionJSON.get(APIConstants.SWAGGER_PATHS);
-            Map<String, JSONObject> clonePathMap = new HashMap<>();
-            apiDefinitionJSON.remove(APIConstants.SWAGGER_PATHS);
-            Iterator<Entry<String, JSONObject>> iterator = pathMap.entrySet().iterator();
-            while (iterator.hasNext()) {
-                Map.Entry<String, JSONObject> resource = iterator.next();
-                String key = resource.getKey();
-                JSONObject resourceDefinition = resource.getValue();
-                if (key.length() > 1 && key.endsWith("/")) {
-                    key = key.substring(0, key.length() - 1);
-                }
-
-                if (clonePathMap.containsKey(key)) {
-                    JSONObject updatedDefinition = clonePathMap.get(key);
-                    updatedDefinition.putAll(resourceDefinition);
-                    clonePathMap.put(key, updatedDefinition);
-                } else {
-                    clonePathMap.put(key, resourceDefinition);
-                }
-
-                iterator.remove();
-            }
-            apiDefinitionJSON.put(APIConstants.SWAGGER_PATHS, clonePathMap);
-            return Json.mapper().writeValueAsString(apiDefinitionJSON);
-        } catch (ParseException | JsonProcessingException e) {
-            String errorMessage = "Error while validating the swagger definition";
-            RestApiUtil.handleInternalServerError(errorMessage, e, log);
+        if (apiDefinition == null) {
+            RestApiUtil.handleBadRequest("Parameter: \"apiDefinition\" cannot be null", log);
         }
-        return null;
+        JsonElement jsonElement =  new JsonParser().parse(apiDefinition);
+        JsonObject apiDefinitionJSON = jsonElement.getAsJsonObject();
+        JsonElement pathMap = apiDefinitionJSON.get(APIConstants.SWAGGER_PATHS);
+        Map<String, JsonObject> clonePathMap = new LinkedHashMap<>();
+        Iterator<Entry<String, JsonElement>> iterator = pathMap.getAsJsonObject().entrySet().iterator();
+        while (iterator.hasNext()) {
+            Entry<String, JsonElement> resource = iterator.next();
+            String key = resource.getKey();
+            JsonObject resourceDefinition = resource.getValue().getAsJsonObject();
+            if (key.length() > 1 && key.endsWith("/")) {
+                key = key.substring(0, key.length() - 1);
+            }
+
+            if (clonePathMap.containsKey(key)) {
+                // In case the resource path already exists in map, update the resource definition with the new verb
+                JsonObject updatedDefinition = clonePathMap.get(key);
+                Iterator<Entry<String, JsonElement>> resourceDefinitionElementIterator =
+                        resourceDefinition.entrySet().iterator();
+                while (resourceDefinitionElementIterator.hasNext()) {
+                    Entry<String, JsonElement> resourceDefinitionEntry = resourceDefinitionElementIterator.next();
+                    String resourceDefinitionElementKey = resourceDefinitionEntry.getKey();
+                    JsonObject resourceDefinitionElement = resourceDefinitionEntry.getValue().getAsJsonObject();
+                    updatedDefinition.add(resourceDefinitionElementKey, resourceDefinitionElement);
+                    resourceDefinitionElementIterator.remove();
+                }
+                clonePathMap.put(key, updatedDefinition);
+            } else {
+                clonePathMap.put(key, resourceDefinition);
+            }
+
+            iterator.remove();
+        }
+        String clonePathMapJsonString = new Gson().toJson(clonePathMap, LinkedHashMap.class);
+        JsonElement clonePathJsonElement =  new JsonParser().parse(clonePathMapJsonString);
+        apiDefinitionJSON.add(APIConstants.SWAGGER_PATHS, clonePathJsonElement);
+        return new Gson().toJson(apiDefinitionJSON);
     }
 
     /**
