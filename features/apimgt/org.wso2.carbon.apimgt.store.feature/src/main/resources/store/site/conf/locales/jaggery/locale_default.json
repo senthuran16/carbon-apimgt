@@ -394,7 +394,8 @@
     "Application subscription is not permitted for this API, as it is only protected with Mutual SSL." : "Application subscription is not permitted for this API, as it is only protected with Mutual SSL.",
     "Try" : "Try",
     "Using" : "Using",
-    "Set Request Header" : "Set Request Header"
-
-
+    "Set Request Header" : "Set Request Header",
+    "Create your Account" : "Create your Account",
+    "First Name" : "First Name",
+    "Last Name" : "Last Name"
 }
