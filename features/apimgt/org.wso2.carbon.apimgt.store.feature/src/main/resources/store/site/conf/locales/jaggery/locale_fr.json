@@ -398,5 +398,8 @@
 	"Download client-side SDKs for this API." : "Téléchargez les kits SDK côté client pour cette API.",
 	"Try" : "Essayer",
 	"Using" : "En utilisant",
-	"Set Request Header" : "Définir l'en-tête de demande"
+	"Set Request Header" : "Définir l'en-tête de demande",
+	"Create your Account": "Créez votre compte",
+	"First Name" : "Prénom",
+	"Last Name" : "Nom de famille"
 }

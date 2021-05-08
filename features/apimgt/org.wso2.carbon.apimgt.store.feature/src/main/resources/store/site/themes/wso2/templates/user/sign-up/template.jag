@@ -27,13 +27,13 @@
                                     <img class="img-responsive brand-spacer" alt="store_logo" src="<%=jagg.getAbsoluteUrl(jagg.getThemeFile("images/logo-white.png"))%>">
                                 </div>
                             </div>
-                            <h2 class="text-center-sm text-center-xs text-center-md text-right">API Store</h2>
+                            <h2 class="text-center-sm text-center-xs text-center-md text-right"><%=i18n.localize("API Store")%></h2>
                         </div>
                     </div>
                     <div class="col-xs-12 col-sm-12 col-md-9 col-lg-9 login padding-bottom-100"">
                         <div class="data-container">
                             <form class="form-horizontal" id="sign-up" autocomplete="off">
-                                <h3>Create your Account</h3>
+                                <h3><%=i18n.localize("Create your Account")%></h3>
                                 <div class="form-group">
                                     <div class="col-xs-12 col-sm-12 col-md-5 col-lg-5">
                                         <label class="control-label"><%=i18n.localize("Username")%> *</label>
