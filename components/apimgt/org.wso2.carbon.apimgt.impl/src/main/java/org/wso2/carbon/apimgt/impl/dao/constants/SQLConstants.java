@@ -1664,7 +1664,7 @@ public class SQLConstants {
             " SELECT " +
             "   APP.NAME " +
             " FROM " +
-            "   AM_APPLICATION AS APP INNER JOIN AM_APPLICATION_KEY_MAPPING AS MAP" +
+            "   AM_APPLICATION APP INNER JOIN AM_APPLICATION_KEY_MAPPING MAP" +
             "   ON APP.APPLICATION_ID = MAP.APPLICATION_ID" +
             " WHERE " +
             "   CONSUMER_KEY = ?";
