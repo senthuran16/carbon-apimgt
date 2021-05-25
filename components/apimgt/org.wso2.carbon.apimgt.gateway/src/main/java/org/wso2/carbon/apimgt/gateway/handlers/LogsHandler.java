@@ -33,6 +33,9 @@ import org.wso2.carbon.apimgt.impl.APIConstants;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.text.SimpleDateFormat;
+import java.util.ArrayDeque;
+import java.util.Date;
 import java.util.Map;
 import java.util.Set;
 import javax.xml.stream.XMLStreamException;
@@ -41,7 +44,19 @@ import javax.xml.stream.XMLStreamException;
  * This Handler can be used to log all external calls done by the api manager via synapse
  */
 public class LogsHandler extends AbstractSynapseHandler {
-    private static final Log log = LogFactory.getLog(APIConstants.CORRELATION_LOGGER);
+    private static final Log correlationLog = LogFactory.getLog(APIConstants.CORRELATION_LOGGER);
+    private static final Log messageTrackLog = LogFactory.getLog(APIConstants.MESSAGE_TRACK_LOGGER);
+    private static ArrayDeque<String> messageTrackLogs = new ArrayDeque<>();
+    private final SimpleDateFormat simpleDateFormat = new SimpleDateFormat("[yyyy-MM-dd HH:mm:ss]");
+    private final String KEY_TIMESTAMP = "Timestamp: ";
+    private final String KEY_MESSAGE_ID = ", MessageId: ";
+    private final String KEY_DIRECTION = ", Direction: ";
+    private final String KEY_HTTP_METHOD = ", HTTPMethod: ";
+    private final String KEY_HTTP_SC = ", HTTPStatusCode: ";
+    private final String KEY_ADDRESS = ", ";
+    private final String HTTP_METHOD = "HTTP_METHOD";
+    private final String HTTP_SC = "HTTP_SC";
+
     private static boolean isEnabled = false;
     private static boolean isSet = false;
     private String apiName = null;
@@ -69,6 +84,11 @@ public class LogsHandler extends AbstractSynapseHandler {
     private static final String REQUEST_EVENT_PUBLICATION_ERROR = "Cannot publish request event. ";
     private static final String RESPONSE_EVENT_PUBLICATION_ERROR = "Cannot publish response event. ";
 
+    public LogsHandler() {
+        Thread asyncLoggerThread = new Thread(new AsyncLogger());
+        asyncLoggerThread.start();
+    }
+
     private boolean isEnabled() {
         if(!isSet) {
             String config = System.getProperty(APIConstants.ENABLE_CORRELATION_LOGS);
@@ -86,10 +106,20 @@ public class LogsHandler extends AbstractSynapseHandler {
                 apiTo = LogUtils.getTo(messageContext);
                 return true;
             } catch (Exception e) {
-                log.error(REQUEST_EVENT_PUBLICATION_ERROR + e.getMessage(), e);
+                correlationLog.error(REQUEST_EVENT_PUBLICATION_ERROR + e.getMessage(), e);
             }
             return false;
         }
+
+        // Track messages
+        String logMessage = KEY_TIMESTAMP + simpleDateFormat.format(new Date());
+        logMessage += KEY_MESSAGE_ID + messageContext.getMessageID();
+        logMessage += KEY_DIRECTION + "RequestIn";
+        org.apache.axis2.context.MessageContext axis2MessageContext =
+                ((Axis2MessageContext) messageContext).getAxis2MessageContext();
+        logMessage += KEY_HTTP_METHOD + axis2MessageContext.getProperty(HTTP_METHOD);
+        logMessage += KEY_ADDRESS + messageContext.getTo();
+        messageTrackLogs.add(logMessage);
         return true;
     }
 
@@ -121,10 +151,20 @@ public class LogsHandler extends AbstractSynapseHandler {
                 apiRsrcCacheKey = LogUtils.getResourceCacheKey(messageContext);
                 return true;
             } catch (Exception e) {
-                log.error(REQUEST_EVENT_PUBLICATION_ERROR + e.getMessage(), e);
+                correlationLog.error(REQUEST_EVENT_PUBLICATION_ERROR + e.getMessage(), e);
             }
             return false;
         }
+
+        // Track messages
+        String logMessage = KEY_TIMESTAMP + simpleDateFormat.format(new Date());
+        logMessage += KEY_MESSAGE_ID + messageContext.getMessageID();
+        logMessage += KEY_DIRECTION + "RequestOut";
+        org.apache.axis2.context.MessageContext axis2MessageContext =
+                ((Axis2MessageContext) messageContext).getAxis2MessageContext();
+        logMessage += KEY_HTTP_METHOD + axis2MessageContext.getProperty(HTTP_METHOD);
+        logMessage += KEY_ADDRESS + messageContext.getTo();
+        messageTrackLogs.add(logMessage);
         return true;
     }
 
@@ -149,7 +189,7 @@ public class LogsHandler extends AbstractSynapseHandler {
                     String uuIdHeader = (String) messageContext.getProperty(UUID_HEADER);
                     String correlationIdHeader = (String) messageContext.getProperty(CORRELATION_ID_HEADER);
                     MDC.put(APIConstants.CORRELATION_ID, correlationIdHeader);
-                    log.info(beTotalLatency + "|HTTP|" + apiName + "|" + apiMethod + "|" + apiCTX + apiElectedRsrc
+                    correlationLog.info(beTotalLatency + "|HTTP|" + apiName + "|" + apiMethod + "|" + apiCTX + apiElectedRsrc
                             + "|" + apiTo + "|" + authHeader + "|" + orgIdHeader + "|" + SrcIdHeader
                             + "|" + applIdHeader + "|" + uuIdHeader + "|" + requestSize
                             + "|" + responseSize + "|" + apiResponseSC + "|"
@@ -157,15 +197,34 @@ public class LogsHandler extends AbstractSynapseHandler {
                     MDC.remove(APIConstants.CORRELATION_ID);
                     return true;
                 } catch (Exception e) {
-                    log.error(RESPONSE_EVENT_PUBLICATION_ERROR + e.getMessage(), e);
+                    correlationLog.error(RESPONSE_EVENT_PUBLICATION_ERROR + e.getMessage(), e);
                 }
             }
             return false;
         }
+
+        // Track messages
+        String logMessage = KEY_TIMESTAMP + simpleDateFormat.format(new Date());
+        logMessage += KEY_MESSAGE_ID + messageContext.getMessageID();
+        logMessage += KEY_DIRECTION + "ResponseIn";
+        org.apache.axis2.context.MessageContext axis2MessageContext =
+                ((Axis2MessageContext) messageContext).getAxis2MessageContext();
+        logMessage += KEY_HTTP_SC + axis2MessageContext.getProperty(HTTP_SC);
+        logMessage += KEY_ADDRESS + messageContext.getTo();
+        messageTrackLogs.add(logMessage);
         return true;
     }
 
     public boolean handleResponseOutFlow(MessageContext messageContext) {
+        // Track messages
+        String logMessage = KEY_TIMESTAMP + simpleDateFormat.format(new Date());
+        logMessage += KEY_MESSAGE_ID + messageContext.getMessageID() ;
+        logMessage += KEY_DIRECTION + "ResponseOut";
+        org.apache.axis2.context.MessageContext axis2MessageContext =
+                ((Axis2MessageContext) messageContext).getAxis2MessageContext();
+        logMessage += KEY_HTTP_SC + axis2MessageContext.getProperty(HTTP_SC);
+        logMessage += KEY_ADDRESS + messageContext.getTo();
+        messageTrackLogs.add(logMessage);
         return true;
     }
 
@@ -197,7 +256,7 @@ public class LogsHandler extends AbstractSynapseHandler {
             beTotalLatency = beEndTime - beStartTime;
 
         } catch (Exception e) {
-            log.error("Error getBackendLatency -  " + e.getMessage(), e);
+            correlationLog.error("Error getBackendLatency -  " + e.getMessage(), e);
         }
         return beTotalLatency;
     }
@@ -215,11 +274,14 @@ public class LogsHandler extends AbstractSynapseHandler {
             }
             responseTime = System.currentTimeMillis() - rtStartTime;
         } catch (Exception e) {
-            log.error("Error getResponseTime -  " + e.getMessage(), e);
+            correlationLog.error("Error getResponseTime -  " + e.getMessage(), e);
         }
         return responseTime;
     }
 
+    /*
+     * buildRequestMessage
+     */
     private long buildRequestMessage(org.apache.synapse.MessageContext messageContext) {
         long requestSize = 0;
         org.apache.axis2.context.MessageContext axis2MC = ((Axis2MessageContext) messageContext)
@@ -234,7 +296,7 @@ public class LogsHandler extends AbstractSynapseHandler {
                 RelayUtils.buildMessage(axis2MC);
             } catch (IOException | XMLStreamException ex) {
                 // In case of an exception, it won't be propagated up,and set response size to 0
-                log.error(REQUEST_BODY_SIZE_ERROR, ex);
+                correlationLog.error(REQUEST_BODY_SIZE_ERROR, ex);
             }
             SOAPEnvelope env = messageContext.getEnvelope();
             if (env != null) {
@@ -249,6 +311,9 @@ public class LogsHandler extends AbstractSynapseHandler {
         return requestSize;
     }
 
+    /*
+     * buildResponseMessage
+     */
     private long buildResponseMessage(org.apache.synapse.MessageContext messageContext) {
         long responseSize = 0;
         org.apache.axis2.context.MessageContext axis2MC = ((Axis2MessageContext) messageContext)
@@ -263,7 +328,7 @@ public class LogsHandler extends AbstractSynapseHandler {
                 RelayUtils.buildMessage(axis2MC);
             } catch (IOException | XMLStreamException ex) {
                 // In case of an exception, it won't be propagated up,and set response size to 0
-                log.error(REQUEST_BODY_SIZE_ERROR, ex);
+                correlationLog.error(REQUEST_BODY_SIZE_ERROR, ex);
             }
         }
         SOAPEnvelope env = messageContext.getEnvelope();
@@ -277,5 +342,22 @@ public class LogsHandler extends AbstractSynapseHandler {
         }
         return responseSize;
 
+    }
+
+    private static class AsyncLogger implements Runnable {
+        @Override
+        public void run() {
+            while (true) {
+                if (!messageTrackLogs.isEmpty()) {
+                    messageTrackLog.info(messageTrackLogs.remove());
+                } else {
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) {
+                        continue;
+                    }
+                }
+            }
+        }
     }
 }

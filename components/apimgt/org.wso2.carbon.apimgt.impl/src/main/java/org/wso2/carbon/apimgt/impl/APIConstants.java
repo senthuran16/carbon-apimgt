@@ -1507,6 +1507,11 @@ public final class APIConstants {
     public static final String CORRELATION_LOGGER = "correlation";
     public static final String LOG_ALL_METHODS = "logAllMethods";
     public static final String AM_ACTIVITY_ID = "activityid";
+
+    /**
+     * Constants for message track logging
+     * */
+    public static final String MESSAGE_TRACK_LOGGER = "MessageTracker";
     
     public static final String WSO2_ANONYMOUS_USER = "wso2.anonymous.user";
 
