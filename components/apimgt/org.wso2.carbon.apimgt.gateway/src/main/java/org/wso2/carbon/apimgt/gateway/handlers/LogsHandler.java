@@ -104,11 +104,10 @@ public class LogsHandler extends AbstractSynapseHandler {
         if (isEnabled()) {
             try {
                 apiTo = LogUtils.getTo(messageContext);
-                return true;
             } catch (Exception e) {
                 correlationLog.error(REQUEST_EVENT_PUBLICATION_ERROR + e.getMessage(), e);
+                return false;
             }
-            return false;
         }
 
         // Track messages
@@ -149,11 +148,10 @@ public class LogsHandler extends AbstractSynapseHandler {
                 apiRestReqFullPath = LogUtils.getRestReqFullPath(messageContext);
                 apiMsgUUID = (String) messageContext.getMessageID();
                 apiRsrcCacheKey = LogUtils.getResourceCacheKey(messageContext);
-                return true;
             } catch (Exception e) {
                 correlationLog.error(REQUEST_EVENT_PUBLICATION_ERROR + e.getMessage(), e);
+                return false;
             }
-            return false;
         }
 
         // Track messages
@@ -172,9 +170,7 @@ public class LogsHandler extends AbstractSynapseHandler {
         if (isEnabled()) {
             // default API would have the property LoggedResponse as true.
             String defaultAPI = (String) messageContext.getProperty("DefaultAPI");
-            if ("true".equals(defaultAPI)) {
-                return true;
-            } else {
+            if (!"true".equals(defaultAPI)) {
                 try {
                     long responseTime = getResponseTime(messageContext);
                     long beTotalLatency = getBackendLatency(messageContext);
@@ -195,12 +191,11 @@ public class LogsHandler extends AbstractSynapseHandler {
                             + "|" + responseSize + "|" + apiResponseSC + "|"
                             + applicationName + "|" + apiConsumerKey + "|" + responseTime);
                     MDC.remove(APIConstants.CORRELATION_ID);
-                    return true;
                 } catch (Exception e) {
                     correlationLog.error(RESPONSE_EVENT_PUBLICATION_ERROR + e.getMessage(), e);
+                    return false;
                 }
             }
-            return false;
         }
 
         // Track messages
