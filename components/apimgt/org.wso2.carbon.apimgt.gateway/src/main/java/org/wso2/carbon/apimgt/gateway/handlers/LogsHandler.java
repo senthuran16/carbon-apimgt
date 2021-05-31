@@ -50,10 +50,12 @@ public class LogsHandler extends AbstractSynapseHandler {
     private final SimpleDateFormat simpleDateFormat = new SimpleDateFormat("[yyyy-MM-dd HH:mm:ss]");
     private final String KEY_TIMESTAMP = "Timestamp: ";
     private final String KEY_MESSAGE_ID = ", MessageId: ";
+    private final String KEY_CORRELATION_ID = ", CorrelationId: ";
     private final String KEY_DIRECTION = ", Direction: ";
     private final String KEY_HTTP_METHOD = ", HTTPMethod: ";
     private final String KEY_HTTP_SC = ", HTTPStatusCode: ";
     private final String KEY_ADDRESS = ", ";
+    private final String CORRELATION_ID = "correlation_id";
     private final String HTTP_METHOD = "HTTP_METHOD";
     private final String HTTP_SC = "HTTP_SC";
 
@@ -111,11 +113,12 @@ public class LogsHandler extends AbstractSynapseHandler {
         }
 
         // Track messages
-        String logMessage = KEY_TIMESTAMP + simpleDateFormat.format(new Date());
-        logMessage += KEY_MESSAGE_ID + messageContext.getMessageID();
-        logMessage += KEY_DIRECTION + "RequestIn";
         org.apache.axis2.context.MessageContext axis2MessageContext =
                 ((Axis2MessageContext) messageContext).getAxis2MessageContext();
+        String logMessage = KEY_TIMESTAMP + simpleDateFormat.format(new Date());
+//        logMessage += KEY_MESSAGE_ID + messageContext.getMessageID();
+        logMessage += KEY_CORRELATION_ID + axis2MessageContext.getProperty(CORRELATION_ID);
+        logMessage += KEY_DIRECTION + "RequestIn";
         logMessage += KEY_HTTP_METHOD + axis2MessageContext.getProperty(HTTP_METHOD);
         logMessage += KEY_ADDRESS + messageContext.getTo();
         messageTrackLogs.add(logMessage);
@@ -130,13 +133,13 @@ public class LogsHandler extends AbstractSynapseHandler {
                 Set<String> key = headers.keySet();
                 String authHeader = LogUtils.getAuthorizationHeader(headers);
                 String orgIdHeader = LogUtils.getOrganizationIdHeader(headers);
-                String SrcIdHeader = LogUtils.getSourceIdHeader(headers);
+                String srcIdHeader = LogUtils.getSourceIdHeader(headers);
                 String applIdHeader = LogUtils.getApplicationIdHeader(headers);
                 String uuIdHeader = LogUtils.getUuidHeader(headers);
                 String correlationIdHeader = LogUtils.getCorrelationHeader(headers);
                 messageContext.setProperty(AUTH_HEADER, authHeader);
                 messageContext.setProperty(ORG_ID_HEADER, orgIdHeader);
-                messageContext.setProperty(SRC_ID_HEADER, SrcIdHeader);
+                messageContext.setProperty(SRC_ID_HEADER, srcIdHeader);
                 messageContext.setProperty(APP_ID_HEADER, applIdHeader);
                 messageContext.setProperty(UUID_HEADER, uuIdHeader);
                 messageContext.setProperty(CORRELATION_ID_HEADER, correlationIdHeader);
@@ -155,11 +158,12 @@ public class LogsHandler extends AbstractSynapseHandler {
         }
 
         // Track messages
-        String logMessage = KEY_TIMESTAMP + simpleDateFormat.format(new Date());
-        logMessage += KEY_MESSAGE_ID + messageContext.getMessageID();
-        logMessage += KEY_DIRECTION + "RequestOut";
         org.apache.axis2.context.MessageContext axis2MessageContext =
                 ((Axis2MessageContext) messageContext).getAxis2MessageContext();
+        String logMessage = KEY_TIMESTAMP + simpleDateFormat.format(new Date());
+//        logMessage += KEY_MESSAGE_ID + messageContext.getMessageID();
+        logMessage += KEY_CORRELATION_ID + axis2MessageContext.getProperty(CORRELATION_ID);
+        logMessage += KEY_DIRECTION + "RequestOut";
         logMessage += KEY_HTTP_METHOD + axis2MessageContext.getProperty(HTTP_METHOD);
         logMessage += KEY_ADDRESS + messageContext.getTo();
         messageTrackLogs.add(logMessage);
@@ -180,16 +184,15 @@ public class LogsHandler extends AbstractSynapseHandler {
                     apiConsumerKey = LogUtils.getConsumerKey(messageContext);
                     String authHeader = (String) messageContext.getProperty(AUTH_HEADER);
                     String orgIdHeader = (String) messageContext.getProperty(ORG_ID_HEADER);
-                    String SrcIdHeader = (String) messageContext.getProperty(SRC_ID_HEADER);
+                    String srcIdHeader = (String) messageContext.getProperty(SRC_ID_HEADER);
                     String applIdHeader = (String) messageContext.getProperty(APP_ID_HEADER);
                     String uuIdHeader = (String) messageContext.getProperty(UUID_HEADER);
                     String correlationIdHeader = (String) messageContext.getProperty(CORRELATION_ID_HEADER);
                     MDC.put(APIConstants.CORRELATION_ID, correlationIdHeader);
-                    correlationLog.info(beTotalLatency + "|HTTP|" + apiName + "|" + apiMethod + "|" + apiCTX + apiElectedRsrc
-                            + "|" + apiTo + "|" + authHeader + "|" + orgIdHeader + "|" + SrcIdHeader
-                            + "|" + applIdHeader + "|" + uuIdHeader + "|" + requestSize
-                            + "|" + responseSize + "|" + apiResponseSC + "|"
-                            + applicationName + "|" + apiConsumerKey + "|" + responseTime);
+                    correlationLog.info(beTotalLatency + "|HTTP|" + apiName + "|" + apiMethod + "|" + apiCTX
+                            + apiElectedRsrc + "|" + apiTo + "|" + authHeader + "|" + orgIdHeader + "|" + srcIdHeader
+                            + "|" + applIdHeader + "|" + uuIdHeader + "|" + requestSize + "|" + responseSize + "|"
+                            + apiResponseSC + "|" + applicationName + "|" + apiConsumerKey + "|" + responseTime);
                     MDC.remove(APIConstants.CORRELATION_ID);
                 } catch (Exception e) {
                     correlationLog.error(RESPONSE_EVENT_PUBLICATION_ERROR + e.getMessage(), e);
@@ -199,11 +202,12 @@ public class LogsHandler extends AbstractSynapseHandler {
         }
 
         // Track messages
-        String logMessage = KEY_TIMESTAMP + simpleDateFormat.format(new Date());
-        logMessage += KEY_MESSAGE_ID + messageContext.getMessageID();
-        logMessage += KEY_DIRECTION + "ResponseIn";
         org.apache.axis2.context.MessageContext axis2MessageContext =
                 ((Axis2MessageContext) messageContext).getAxis2MessageContext();
+        String logMessage = KEY_TIMESTAMP + simpleDateFormat.format(new Date());
+//        logMessage += KEY_MESSAGE_ID + messageContext.getMessageID();
+        logMessage += KEY_CORRELATION_ID + axis2MessageContext.getProperty(CORRELATION_ID);
+        logMessage += KEY_DIRECTION + "ResponseIn";
         logMessage += KEY_HTTP_SC + axis2MessageContext.getProperty(HTTP_SC);
         logMessage += KEY_ADDRESS + messageContext.getTo();
         messageTrackLogs.add(logMessage);
@@ -212,11 +216,12 @@ public class LogsHandler extends AbstractSynapseHandler {
 
     public boolean handleResponseOutFlow(MessageContext messageContext) {
         // Track messages
-        String logMessage = KEY_TIMESTAMP + simpleDateFormat.format(new Date());
-        logMessage += KEY_MESSAGE_ID + messageContext.getMessageID() ;
-        logMessage += KEY_DIRECTION + "ResponseOut";
         org.apache.axis2.context.MessageContext axis2MessageContext =
                 ((Axis2MessageContext) messageContext).getAxis2MessageContext();
+        String logMessage = KEY_TIMESTAMP + simpleDateFormat.format(new Date());
+//        logMessage += KEY_MESSAGE_ID + messageContext.getMessageID();
+        logMessage += KEY_CORRELATION_ID + axis2MessageContext.getProperty(CORRELATION_ID);
+        logMessage += KEY_DIRECTION + "ResponseOut";
         logMessage += KEY_HTTP_SC + axis2MessageContext.getProperty(HTTP_SC);
         logMessage += KEY_ADDRESS + messageContext.getTo();
         messageTrackLogs.add(logMessage);
