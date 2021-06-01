@@ -1512,6 +1512,7 @@ public final class APIConstants {
      * Constants for message track logging
      * */
     public static final String MESSAGE_TRACK_LOGGER = "MessageTracker";
+    public static final String ENABLE_MESSAGE_TRACKING = "enableMessageTracking";
     
     public static final String WSO2_ANONYMOUS_USER = "wso2.anonymous.user";
 
