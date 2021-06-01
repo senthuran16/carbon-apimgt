@@ -48,11 +48,11 @@ public class LogsHandler extends AbstractSynapseHandler {
     private static ArrayDeque<String> messageTrackLogs = new ArrayDeque<>();
     private final SimpleDateFormat simpleDateFormat = new SimpleDateFormat("[yyyy-MM-dd HH:mm:ss]");
     private final String KEY_TIMESTAMP = "Timestamp: ";
-    private final String KEY_CORRELATION_ID = ", CorrelationId: ";
-    private final String KEY_DIRECTION = ", Direction: ";
-    private final String KEY_HTTP_METHOD = ", HTTPMethod: ";
-    private final String KEY_HTTP_SC = ", HTTPStatusCode: ";
-    private final String KEY_ADDRESS = ", ";
+    private final String KEY_CORRELATION_ID = "CorrelationId: ";
+    private final String KEY_DIRECTION = "Direction: ";
+    private final String KEY_HTTP_METHOD = "HTTPMethod: ";
+    private final String KEY_HTTP_SC = "HTTPStatusCode: ";
+    private final String SEPARATOR = ", ";
     private final String CORRELATION_ID = "correlation_id";
     private final String HTTP_METHOD = "HTTP_METHOD";
     private final String HTTP_SC = "HTTP_SC";
@@ -104,11 +104,11 @@ public class LogsHandler extends AbstractSynapseHandler {
         // Track messages
         org.apache.axis2.context.MessageContext axis2MessageContext =
                 ((Axis2MessageContext) messageContext).getAxis2MessageContext();
-        String logMessage = KEY_TIMESTAMP + simpleDateFormat.format(new Date());
-        logMessage += KEY_CORRELATION_ID + axis2MessageContext.getProperty(CORRELATION_ID);
-        logMessage += KEY_DIRECTION + "RequestIn";
-        logMessage += KEY_HTTP_METHOD + axis2MessageContext.getProperty(HTTP_METHOD);
-        logMessage += KEY_ADDRESS + messageContext.getTo();
+        String logMessage = KEY_TIMESTAMP + simpleDateFormat.format(new Date()) + SEPARATOR;
+        logMessage += KEY_CORRELATION_ID + axis2MessageContext.getProperty(CORRELATION_ID) + SEPARATOR;
+        logMessage += KEY_DIRECTION + "RequestIn" + SEPARATOR;
+        logMessage += KEY_HTTP_METHOD + axis2MessageContext.getProperty(HTTP_METHOD) + SEPARATOR;
+        logMessage += messageContext.getTo();
         messageTrackLogs.add(logMessage);
         return true;
     }
@@ -151,11 +151,11 @@ public class LogsHandler extends AbstractSynapseHandler {
         // Track messages
         org.apache.axis2.context.MessageContext axis2MessageContext =
                 ((Axis2MessageContext) messageContext).getAxis2MessageContext();
-        String logMessage = KEY_TIMESTAMP + simpleDateFormat.format(new Date());
-        logMessage += KEY_CORRELATION_ID + axis2MessageContext.getProperty(CORRELATION_ID);
-        logMessage += KEY_DIRECTION + "RequestOut";
-        logMessage += KEY_HTTP_METHOD + axis2MessageContext.getProperty(HTTP_METHOD);
-        logMessage += KEY_ADDRESS + messageContext.getTo();
+        String logMessage = KEY_TIMESTAMP + simpleDateFormat.format(new Date()) + SEPARATOR;
+        logMessage += KEY_CORRELATION_ID + axis2MessageContext.getProperty(CORRELATION_ID) + SEPARATOR;
+        logMessage += KEY_DIRECTION + "RequestOut" + SEPARATOR;
+        logMessage += KEY_HTTP_METHOD + axis2MessageContext.getProperty(HTTP_METHOD) + SEPARATOR;
+        logMessage += messageContext.getTo();
         messageTrackLogs.add(logMessage);
         return true;
     }
@@ -201,11 +201,11 @@ public class LogsHandler extends AbstractSynapseHandler {
         // Track messages
         org.apache.axis2.context.MessageContext axis2MessageContext =
                 ((Axis2MessageContext) messageContext).getAxis2MessageContext();
-        String logMessage = KEY_TIMESTAMP + simpleDateFormat.format(new Date());
-        logMessage += KEY_CORRELATION_ID + axis2MessageContext.getProperty(CORRELATION_ID);
-        logMessage += KEY_DIRECTION + "ResponseIn";
-        logMessage += KEY_HTTP_SC + axis2MessageContext.getProperty(HTTP_SC);
-        logMessage += KEY_ADDRESS + messageContext.getTo();
+        String logMessage = KEY_TIMESTAMP + simpleDateFormat.format(new Date()) + SEPARATOR;
+        logMessage += KEY_CORRELATION_ID + axis2MessageContext.getProperty(CORRELATION_ID) + SEPARATOR;
+        logMessage += KEY_DIRECTION + "ResponseIn" + SEPARATOR;
+        logMessage += KEY_HTTP_METHOD + axis2MessageContext.getProperty(HTTP_METHOD) + SEPARATOR;
+        logMessage += messageContext.getTo();
         messageTrackLogs.add(logMessage);
         return true;
     }
@@ -214,11 +214,11 @@ public class LogsHandler extends AbstractSynapseHandler {
         // Track messages
         org.apache.axis2.context.MessageContext axis2MessageContext =
                 ((Axis2MessageContext) messageContext).getAxis2MessageContext();
-        String logMessage = KEY_TIMESTAMP + simpleDateFormat.format(new Date());
-        logMessage += KEY_CORRELATION_ID + axis2MessageContext.getProperty(CORRELATION_ID);
-        logMessage += KEY_DIRECTION + "ResponseOut";
-        logMessage += KEY_HTTP_SC + axis2MessageContext.getProperty(HTTP_SC);
-        logMessage += KEY_ADDRESS + messageContext.getTo();
+        String logMessage = KEY_TIMESTAMP + simpleDateFormat.format(new Date()) + SEPARATOR;
+        logMessage += KEY_CORRELATION_ID + axis2MessageContext.getProperty(CORRELATION_ID) + SEPARATOR;
+        logMessage += KEY_DIRECTION + "ResponseOut" + SEPARATOR;
+        logMessage += KEY_HTTP_METHOD + axis2MessageContext.getProperty(HTTP_METHOD) + SEPARATOR;
+        logMessage += messageContext.getTo();
         messageTrackLogs.add(logMessage);
         return true;
     }
