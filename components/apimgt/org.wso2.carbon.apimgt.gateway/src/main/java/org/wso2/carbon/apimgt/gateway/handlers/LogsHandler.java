@@ -53,9 +53,9 @@ public class LogsHandler extends AbstractSynapseHandler {
     private final String SEPARATOR = ", ";
 
     private static boolean isCorrelationEnabled = false;
-    private static boolean isSetCorrelationEnabledProperty = false;
+    private static boolean isCorrelationEnabledSystemPropertyRead = false;
     private static boolean isMessageTrackingEnabled = false;
-    private static boolean isSetMessageTrackingEnabledProperty = false;
+    private static boolean isMessageTrackingEnabledSystemPropertyRead = false;
 
     private static final String API_INFO = "API_INFO";
     private static final String AUTH_HEADER = "AUTH_HEADER";
@@ -72,23 +72,23 @@ public class LogsHandler extends AbstractSynapseHandler {
     private static final String MESSAGE_TRACK_BUILD_MESSAGE_ERROR = "Error occurred while building the log message. ";
 
     private boolean isCorrelationEnabled() {
-        if(!isSetCorrelationEnabledProperty) {
+        if(!isCorrelationEnabledSystemPropertyRead) {
             String config = System.getProperty(APIConstants.ENABLE_CORRELATION_LOGS);
             if (config != null && !config.equals("")) {
                 isCorrelationEnabled = Boolean.parseBoolean(config);
-                isSetCorrelationEnabledProperty = true;
             }
+            isCorrelationEnabledSystemPropertyRead = true;
         }
         return isCorrelationEnabled;
     }
 
     private boolean isMessageTrackingEnabled() {
-        if(!isSetMessageTrackingEnabledProperty) {
+        if(!isMessageTrackingEnabledSystemPropertyRead) {
             String config = System.getProperty(APIConstants.ENABLE_MESSAGE_TRACKING);
             if (config != null && !config.equals("")) {
                 isMessageTrackingEnabled = Boolean.parseBoolean(config);
-                isSetMessageTrackingEnabledProperty = true;
             }
+            isMessageTrackingEnabledSystemPropertyRead = true;
         }
         return isMessageTrackingEnabled;
     }
