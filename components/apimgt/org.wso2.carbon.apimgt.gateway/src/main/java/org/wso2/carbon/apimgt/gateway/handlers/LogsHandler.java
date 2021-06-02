@@ -84,7 +84,7 @@ public class LogsHandler extends AbstractSynapseHandler {
 
     private boolean isMessageTrackingEnabled() {
         if (!isMessageTrackingEnabledSystemPropertyRead) {
-            String config = System.getProperty(APIConstants.ENABLE_MESSAGE_TRACKING);
+            String config = System.getProperty(APIConstants.ENABLE_MESSAGE_TRACKING_LOGS);
             if (config != null && !config.equals("")) {
                 isMessageTrackingEnabled = Boolean.parseBoolean(config);
             }
