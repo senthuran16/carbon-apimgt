@@ -72,7 +72,7 @@ public class LogsHandler extends AbstractSynapseHandler {
     private static final String MESSAGE_TRACK_BUILD_MESSAGE_ERROR = "Error occurred while building the log message. ";
 
     private boolean isCorrelationEnabled() {
-        if(!isCorrelationEnabledSystemPropertyRead) {
+        if (!isCorrelationEnabledSystemPropertyRead) {
             String config = System.getProperty(APIConstants.ENABLE_CORRELATION_LOGS);
             if (config != null && !config.equals("")) {
                 isCorrelationEnabled = Boolean.parseBoolean(config);
@@ -83,7 +83,7 @@ public class LogsHandler extends AbstractSynapseHandler {
     }
 
     private boolean isMessageTrackingEnabled() {
-        if(!isMessageTrackingEnabledSystemPropertyRead) {
+        if (!isMessageTrackingEnabledSystemPropertyRead) {
             String config = System.getProperty(APIConstants.ENABLE_MESSAGE_TRACKING);
             if (config != null && !config.equals("")) {
                 isMessageTrackingEnabled = Boolean.parseBoolean(config);
