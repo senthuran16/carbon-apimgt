@@ -249,7 +249,8 @@ public class LogsHandler extends AbstractSynapseHandler {
                 String logMessage = KEY_CORRELATION_ID + axis2MessageContext.getProperty(CORRELATION_ID);
                 logMessage += SEPARATOR + KEY_DIRECTION + "ResponseOut";
                 logMessage += SEPARATOR + KEY_HTTP_SC + axis2MessageContext.getProperty(HTTP_SC);
-                if (axis2MessageContext.getProperty(OUT_TRANSPORT_INFO) != null) {
+                if (axis2MessageContext.getProperty(OUT_TRANSPORT_INFO) != null &&
+                        axis2MessageContext.getProperty(OUT_TRANSPORT_INFO) instanceof ServerWorker) {
                     ServerWorker outTransportInfo = (ServerWorker) axis2MessageContext.getProperty(OUT_TRANSPORT_INFO);
                     org.apache.axis2.context.MessageContext requestContext = outTransportInfo.getRequestContext();
                     if (requestContext.getProperty(TRANSPORT_IN_URL) != null) {
