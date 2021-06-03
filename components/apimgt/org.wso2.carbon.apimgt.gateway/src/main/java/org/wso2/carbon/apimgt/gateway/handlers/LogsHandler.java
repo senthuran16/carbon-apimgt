@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ * Copyright (c) 2018-2021 WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
  *
  * WSO2 Inc. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -27,6 +27,7 @@ import org.apache.log4j.MDC;
 import org.apache.synapse.AbstractSynapseHandler;
 import org.apache.synapse.MessageContext;
 import org.apache.synapse.core.axis2.Axis2MessageContext;
+import org.apache.synapse.transport.passthru.ServerWorker;
 import org.apache.synapse.transport.passthru.util.RelayUtils;
 import org.wso2.carbon.apimgt.gateway.APIMgtGatewayConstants;
 import org.wso2.carbon.apimgt.impl.APIConstants;
@@ -45,11 +46,16 @@ public class LogsHandler extends AbstractSynapseHandler {
 
     private final String KEY_CORRELATION_ID = "CorrelationId: ";
     private final String KEY_DIRECTION = "Direction: ";
+    private final String KEY_DESTINATION = "Destination: ";
+    private final String KEY_ORIGIN = "Origin: ";
     private final String KEY_HTTP_METHOD = "HTTPMethod: ";
     private final String KEY_HTTP_SC = "HTTPStatusCode: ";
     private final String CORRELATION_ID = "correlation_id";
     private final String HTTP_METHOD = "HTTP_METHOD";
     private final String HTTP_SC = "HTTP_SC";
+    private final String ENDPOINT_PREFIX = "ENDPOINT_PREFIX";
+    private final String OUT_TRANSPORT_INFO = "OutTransportInfo";
+    private final String TRANSPORT_IN_URL = "TransportInURL";
     private final String SEPARATOR = ", ";
 
     private static boolean isCorrelationEnabled = false;
@@ -110,10 +116,10 @@ public class LogsHandler extends AbstractSynapseHandler {
             try {
                 org.apache.axis2.context.MessageContext axis2MessageContext =
                         ((Axis2MessageContext) messageContext).getAxis2MessageContext();
-                String logMessage = KEY_CORRELATION_ID + axis2MessageContext.getProperty(CORRELATION_ID) + SEPARATOR;
-                logMessage += KEY_DIRECTION + "RequestIn" + SEPARATOR;
-                logMessage += KEY_HTTP_METHOD + axis2MessageContext.getProperty(HTTP_METHOD) + SEPARATOR;
-                logMessage += messageContext.getTo();
+                String logMessage = KEY_CORRELATION_ID + axis2MessageContext.getProperty(CORRELATION_ID);
+                logMessage += SEPARATOR + KEY_DIRECTION + "RequestIn";
+                logMessage += SEPARATOR + KEY_HTTP_METHOD + axis2MessageContext.getProperty(HTTP_METHOD);
+                logMessage += SEPARATOR + KEY_DESTINATION + messageContext.getTo().getAddress();
                 messageTrackLog.info(logMessage);
             } catch (Exception e) {
                 messageTrackLog.error(MESSAGE_TRACK_BUILD_MESSAGE_ERROR + e.getMessage(), e);
@@ -163,10 +169,10 @@ public class LogsHandler extends AbstractSynapseHandler {
             try {
                 org.apache.axis2.context.MessageContext axis2MessageContext =
                         ((Axis2MessageContext) messageContext).getAxis2MessageContext();
-                String logMessage = KEY_CORRELATION_ID + axis2MessageContext.getProperty(CORRELATION_ID) + SEPARATOR;
-                logMessage += KEY_DIRECTION + "RequestOut" + SEPARATOR;
-                logMessage += KEY_HTTP_METHOD + axis2MessageContext.getProperty(HTTP_METHOD) + SEPARATOR;
-                logMessage += messageContext.getTo();
+                String logMessage = KEY_CORRELATION_ID + axis2MessageContext.getProperty(CORRELATION_ID);
+                logMessage += SEPARATOR + KEY_DIRECTION + "RequestOut";
+                logMessage += SEPARATOR + KEY_HTTP_METHOD + axis2MessageContext.getProperty(HTTP_METHOD);
+                logMessage += SEPARATOR + KEY_DESTINATION + messageContext.getTo().getAddress();
                 messageTrackLog.info(logMessage);
             } catch (Exception e) {
                 messageTrackLog.error(MESSAGE_TRACK_BUILD_MESSAGE_ERROR + e.getMessage(), e);
@@ -219,10 +225,12 @@ public class LogsHandler extends AbstractSynapseHandler {
             try {
                 org.apache.axis2.context.MessageContext axis2MessageContext =
                         ((Axis2MessageContext) messageContext).getAxis2MessageContext();
-                String logMessage = KEY_CORRELATION_ID + axis2MessageContext.getProperty(CORRELATION_ID) + SEPARATOR;
-                logMessage += KEY_DIRECTION + "ResponseIn" + SEPARATOR;
-                logMessage += KEY_HTTP_SC + axis2MessageContext.getProperty(HTTP_SC) + SEPARATOR;
-                logMessage += messageContext.getTo();
+                String logMessage = KEY_CORRELATION_ID + axis2MessageContext.getProperty(CORRELATION_ID);
+                logMessage += SEPARATOR + KEY_DIRECTION + "ResponseIn";
+                logMessage += SEPARATOR + KEY_HTTP_SC + axis2MessageContext.getProperty(HTTP_SC);
+                if (messageContext.getProperty(ENDPOINT_PREFIX) != null) {
+                    logMessage += SEPARATOR + KEY_ORIGIN + messageContext.getProperty(ENDPOINT_PREFIX);
+                }
                 messageTrackLog.info(logMessage);
             } catch (Exception e) {
                 messageTrackLog.error(MESSAGE_TRACK_BUILD_MESSAGE_ERROR + e.getMessage(), e);
@@ -238,10 +246,16 @@ public class LogsHandler extends AbstractSynapseHandler {
             try {
                 org.apache.axis2.context.MessageContext axis2MessageContext =
                         ((Axis2MessageContext) messageContext).getAxis2MessageContext();
-                String logMessage = KEY_CORRELATION_ID + axis2MessageContext.getProperty(CORRELATION_ID) + SEPARATOR;
-                logMessage += KEY_DIRECTION + "ResponseOut" + SEPARATOR;
-                logMessage += KEY_HTTP_SC + axis2MessageContext.getProperty(HTTP_SC) + SEPARATOR;
-                logMessage += messageContext.getTo();
+                String logMessage = KEY_CORRELATION_ID + axis2MessageContext.getProperty(CORRELATION_ID);
+                logMessage += SEPARATOR + KEY_DIRECTION + "ResponseOut";
+                logMessage += SEPARATOR + KEY_HTTP_SC + axis2MessageContext.getProperty(HTTP_SC);
+                if (axis2MessageContext.getProperty(OUT_TRANSPORT_INFO) != null) {
+                    ServerWorker outTransportInfo = (ServerWorker) axis2MessageContext.getProperty(OUT_TRANSPORT_INFO);
+                    org.apache.axis2.context.MessageContext requestContext = outTransportInfo.getRequestContext();
+                    if (requestContext.getProperty(TRANSPORT_IN_URL) != null) {
+                        logMessage += SEPARATOR + KEY_ORIGIN + requestContext.getProperty(TRANSPORT_IN_URL);
+                    }
+                }
                 messageTrackLog.info(logMessage);
             } catch (Exception e) {
                 messageTrackLog.error(MESSAGE_TRACK_BUILD_MESSAGE_ERROR + e.getMessage(), e);
