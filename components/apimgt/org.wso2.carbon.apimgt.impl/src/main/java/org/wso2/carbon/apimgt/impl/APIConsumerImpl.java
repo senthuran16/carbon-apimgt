@@ -2562,7 +2562,7 @@ public class APIConsumerImpl extends AbstractAPIManager implements APIConsumer {
                 isTenantFlowStarted = true;
             }
 
-            API api = getAPI(identifier);
+            API api = getAPIWithoutPermissionCheck(identifier);
             SubscriptionWorkflowDTO workflowDTO;
             WorkflowExecutor createSubscriptionWFExecutor = getWorkflowExecutor(WorkflowConstants.WF_TYPE_AM_SUBSCRIPTION_CREATION);
             WorkflowExecutor removeSubscriptionWFExecutor = getWorkflowExecutor(WorkflowConstants.WF_TYPE_AM_SUBSCRIPTION_DELETION);

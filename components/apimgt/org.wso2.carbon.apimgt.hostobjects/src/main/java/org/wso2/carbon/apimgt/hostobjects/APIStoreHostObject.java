@@ -3508,7 +3508,7 @@ public class APIStoreHostObject extends ScriptableObject {
         APIConsumer apiConsumer = getAPIConsumer(thisObj);
 //        ApiMgtDAO apiMgtDAO = new ApiMgtDAO();
         try {
-            API api = apiConsumer.getLightweightAPI(subscribedAPI.getApiId());
+            API api = apiConsumer.getLightweightAPIWithoutPermissionCheck(subscribedAPI.getApiId());
             apiObj.put("name", apiObj, subscribedAPI.getApiId().getApiName());
             apiObj.put("provider", apiObj, APIUtil.replaceEmailDomainBack(subscribedAPI.getApiId().getProviderName()));
             apiObj.put("version", apiObj, subscribedAPI.getApiId().getVersion());
@@ -4050,7 +4050,7 @@ public class APIStoreHostObject extends ScriptableObject {
 
                 int i = 0;
                 for (SubscribedAPI subscribedAPI : subscribedAPIs) {
-                    API api = apiConsumer.getLightweightAPI(subscribedAPI.getApiId());
+                    API api = apiConsumer.getLightweightAPIWithoutPermissionCheck(subscribedAPI.getApiId());
                     NativeObject row = new NativeObject();
                     row.put("apiName", row, subscribedAPI.getApiId().getApiName());
                     row.put("apiVersion", row, subscribedAPI.getApiId().getVersion());
