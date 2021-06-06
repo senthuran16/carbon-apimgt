@@ -173,6 +173,7 @@ public class APIConsumerImplTest {
         Mockito.when(userRealm.getUserStoreManager()).thenReturn(userStoreManager);
         Mockito.when(serviceReferenceHolder.getRegistryService()).thenReturn(registryService);
         Mockito.when(registryService.getGovernanceSystemRegistry(Mockito.anyInt())).thenReturn(userRegistry);
+        Mockito.when(registryService.getGovernanceUserRegistry(Mockito.anyString(), Mockito.anyInt())).thenReturn(userRegistry);
         Mockito.when(userRealm.getAuthorizationManager()).thenReturn(authorizationManager);
 
         PowerMockito.when(APIUtil.replaceSystemProperty(anyString())).thenAnswer((Answer<String>) invocation -> {
@@ -1319,7 +1320,7 @@ public class APIConsumerImplTest {
     }
 
     @Test
-    public void testRemoveSubscription() throws APIManagementException, WorkflowException {
+    public void testRemoveSubscription() throws APIManagementException, RegistryException {
         String uuid = UUID.randomUUID().toString();
         Subscriber subscriber = new Subscriber("sub1");
         Application application = new Application("app1", subscriber);
@@ -1338,6 +1339,20 @@ public class APIConsumerImplTest {
         } catch (APIManagementException e) {
             Assert.assertTrue(e.getMessage().contains("Subscription for UUID"));
         }
+        Resource resource = new ResourceImpl();
+        resource.setUUID(UUID.randomUUID().toString());
+        Mockito.when(userRegistry.get(Mockito.anyString())).thenReturn(resource);
+        GenericArtifact genericArtifact = Mockito.mock(GenericArtifactImpl.class);
+        GenericArtifactManager artifactManager = Mockito.mock(GenericArtifactManager.class);
+        PowerMockito.when(APIUtil.getArtifactManager((UserRegistry)(Mockito.anyObject()), Mockito.anyString())).
+                thenReturn(artifactManager);
+        Mockito.when(artifactManager.getGenericArtifact(Mockito.anyString())).thenReturn(genericArtifact);
+        String path = "testPath";
+        Mockito.when(APIUtil.getAPIPath((APIIdentifier) Mockito.any())).thenReturn(path);
+        API api = Mockito.mock(API.class);
+        PowerMockito.when(APIUtil.getAPIForPublishing((GovernanceArtifact) (Mockito.anyObject()), (UserRegistry)(Mockito.anyObject()))).
+                thenReturn(api);
+        Mockito.when(api.getVisibility()).thenReturn(APIConstants.API_GLOBAL_VISIBILITY);
         apiConsumer.removeSubscription(subscribedAPINew);
         Mockito.verify(apiMgtDAO, Mockito.times(1)).getApplicationNameFromId(Mockito.anyInt());
         String workflowExtRef = "test_wf_ref";
