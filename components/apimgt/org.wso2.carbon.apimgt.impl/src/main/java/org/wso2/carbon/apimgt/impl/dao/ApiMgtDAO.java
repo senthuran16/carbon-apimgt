@@ -6815,10 +6815,10 @@ public class ApiMgtDAO {
 
 
     public void updateAPI(API api, int tenantId) throws APIManagementException {
-        updateAPI(api, tenantId, null);
+        updateAPI(api, null, tenantId, null);
     }
 
-    public void updateAPI(API api, int tenantId, String username) throws APIManagementException {
+    public void updateAPI(API api, Set<URITemplate> templates, int tenantId, String username) throws APIManagementException {
         Connection connection = null;
         PreparedStatement prepStmt = null;
 
@@ -6861,14 +6861,54 @@ public class ApiMgtDAO {
             }
             connection.commit();
 
-            updateScopes(api, tenantId);
-            updateURLTemplates(api);
+            if (scopesChanged(api, templates)) {
+                updateScopes(api, tenantId);
+                updateURLTemplates(api);
+            }
         } catch (SQLException e) {
             handleException("Error while updating the API: " + api.getId() + " in the database", e);
         } finally {
             APIMgtDBUtil.closeAllConnections(prepStmt, connection, null);
         }
     }
+
+    private boolean scopesChanged(API newAPI, Set<URITemplate> oldTemplates) {
+        if (oldTemplates == null) {
+            return true;
+        }
+
+        if (newAPI.getUriTemplates().size() != oldTemplates.size()) {
+            return true;
+        }
+        for (URITemplate template : newAPI.getUriTemplates()) {
+            for (URITemplate templateOld : oldTemplates) {
+                if (template.getUriTemplate().equals(templateOld.getUriTemplate())
+                && template.getHTTPVerb().equals(templateOld.getHTTPVerb())) {
+                    Scope oldScope = templateOld.getScope();
+                    Scope newScope = template.getScope();
+
+                    if ((oldScope == null && newScope != null) || (oldScope != null && newScope == null) ) {
+                        return true;
+                    }
+
+                    if (oldScope != null && newScope != null) {
+                        if (!oldScope.getName().equals(newScope.getName())) {
+                            return true;
+                        }
+
+                        List<String> roleListOld = APIUtil.getRolesList(oldScope.getRoles());
+                        List<String> roleListNew = APIUtil.getRolesList(newScope.getRoles());
+
+                        if (!roleListOld.containsAll(roleListNew)) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
 
     public int getAPIID(APIIdentifier apiId, Connection connection) throws APIManagementException {
         boolean created = false;

@@ -57,6 +57,7 @@ import org.wso2.carbon.apimgt.api.model.SubscribedAPI;
 import org.wso2.carbon.apimgt.api.model.Subscriber;
 import org.wso2.carbon.apimgt.api.model.Tier;
 import org.wso2.carbon.apimgt.api.model.Wsdl;
+import org.wso2.carbon.apimgt.api.model.URITemplate;
 import org.wso2.carbon.apimgt.api.model.policy.Policy;
 import org.wso2.carbon.apimgt.api.model.policy.PolicyConstants;
 import org.wso2.carbon.apimgt.impl.dao.ApiMgtDAO;
@@ -95,17 +96,7 @@ import org.wso2.carbon.utils.multitenancy.MultitenantUtils;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.SortedSet;
-import java.util.TreeSet;
+import java.util.*;
 import javax.xml.namespace.QName;
 import javax.xml.stream.XMLStreamException;
 
@@ -383,6 +374,50 @@ public abstract class AbstractAPIManager implements APIManager {
 
     protected API getApi(GovernanceArtifact artifact) throws APIManagementException {
         return APIUtil.getAPI(artifact);
+    }
+
+    public Set<URITemplate> getURITemplatesForAPI(APIIdentifier identifier) throws APIManagementException {
+        String apiPath = APIUtil.getAPIPath(identifier);
+
+        Set<URITemplate> uriTemplates = new LinkedHashSet<URITemplate>();
+
+        Registry registry;
+        try {
+            String apiTenantDomain = getTenantDomain(identifier);
+            int apiTenantId = getTenantManager()
+                    .getTenantId(apiTenantDomain);
+            if (!MultitenantConstants.SUPER_TENANT_DOMAIN_NAME.equals(apiTenantDomain)) {
+                APIUtil.loadTenantRegistry(apiTenantId);
+            }
+
+            if (this.tenantDomain == null || !this.tenantDomain.equals(apiTenantDomain)) { //cross tenant scenario
+                registry = getRegistryService().getGovernanceUserRegistry(
+                        getTenantAwareUsername(APIUtil.replaceEmailDomainBack(identifier.getProviderName())), apiTenantId);
+            } else {
+                registry = this.registry;
+            }
+            GenericArtifactManager artifactManager = getAPIGenericArtifactManagerFromUtil(registry,
+                    APIConstants.API_KEY);
+            Resource apiResource = registry.get(apiPath);
+            String artifactId = apiResource.getUUID();
+            if (artifactId == null) {
+                throw new APIManagementException("artifact id is null for : " + apiPath);
+            }
+            GenericArtifact apiArtifact = artifactManager.getGenericArtifact(artifactId);
+
+            uriTemplates = APIUtil.getURITemplatesForAPI(apiArtifact, registry);
+
+            return uriTemplates;
+
+        } catch (RegistryException e) {
+            String msg = "Failed to get API from : " + apiPath;
+            log.error(msg, e);
+            throw new APIManagementException(msg, e);
+        } catch (org.wso2.carbon.user.api.UserStoreException e) {
+            String msg = "Failed to get API from : " + apiPath;
+            log.error(msg, e);
+            throw new APIManagementException(msg, e);
+        }
     }
 
     public API getAPI(APIIdentifier identifier) throws APIManagementException {

@@ -19,15 +19,14 @@
 package org.wso2.carbon.apimgt.impl;
 
 import java.io.File;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.axis2.AxisFault;
 import org.wso2.carbon.apimgt.api.APIManagementException;
-import org.wso2.carbon.apimgt.api.model.API;
-import org.wso2.carbon.apimgt.api.model.APIIdentifier;
-import org.wso2.carbon.apimgt.api.model.Documentation;
-import org.wso2.carbon.apimgt.api.model.ResourceFile;
+import org.wso2.carbon.apimgt.api.model.*;
 import org.wso2.carbon.apimgt.impl.dao.ApiMgtDAO;
 import org.wso2.carbon.apimgt.impl.dto.Environment;
 import org.wso2.carbon.apimgt.impl.notification.NotificationDTO;
@@ -100,6 +99,20 @@ public class APIProviderImplWrapper extends APIProviderImpl {
     protected void invalidateResourceCache(String apiContext, String apiVersion, String resourceURLContext,
                                            String httpVerb, Environment environment) throws AxisFault {
         //do nothing
+    }
+
+    @Override
+    public Set<URITemplate> getURITemplatesForAPI(APIIdentifier identifier) throws APIManagementException {
+        URITemplate uriTemplate1 = new URITemplate();
+        uriTemplate1.setHTTPVerb("POST");
+        uriTemplate1.setAuthType("Application");
+        uriTemplate1.setUriTemplate("/add");
+        uriTemplate1.setThrottlingTier("Gold");
+
+        Set<URITemplate> set = new HashSet<>();
+        set.add(uriTemplate1);
+
+        return set;
     }
 
     @Override

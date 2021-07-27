@@ -66,6 +66,7 @@ import org.wso2.carbon.apimgt.api.model.Subscriber;
 import org.wso2.carbon.apimgt.api.model.Tier;
 import org.wso2.carbon.apimgt.api.model.URITemplate;
 import org.wso2.carbon.apimgt.api.model.Usage;
+import org.wso2.carbon.apimgt.api.model.URITemplate;
 import org.wso2.carbon.apimgt.api.model.policy.APIPolicy;
 import org.wso2.carbon.apimgt.api.model.policy.ApplicationPolicy;
 import org.wso2.carbon.apimgt.api.model.policy.Condition;
@@ -92,9 +93,6 @@ import org.wso2.carbon.apimgt.impl.notification.NotificationExecutor;
 import org.wso2.carbon.apimgt.impl.notification.NotifierConstants;
 import org.wso2.carbon.apimgt.impl.notification.exception.NotificationException;
 import org.wso2.carbon.apimgt.impl.publishers.WSO2APIPublisher;
-import org.wso2.carbon.apimgt.impl.soaptorest.WSDLSOAPOperationExtractor;
-import org.wso2.carbon.apimgt.api.model.WSDLArchiveInfo;
-import org.wso2.carbon.apimgt.impl.soaptorest.util.SOAPOperationBindingUtils;
 import org.wso2.carbon.apimgt.impl.template.APITemplateBuilder;
 import org.wso2.carbon.apimgt.impl.template.APITemplateBuilderImpl;
 import org.wso2.carbon.apimgt.impl.template.APITemplateException;
@@ -136,6 +134,7 @@ import org.wso2.carbon.registry.core.CollectionImpl;
 import org.wso2.carbon.registry.core.Registry;
 import org.wso2.carbon.registry.core.RegistryConstants;
 import org.wso2.carbon.registry.core.Resource;
+import org.wso2.carbon.registry.core.Tag;
 import org.wso2.carbon.registry.core.config.RegistryContext;
 import org.wso2.carbon.registry.core.exceptions.RegistryException;
 import org.wso2.carbon.registry.core.jdbc.realm.RegistryAuthorizationManager;
@@ -1101,7 +1100,10 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
                         "Error in retrieving Tenant Information while updating api :" + api.getId().getApiName(), e);
             }
             validateResourceThrottlingTiers(api, tenantDomain);
-            apiMgtDAO.updateAPI(api, tenantId, userNameWithoutChange);
+
+            Set<URITemplate> templates = getURITemplatesForAPI(api.getId());
+
+            apiMgtDAO.updateAPI(api,templates, tenantId, userNameWithoutChange);
             if (log.isDebugEnabled()) {
                 log.debug("Successfully updated the API: " + api.getId() + " in the database");
             }
@@ -1288,14 +1290,28 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
             GenericArtifact updateApiArtifact = APIUtil.createAPIArtifactContent(artifact, api);
             String artifactPath = GovernanceUtils.getArtifactPath(registry, updateApiArtifact.getId());
             org.wso2.carbon.registry.core.Tag[] oldTags = registry.getTags(artifactPath);
+            Set<String> oldTagsSet = new HashSet<>();
             if (oldTags != null) {
-                for (org.wso2.carbon.registry.core.Tag tag : oldTags) {
-                    registry.removeTag(artifactPath, tag.getTagName());
+                for (Tag tag : oldTags) {
+                    oldTagsSet.add(tag.getTagName());
                 }
             }
-            Set<String> tagSet = api.getTags();
-            if (tagSet != null) {
-                for (String tag : tagSet) {
+            Set<String> newTags = api.getTags();
+            Set<String> tagsToCreate = new HashSet<>();
+            if (newTags != null){
+                tagsToCreate.addAll(newTags);
+            }
+            tagsToCreate.removeAll(oldTagsSet);
+            Set<String> tagsToRemove = new HashSet<>(oldTagsSet);
+            oldTagsSet.retainAll(newTags);
+            tagsToRemove.removeAll(oldTagsSet);
+            if (tagsToRemove != null) {
+                for (String tag : tagsToRemove) {
+                    registry.removeTag(artifactPath, tag);
+                }
+            }
+            if (tagsToCreate != null) {
+                for (String tag : tagsToCreate) {
                     registry.applyTag(artifactPath, tag);
                 }
             }

@@ -719,6 +719,90 @@ public final class APIUtil {
         return api;
     }
 
+    public static Set<URITemplate> getURITemplatesForAPI(GovernanceArtifact artifact, Registry registry) throws APIManagementException {
+        API api;
+        Set<URITemplate> uriTemplates = new LinkedHashSet<URITemplate>();
+        try {
+            String providerName = artifact.getAttribute(APIConstants.API_OVERVIEW_PROVIDER);
+            String apiName = artifact.getAttribute(APIConstants.API_OVERVIEW_NAME);
+            String apiVersion = artifact.getAttribute(APIConstants.API_OVERVIEW_VERSION);
+            APIIdentifier apiIdentifier = new APIIdentifier(providerName, apiName, apiVersion);
+            int apiId = ApiMgtDAO.getInstance().getAPIID(apiIdentifier, null);
+
+            if (apiId == -1) {
+                return null;
+            }
+
+            api = new API(apiIdentifier);
+            //set uuid
+            api.setUUID(artifact.getId());
+            // set rating
+            String artifactPath = GovernanceUtils.getArtifactPath(registry, artifact.getId());
+            api = setResourceProperties(api, registry, artifactPath);
+            List<String> uriTemplateNames = new ArrayList<String>();
+
+            // This contains the resolved context
+            api.setContext(artifact.getAttribute(APIConstants.API_OVERVIEW_CONTEXT));
+            // We set the context template here
+            api.setContextTemplate(artifact.getAttribute(APIConstants.API_OVERVIEW_CONTEXT_TEMPLATE));
+            api.setLatest(Boolean.parseBoolean(artifact.getAttribute(APIConstants.API_OVERVIEW_IS_LATEST)));
+
+
+            Set<Scope> scopes = ApiMgtDAO.getInstance().getAPIScopes(api.getId());
+            api.setScopes(scopes);
+
+            HashMap<String, String> urlPatternsSet;
+            urlPatternsSet = ApiMgtDAO.getInstance().getURITemplatesPerAPIAsString(api.getId());
+            HashMap<String, String> resourceScopes;
+            resourceScopes = ApiMgtDAO.getInstance().getResourceToScopeMapping(api.getId());
+
+            Set<String> urlPatternsKeySet = urlPatternsSet.keySet();
+            String resourceScopeKey;
+            for (String urlPattern : urlPatternsKeySet) {
+                URITemplate uriTemplate = new URITemplate();
+                String[] urlPatternComponents = urlPattern.split("::");
+                String uTemplate = (urlPatternComponents.length >= 1) ? urlPatternComponents[0] : null;
+                String method = (urlPatternComponents.length >= 2) ? urlPatternComponents[1] : null;
+                String authType = (urlPatternComponents.length >= 3) ? urlPatternComponents[2] : null;
+                String throttlingTier = (urlPatternComponents.length >= 4) ? urlPatternComponents[3] : null;
+                String mediationScript = (urlPatternComponents.length >= 5) ? urlPatternComponents[4] : null;
+                uriTemplate.setHTTPVerb(method);
+                uriTemplate.setAuthType(authType);
+                uriTemplate.setThrottlingTier(throttlingTier);
+                uriTemplate.setHttpVerbs(method);
+                uriTemplate.setAuthTypes(authType);
+                uriTemplate.setUriTemplate(uTemplate);
+                uriTemplate.setResourceURI(api.getUrl());
+                uriTemplate.setResourceSandboxURI(api.getSandboxUrl());
+                uriTemplate.setThrottlingTiers(throttlingTier);
+                uriTemplate.setMediationScript(mediationScript);
+                uriTemplate.setMediationScripts(method, mediationScript);
+                resourceScopeKey = APIUtil.getResourceKey(api.getContext(), apiVersion, uTemplate, method);
+                uriTemplate.setScope(findScopeByKey(scopes, resourceScopes.get(resourceScopeKey)));
+                //Checking for duplicate uri template names
+
+                uriTemplates.add(uriTemplate);
+            }
+
+            if (APIConstants.IMPLEMENTATION_TYPE_INLINE.equalsIgnoreCase(api.getImplementation())) {
+                for (URITemplate template : uriTemplates) {
+                    template.setMediationScript(template.getAggregatedMediationScript());
+                }
+            }
+
+            api.setUriTemplates(uriTemplates);
+
+        } catch (GovernanceException e) {
+            String msg = "Failed to get API for artifact ";
+            throw new APIManagementException(msg, e);
+        } catch (RegistryException e) {
+            String msg = "Failed to get LastAccess time or Rating";
+            throw new APIManagementException(msg, e);
+        }
+
+        return uriTemplates;
+    }
+
     /**
      * This method used to extract environment list configured with non empty URLs.
      *
