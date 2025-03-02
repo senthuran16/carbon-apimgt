@@ -1551,6 +1551,11 @@ public final class APIConstants {
     public static final String CONFIG_REDIS_KEY_LOCK_RETRIEVAL_TIMEOUT = "KeyLockRetrievalTimeout";
     public static final String HYBRID_THROTTLE_PROCESSOR_TYPE_START_TIME_BASED = "start_time_based";
 
+    // Solace Configurations
+    public static final String SOLACE_CONFIG = "SolaceConfig";
+    public static final String SOLACE_APIM_API_ENDPOINT = "SolaceApimApiEndpoint";
+    public static final String SOLACE_TOKEN = "SolaceToken";
+
     // Primary/Secondary Login configuration
     public static final String USERID_LOGIN = "UserIdLogin";
     public static final String EMAIL_LOGIN = "EmailLogin";
