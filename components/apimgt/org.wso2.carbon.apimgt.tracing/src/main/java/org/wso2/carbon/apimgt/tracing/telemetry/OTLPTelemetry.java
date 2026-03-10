@@ -22,11 +22,13 @@ import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.api.trace.Tracer;
 import io.opentelemetry.api.trace.propagation.W3CTraceContextPropagator;
 import io.opentelemetry.context.propagation.ContextPropagators;
+import io.opentelemetry.exporter.otlp.http.trace.OtlpHttpSpanExporter;
 import io.opentelemetry.exporter.otlp.trace.OtlpGrpcSpanExporter;
 import io.opentelemetry.exporter.otlp.trace.OtlpGrpcSpanExporterBuilder;
 import io.opentelemetry.sdk.OpenTelemetrySdk;
 import io.opentelemetry.sdk.trace.SdkTracerProvider;
 import io.opentelemetry.sdk.trace.export.BatchSpanProcessor;
+import io.opentelemetry.sdk.trace.export.SpanExporter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -64,28 +66,52 @@ public class OTLPTelemetry implements APIMOpenTelemetry {
         }
 
         if (StringUtils.isNotEmpty(endPointURL)) {
-            OtlpGrpcSpanExporterBuilder otlpGrpcSpanExporterBuilder = null;
+            boolean useHttp = false;
+
+            Object useHttpObject = System.getProperty("use.http.otlp.exporter");
+            if (useHttpObject != null) {
+                useHttp = Boolean.parseBoolean(useHttpObject.toString());
+            }
+
+            SpanExporter spanExporter;
             if (headerKey != null && headerValue != null) {
-                otlpGrpcSpanExporterBuilder = OtlpGrpcSpanExporter.builder()
-                        .setEndpoint(endPointURL)
-                        .setCompression("gzip")
-                        .addHeader(headerKey, headerValue);
+                if (useHttp) {
+                    spanExporter = OtlpHttpSpanExporter.builder()
+                            .setEndpoint(endPointURL)
+                            .setCompression("gzip")
+                            .addHeader(headerKey, headerValue)
+                            .build();
+                } else {
+                    spanExporter = OtlpGrpcSpanExporter.builder()
+                            .setEndpoint(endPointURL)
+                            .setCompression("gzip")
+                            .addHeader(headerKey, headerValue)
+                            .build();
+                }
             } else {
-                otlpGrpcSpanExporterBuilder = OtlpGrpcSpanExporter.builder()
-                        .setEndpoint(endPointURL)
-                        .setCompression("gzip");
+                if (useHttp) {
+                    spanExporter = OtlpHttpSpanExporter.builder()
+                            .setEndpoint(endPointURL)
+                            .setCompression("gzip")
+                            .build();
+                } else {
+                    spanExporter = OtlpGrpcSpanExporter.builder()
+                            .setEndpoint(endPointURL)
+                            .setCompression("gzip")
+                            .build();
+                }
                 if (log.isDebugEnabled()) {
-                    log.debug("OTLP exporter: " + otlpGrpcSpanExporterBuilder + " is configured at " + endPointURL +
+                    log.debug("OTLP exporter: " + spanExporter + " is configured at " + endPointURL +
                             " without headers.");
                 }
             }
 
             if (log.isDebugEnabled()) {
-                log.debug("OTLP exporter: " + otlpGrpcSpanExporterBuilder + " is configured at " + endPointURL);
+                log.debug("OTLP exporter: " + spanExporter + " is configured at " + endPointURL);
             }
 
             sdkTracerProvider = SdkTracerProvider.builder()
-                    .addSpanProcessor(BatchSpanProcessor.builder(otlpGrpcSpanExporterBuilder.build()).build())
+                    .addSpanProcessor(BatchSpanProcessor.builder(spanExporter).build())
                     .setResource(TelemetryUtil.getTracerProviderResource(serviceName))
                     .build();
 
